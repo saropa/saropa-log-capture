@@ -148,7 +148,7 @@ export function renderOccurrencesSection(count: number, examples: readonly strin
  * Render the action bar with export/diagnostic buttons.
  *
  * The "Explain with AI" button was removed (bug_005): it posted to a message
- * handler that called `vscode.commands.executeCommand('saropaLogCapture.explainError')`,
+ * handler that called `vscode.commands.executeCommand('saropaCapture.explainError')`,
  * a command with no matching `registerCommand` anywhere in the extension. Every
  * click therefore failed silently and showed "AI unavailable". Re-add only once
  * the command is wired to a real handler (see `src/modules/ai/ai-context-builder.ts`).

@@ -79,10 +79,10 @@ export function setupConfigListener(
     captureToggle: CaptureToggleStatusBar,
 ): void {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
-        if (!e.affectsConfiguration('saropaLogCapture')) { return; }
+        if (!e.affectsConfiguration('saropaCapture')) { return; }
         const cfg = getConfig();
         sessionManager.refreshConfig(cfg);
-        if (e.affectsConfiguration('saropaLogCapture.enabled')) {
+        if (e.affectsConfiguration('saropaCapture.enabled')) {
             /* Keep the status bar toggle in sync when the setting changes
              * externally (e.g. via the Settings UI or settings.json edit). */
             captureToggle.setEnabled(cfg.enabled);
@@ -102,79 +102,79 @@ export function setupConfigListener(
                 );
             }
         }
-        if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
+        if (e.affectsConfiguration('saropaCapture.iconBarPosition')) {
             broadcaster.setIconBarPosition(cfg.iconBarPosition);
         }
-        if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
+        if (e.affectsConfiguration('saropaCapture.minimapShowInfoMarkers')) {
             broadcaster.setMinimapShowInfo(cfg.minimapShowInfoMarkers);
         }
-        if (e.affectsConfiguration('saropaLogCapture.minimapShowSqlDensity')) {
+        if (e.affectsConfiguration('saropaCapture.minimapShowSqlDensity')) {
             broadcaster.setMinimapShowSqlDensity(cfg.minimapShowSqlDensity);
         }
-        if (e.affectsConfiguration('saropaLogCapture.minimapProportionalLines')) {
+        if (e.affectsConfiguration('saropaCapture.minimapProportionalLines')) {
             broadcaster.setMinimapProportionalLines(cfg.minimapProportionalLines);
         }
-        if (e.affectsConfiguration('saropaLogCapture.minimapViewportRedOutline')) {
+        if (e.affectsConfiguration('saropaCapture.minimapViewportRedOutline')) {
             broadcaster.setMinimapViewportRedOutline(cfg.minimapViewportRedOutline);
         }
-        if (e.affectsConfiguration('saropaLogCapture.minimapViewportOutsideArrow')) {
+        if (e.affectsConfiguration('saropaCapture.minimapViewportOutsideArrow')) {
             broadcaster.setMinimapViewportOutsideArrow(cfg.minimapViewportOutsideArrow);
         }
-        if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
+        if (e.affectsConfiguration('saropaCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
             /* Explicit preset change clears any custom drag-to-resize width */
-            context.workspaceState.update('saropaLogCapture.minimapCustomPx', undefined)
+            context.workspaceState.update('saropaCapture.minimapCustomPx', undefined)
                 .then(undefined, () => {});
         }
-        if (e.affectsConfiguration('saropaLogCapture.showScrollbar')) {
+        if (e.affectsConfiguration('saropaCapture.showScrollbar')) {
             broadcaster.setScrollbarVisible(cfg.showScrollbar);
         }
-        if (e.affectsConfiguration('saropaLogCapture.logFontSize')) {
+        if (e.affectsConfiguration('saropaCapture.logFontSize')) {
             broadcaster.setLogFontSize(cfg.logFontSize);
         }
-        if (e.affectsConfiguration('saropaLogCapture.logLineHeight')) {
+        if (e.affectsConfiguration('saropaCapture.logLineHeight')) {
             broadcaster.setLogLineHeight(cfg.logLineHeight);
         }
-        if (e.affectsConfiguration('saropaLogCapture.troubleMode.chartInterval')) {
+        if (e.affectsConfiguration('saropaCapture.troubleMode.chartInterval')) {
             broadcaster.setTroubleChartInterval(cfg.troubleModeChartInterval);
         }
-        if (e.affectsConfiguration('saropaLogCapture.troubleMode.levels')) {
+        if (e.affectsConfiguration('saropaCapture.troubleMode.levels')) {
             broadcaster.postToWebview({ type: 'setTroubleLevels', levels: cfg.troubleModeLevels });
         }
-        if (e.affectsConfiguration('saropaLogCapture.logViewerVisualSpacing')) {
+        if (e.affectsConfiguration('saropaCapture.logViewerVisualSpacing')) {
             broadcaster.setLogViewerVisualSpacing(cfg.logViewerVisualSpacing);
         }
-        if (e.affectsConfiguration('saropaLogCapture.accessibility.showCollapseDividerLabels')) {
+        if (e.affectsConfiguration('saropaCapture.accessibility.showCollapseDividerLabels')) {
             broadcaster.setShowCollapseDividerLabels(cfg.accessibilityShowCollapseDividerLabels);
         }
-        if (e.affectsConfiguration('saropaLogCapture.viewerAlwaysShowSearchMatchOptions')) {
+        if (e.affectsConfiguration('saropaCapture.viewerAlwaysShowSearchMatchOptions')) {
             broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
         }
-        if (e.affectsConfiguration('saropaLogCapture.learning')) {
+        if (e.affectsConfiguration('saropaCapture.learning')) {
             broadcaster.postToWebview(getLearningWebviewOptions());
         }
-        if (e.affectsConfiguration('saropaLogCapture.autoHidePatterns')) {
+        if (e.affectsConfiguration('saropaCapture.autoHidePatterns')) {
             broadcaster.setAutoHidePatterns(cfg.autoHidePatterns);
         }
         if (
-            e.affectsConfiguration('saropaLogCapture.repeatCollapseGlobalMinCount')
-            || e.affectsConfiguration('saropaLogCapture.repeatCollapseReadMinCount')
-            || e.affectsConfiguration('saropaLogCapture.repeatCollapseTransactionMinCount')
-            || e.affectsConfiguration('saropaLogCapture.repeatCollapseDmlMinCount')
+            e.affectsConfiguration('saropaCapture.repeatCollapseGlobalMinCount')
+            || e.affectsConfiguration('saropaCapture.repeatCollapseReadMinCount')
+            || e.affectsConfiguration('saropaCapture.repeatCollapseTransactionMinCount')
+            || e.affectsConfiguration('saropaCapture.repeatCollapseDmlMinCount')
         ) {
             broadcaster.setViewerRepeatThresholds(cfg.viewerRepeatThresholds);
         }
-        if (e.affectsConfiguration('saropaLogCapture.viewerDbSignalsEnabled')) {
+        if (e.affectsConfiguration('saropaCapture.viewerDbSignalsEnabled')) {
             broadcaster.setViewerDbSignalsEnabled(cfg.viewerDbSignalsEnabled);
         }
-        if (e.affectsConfiguration('saropaLogCapture.staticSqlFromFingerprint.enabled')) {
+        if (e.affectsConfiguration('saropaCapture.staticSqlFromFingerprint.enabled')) {
             broadcaster.setStaticSqlFromFingerprintEnabled(cfg.staticSqlFromFingerprintEnabled);
         }
         if (
-            e.affectsConfiguration('saropaLogCapture.viewerDbDetectorNPlusOneEnabled')
-            || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorSlowBurstEnabled')
-            || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorBaselineHintsEnabled')
-            || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorTimestampBurstEnabled')
+            e.affectsConfiguration('saropaCapture.viewerDbDetectorNPlusOneEnabled')
+            || e.affectsConfiguration('saropaCapture.viewerDbDetectorSlowBurstEnabled')
+            || e.affectsConfiguration('saropaCapture.viewerDbDetectorBaselineHintsEnabled')
+            || e.affectsConfiguration('saropaCapture.viewerDbDetectorTimestampBurstEnabled')
         ) {
             broadcaster.setViewerDbDetectorToggles({
                 nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
@@ -184,53 +184,53 @@ export function setupConfigListener(
             });
         }
         if (
-            e.affectsConfiguration('saropaLogCapture.viewerSlowBurstSlowQueryMs')
-            || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstMinCount')
-            || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstWindowMs')
-            || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstCooldownMs')
+            e.affectsConfiguration('saropaCapture.viewerSlowBurstSlowQueryMs')
+            || e.affectsConfiguration('saropaCapture.viewerSlowBurstMinCount')
+            || e.affectsConfiguration('saropaCapture.viewerSlowBurstWindowMs')
+            || e.affectsConfiguration('saropaCapture.viewerSlowBurstCooldownMs')
         ) {
             broadcaster.setViewerSlowBurstThresholds(cfg.viewerSlowBurstThresholds);
         }
 
         if (
-            e.affectsConfiguration('saropaLogCapture.errorRateBucketSize')
-            || e.affectsConfiguration('saropaLogCapture.errorRateShowWarnings')
-            || e.affectsConfiguration('saropaLogCapture.errorRateDetectSpikes')
+            e.affectsConfiguration('saropaCapture.errorRateBucketSize')
+            || e.affectsConfiguration('saropaCapture.errorRateShowWarnings')
+            || e.affectsConfiguration('saropaCapture.errorRateDetectSpikes')
         ) {
             broadcaster.setErrorRateConfig(errorRateConfigFromConfig(cfg));
         }
         if (
-            e.affectsConfiguration('saropaLogCapture.integrations.adapters')
-            || e.affectsConfiguration('saropaLogCapture.ai.enabled')
+            e.affectsConfiguration('saropaCapture.integrations.adapters')
+            || e.affectsConfiguration('saropaCapture.ai.enabled')
             // adbLogcat.enabled drives the "adb Logcat" checkbox state (merged in), so a JSON edit must refresh it.
-            || e.affectsConfiguration('saropaLogCapture.integrations.adbLogcat.enabled')
+            || e.affectsConfiguration('saropaCapture.integrations.adbLogcat.enabled')
             // screenshots.enabled drives the Screenshots checkbox + footer camera toggle the same way.
-            || e.affectsConfiguration('saropaLogCapture.integrations.screenshots.enabled')
+            || e.affectsConfiguration('saropaCapture.integrations.screenshots.enabled')
         ) {
             syncIntegrationsAdaptersToWebview(broadcaster);
         }
         // Footer camera menu (plan 114): any screenshots.* change re-syncs the menu checkboxes.
-        if (e.affectsConfiguration('saropaLogCapture.integrations.screenshots')) {
+        if (e.affectsConfiguration('saropaCapture.integrations.screenshots')) {
             broadcaster.postToWebview({ type: 'screenshotSettings', ...buildScreenshotSettingsPayload() });
         }
         // The Filters-panel "Capture sources" status reflects any log-streaming integration's on/off.
-        if (e.affectsConfiguration('saropaLogCapture.integrations')) {
+        if (e.affectsConfiguration('saropaCapture.integrations')) {
             void resolveAndPostCaptureSources((m) => broadcaster.postToWebview(m));
         }
-        if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
+        if (e.affectsConfiguration('saropaCapture.integrations.adapters')) {
             showSecurityAdapterNotice(context, cfg).catch(() => {});
         }
         // firebase.* settings are one of the app-evidence signals, so a change can flip whether the
         // Crashlytics icon should appear on this workspace — re-detect and push the new state.
-        if (e.affectsConfiguration('saropaLogCapture.firebase')) {
+        if (e.affectsConfiguration('saropaCapture.firebase')) {
             syncCrashlyticsApplicableToWebview(broadcaster);
         }
         if (
-            e.affectsConfiguration('saropaLogCapture.suppressTransientErrors')
-            || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
-            || e.affectsConfiguration('saropaLogCapture.levelDetection')
-            || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')
-            || e.affectsConfiguration('saropaLogCapture.severityKeywords')
+            e.affectsConfiguration('saropaCapture.suppressTransientErrors')
+            || e.affectsConfiguration('saropaCapture.breakOnCritical')
+            || e.affectsConfiguration('saropaCapture.levelDetection')
+            || e.affectsConfiguration('saropaCapture.stderrTreatAsError')
+            || e.affectsConfiguration('saropaCapture.severityKeywords')
         ) {
             setSeverityKeywords(cfg.severityKeywords);
             broadcaster.setErrorClassificationSettings({
@@ -251,7 +251,7 @@ function syncIntegrationsAdaptersToWebview(broadcaster: ViewerBroadcaster): void
     const cfg = getConfig();
     const merged = mergeIntegrationAdaptersForWebview(
         cfg.integrationsAdapters,
-        vscode.workspace.getConfiguration('saropaLogCapture.ai').get<boolean>('enabled', false),
+        vscode.workspace.getConfiguration('saropaCapture.ai').get<boolean>('enabled', false),
         cfg.integrationsAdbLogcat.enabled,
         cfg.integrationsScreenshots.enabled,
     );
@@ -280,7 +280,7 @@ async function showSecurityAdapterNotice(
         openSettings,
     );
     if (choice === openSettings) {
-        vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.integrations.security').then(undefined, () => {});
+        vscode.commands.executeCommand('workbench.action.openSettings', 'saropaCapture.integrations.security').then(undefined, () => {});
     }
 }
 

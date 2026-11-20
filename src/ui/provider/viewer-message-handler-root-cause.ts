@@ -67,7 +67,7 @@ const persistIntervalMs = 30_000;
 function schedulePersist(fileUri: vscode.Uri | undefined): void {
     if (persistTimer || !fileUri) { return; }
     // Check if auto-tracking is enabled — user can disable to only track manually pinned signals
-    const autoTrack = vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('signalAutoTrack', true);
+    const autoTrack = vscode.workspace.getConfiguration('saropaCapture').get<boolean>('signalAutoTrack', true);
     if (!autoTrack) { return; }
     persistTimer = setTimeout(() => {
         persistTimer = undefined;

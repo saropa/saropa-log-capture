@@ -8,8 +8,8 @@ import type { IntegrationLokiConfig } from '../config/config';
 import type { SessionMetadataStore } from '../session/session-metadata';
 import { redactForExport } from './export-redaction';
 
-const LOKI_SECRET_KEY = 'saropaLogCapture.loki.bearerToken';
-const JOB_LABEL = 'saropa-log-capture';
+const LOKI_SECRET_KEY = 'saropaCapture.loki.bearerToken';
+const JOB_LABEL = 'saropa-capture';
 const PUSH_TIMEOUT_MS = 30_000;
 
 /** Loki push API request body: streams array. */

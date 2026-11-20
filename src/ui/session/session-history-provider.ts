@@ -116,7 +116,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
                 isActive ? new vscode.ThemeColor('charts.red') : undefined,
             );
         }
-        ti.command = { command: 'saropaLogCapture.openSession', title: 'Open', arguments: [item] };
+        ti.command = { command: 'saropaCapture.openSession', title: 'Open', arguments: [item] };
         ti.contextValue = item.trashed ? 'trashed-session' : 'session';
         return ti;
     }

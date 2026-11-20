@@ -15,7 +15,7 @@ suite("contributes commands doc (generated)", () => {
         assert.ok(fs.existsSync(p));
         const text = fs.readFileSync(p, "utf8");
         assert.ok(text.includes("AUTO-GENERATED"), "banner");
-        assert.ok(text.includes("saropaLogCapture.start"), "sample command id");
+        assert.ok(text.includes("saropaCapture.start"), "sample command id");
         assert.ok(text.includes("**Total:**") && /\d+\s+commands/.test(text), "total line");
     });
 });

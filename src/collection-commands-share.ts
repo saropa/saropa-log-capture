@@ -25,7 +25,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
     const { context, collectionStore, historyProvider } = deps;
 
     return [
-        vscode.commands.registerCommand('saropaLogCapture.shareCollection', async () => {
+        vscode.commands.registerCommand('saropaCapture.shareCollection', async () => {
             const collection = await collectionStore.getActiveCollection();
             if (!collection) {
                 vscode.window.showWarningMessage(t('msg.noActiveCollection'));
@@ -42,7 +42,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             }
 
             const recent = await getShareHistory(context);
-            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+            const cfg = vscode.workspace.getConfiguration('saropaCapture');
             const uploadPutUrl = (cfg.get<string>('share.uploadPutUrl') ?? '').trim();
             const sharedFolderPath = (cfg.get<string>('share.sharedFolderPath') ?? '').trim();
 
@@ -90,7 +90,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             }
 
             if (choice.value === 'file') {
-                await vscode.commands.executeCommand('saropaLogCapture.exportCollection');
+                await vscode.commands.executeCommand('saropaCapture.exportCollection');
                 return;
             }
 
@@ -101,7 +101,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
                         () => exportCollectionToSlc(collection, folder.uri),
                     );
                     if (outUri) {
-                        const deepLink = `vscode://saropa.saropa-log-capture/import?url=${encodeURIComponent(outUri.toString())}`;
+                        const deepLink = `vscode://saropa.saropa-capture/import?url=${encodeURIComponent(outUri.toString())}`;
                         await vscode.env.clipboard.writeText(deepLink);
                         vscode.window.showInformationMessage(t('msg.deepLinkLocalCopied'));
                     }
@@ -209,7 +209,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.clearShareHistory', async () => {
+        vscode.commands.registerCommand('saropaCapture.clearShareHistory', async () => {
             await clearShareHistory(context);
             vscode.window.showInformationMessage(t('msg.shareHistoryCleared'));
         }),
@@ -217,12 +217,12 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
         // bug_044: the 401 handler clears a stale token automatically, but there was no manual
         // escape hatch for a user who wants to force re-auth (e.g. switching GitHub accounts)
         // without waiting for a failed request to trigger it.
-        vscode.commands.registerCommand('saropaLogCapture.clearGitHubToken', async () => {
+        vscode.commands.registerCommand('saropaCapture.clearGitHubToken', async () => {
             await clearGitHubToken(context);
             vscode.window.showInformationMessage(t('msg.githubTokenCleared'));
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.newCollectionFromSessions', async () => {
+        vscode.commands.registerCommand('saropaCapture.newCollectionFromSessions', async () => {
             if (!historyProvider) {
                 vscode.window.showWarningMessage(t('msg.noSessionsToAdd'));
                 return;

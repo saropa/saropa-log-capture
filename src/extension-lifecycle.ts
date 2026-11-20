@@ -63,7 +63,7 @@ export function applySessionStartedState(
         'Debug Adapter': session.type,
         'launch.json': session.configuration.name,
         'VS Code': vscode.version,
-        'Extension': `saropa-log-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
+        'Extension': `saropa-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
         'OS': `${os.type()} ${os.release()} (${os.arch()})`,
     });
     const cfg = getConfig();

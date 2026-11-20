@@ -37,7 +37,7 @@ lives in **`src/test/ui/viewer-sql-repeat-compression.test.ts`** (runs productio
 
 ## Settings
 
-Tune: `saropaLogCapture.repeatCollapseGlobalMinCount`, `repeatCollapseReadMinCount`,
+Tune: `saropaCapture.repeatCollapseGlobalMinCount`, `repeatCollapseReadMinCount`,
 `repeatCollapseTransactionMinCount`, `repeatCollapseDmlMinCount` (2–50 each).
 
 ## SQL repeat drilldown (DB_06)

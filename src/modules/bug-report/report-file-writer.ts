@@ -98,6 +98,6 @@ function getExtensionVersion(ctx?: vscode.ExtensionContext): string {
     if (ctx?.extension?.packageJSON?.version) {
         return `v${ctx.extension.packageJSON.version}`;
     }
-    const ext = vscode.extensions.getExtension('Saropa.saropa-log-capture');
+    const ext = vscode.extensions.getExtension('Saropa.saropa-capture');
     return ext?.packageJSON?.version ? `v${ext.packageJSON.version}` : 'unknown';
 }

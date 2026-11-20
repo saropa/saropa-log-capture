@@ -1,5 +1,5 @@
 /**
- * Extension entry point for Saropa Log Capture.
+ * Extension entry point for Saropa Capture.
  *
  * Activates the sidebar log viewer, session history, capture pipeline, integrations,
  * and all commands. Registers webview providers, URI handler, and config listeners.
@@ -25,7 +25,7 @@ import type { SaropaLogCaptureApi } from './api-types';
 let activationRefs: ActivationRefs | null = null;
 
 export function activate(context: vscode.ExtensionContext): SaropaLogCaptureApi {
-    const outputChannel = vscode.window.createOutputChannel('Saropa Log Capture');
+    const outputChannel = vscode.window.createOutputChannel('Saropa Capture');
     setExtensionLogger(outputChannel);
 
     activationRefs = runActivation(context, outputChannel);

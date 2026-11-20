@@ -6,7 +6,7 @@
  * **Match-option toggles (case / whole word / regex):** By default they are hidden (`display: none`) until
  * either the search shell has `:focus-within` or `.session-search-compact` has `.has-search-query` (set from
  * script when the input has non-whitespace text). The workspace setting
- * `saropaLogCapture.viewerAlwaysShowSearchMatchOptions` adds `body.search-match-options-always`, which
+ * `saropaCapture.viewerAlwaysShowSearchMatchOptions` adds `body.search-match-options-always`, which
  * forces the toggles visible at all times for power users.
  *
  * **Floating UI:** History and the highlight/filter mode popover use `position: fixed`; coordinates are

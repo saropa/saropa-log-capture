@@ -4,7 +4,7 @@
  * stability issues" email, with no manual click into the panel required.
  *
  * Decoupled from the webview (the panel's own auto-refresh only runs while it is visible). Gated by the
- * `saropaLogCapture.firebase.notifyNewIssues` setting (off by default) and re-checked each tick. New /
+ * `saropaCapture.firebase.notifyNewIssues` setting (off by default) and re-checked each tick. New /
  * returned ids are computed from the snapshot history and gated per-id via workspace state so the same
  * issue never re-alerts; an id that vanishes leaves the gate so its return re-alerts (a regression).
  */
@@ -19,7 +19,7 @@ import { t } from '../../l10n';
 /** Workspace-state key for the set of issue ids already alerted (persists across restarts). */
 const alertedKey = 'crashlytics.alertedIssueIds';
 /** Command auto-registered by VS Code for the log viewer view; reveals the sidebar. */
-const revealViewerCommand = 'saropaLogCapture.logViewer.focus';
+const revealViewerCommand = 'saropaCapture.logViewer.focus';
 
 export class CrashlyticsWatcher implements vscode.Disposable {
     private timer: ReturnType<typeof setInterval> | undefined;
@@ -41,8 +41,8 @@ export class CrashlyticsWatcher implements vscode.Disposable {
                 // off must stop this background poller, and flipping it back on must resume it
                 // without a reload.
                 if (
-                    e.affectsConfiguration('saropaLogCapture.firebase')
-                    || e.affectsConfiguration('saropaLogCapture.enabled')
+                    e.affectsConfiguration('saropaCapture.firebase')
+                    || e.affectsConfiguration('saropaCapture.enabled')
                 ) { this.reschedule(); }
             }),
         );
@@ -53,8 +53,8 @@ export class CrashlyticsWatcher implements vscode.Disposable {
         // Master kill switch: when capture is disabled the background poller must also stop —
         // otherwise network polling continues while the user believes all capture activity is off.
         // Treated the same as the feature's own interval-0 disable (which stops the timer).
-        if (!vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('enabled', true)) { return 0; }
-        const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+        if (!vscode.workspace.getConfiguration('saropaCapture').get<boolean>('enabled', true)) { return 0; }
+        const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
         if (!cfg.get<boolean>('notifyNewIssues', false)) { return 0; }
         // Floor at 60s: the manifest allows refreshInterval down to 0 (disable), so a small positive
         // value (1-59) would otherwise hammer the API with a full token+fetch+snapshot every few seconds.

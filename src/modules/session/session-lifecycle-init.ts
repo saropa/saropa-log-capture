@@ -89,7 +89,7 @@ export async function initializeSession(
     const { session, context, outputChannel, onLineCount, onSplit, broadcastLine } = params;
     const config = getConfig();
     if (!config.enabled) {
-        outputChannel.appendLine('initializeSession: skipped — saropaLogCapture.enabled is false');
+        outputChannel.appendLine('initializeSession: skipped — saropaCapture.enabled is false');
         return undefined;
     }
 

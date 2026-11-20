@@ -24,7 +24,7 @@ export function getCrashlyticsHelpSections(): HelpSection[] {
     return [
         {
             title: 'Overview',
-            html: `<p>Saropa Log Capture queries Firebase Crashlytics for production crash data matching errors in your debug logs. When you analyze a log line, the extension checks if the same error class or message appears in Crashlytics and shows matching issues with event counts, affected users, and a link to the Firebase Console.</p>`,
+            html: `<p>Saropa Capture queries Firebase Crashlytics for production crash data matching errors in your debug logs. When you analyze a log line, the extension checks if the same error class or message appears in Crashlytics and shows matching issues with event counts, affected users, and a link to the Firebase Console.</p>`,
         },
         {
             title: 'Prerequisites',
@@ -40,13 +40,13 @@ export function getCrashlyticsHelpSections(): HelpSection[] {
 <p><strong>One-time setup:</strong> Run <code>gcloud auth application-default login</code>. This opens a browser for Google OAuth. Credentials are stored locally (Windows: <code>%APPDATA%\\gcloud\\application_default_credentials.json</code>; macOS/Linux: <code>~/.config/gcloud/application_default_credentials.json</code>). The extension does not read this file; it runs <code>gcloud auth application-default print-access-token</code> to get a short-lived token, cached in memory for 30 minutes.</p>
 <p><strong>Permissions:</strong> Your account needs the <strong>Firebase Crashlytics Viewer</strong> role (or Editor/Owner) on the Firebase project. If you can see Crashlytics in the Firebase Console, you have enough access.</p>
 <p><strong>Token lifecycle:</strong> First analysis runs gcloud or reads a service account key (~500ms). Later analyses use the cached token (0ms). After 30 minutes the cache expires and the next analysis re-fetches. If the token expires upstream, gcloud auto-refreshes from the stored credential file.</p>
-<p><strong>Service account (alternative):</strong> When gcloud is not available (e.g. CI), set <code>saropaLogCapture.firebase.serviceAccountKeyPath</code> to the path of a Google Cloud service account JSON key. Create the key in Google Cloud Console (IAM &amp; Admin → Service Accounts → Keys → Add key → JSON) and grant the account <strong>Firebase Crashlytics Viewer</strong>. Do not commit the key; add it to <code>.gitignore</code>.</p>`,
+<p><strong>Service account (alternative):</strong> When gcloud is not available (e.g. CI), set <code>saropaCapture.firebase.serviceAccountKeyPath</code> to the path of a Google Cloud service account JSON key. Create the key in Google Cloud Console (IAM &amp; Admin → Service Accounts → Keys → Add key → JSON) and grant the account <strong>Firebase Crashlytics Viewer</strong>. Do not commit the key; add it to <code>.gitignore</code>.</p>`,
         },
         {
             title: 'Project configuration',
             html: `<p>The extension needs your Firebase <strong>project ID</strong> and <strong>app ID</strong>.</p>
 <p><strong>Auto-detection:</strong> If the workspace has a <code>google-services.json</code> file (Android/Flutter), the extension reads <code>project_info.project_id</code> and the first client's <code>mobilesdk_app_id</code>. No settings needed.</p>
-<p><strong>Manual override:</strong> In <code>.vscode/settings.json</code> set <code>saropaLogCapture.firebase.projectId</code> and <code>saropaLogCapture.firebase.appId</code>. Find these in Firebase Console under Project Settings → General.</p>
+<p><strong>Manual override:</strong> In <code>.vscode/settings.json</code> set <code>saropaCapture.firebase.projectId</code> and <code>saropaCapture.firebase.appId</code>. Find these in Firebase Console under Project Settings → General.</p>
 <p><strong>Detection priority:</strong> (1) Extension settings if both set; (2) <code>google-services.json</code> in workspace (android/ paths preferred, then other matches, up to 5, excluding node_modules); (3) not configured with setup hint.</p>`,
         },
         {

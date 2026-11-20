@@ -7,7 +7,7 @@ suite('DeepLinks', () => {
 
     suite('parseDeepLinkUri', () => {
         test('should parse URI with session and line', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=test.log&line=42');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=test.log&line=42');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.session, 'test.log');
@@ -15,7 +15,7 @@ suite('DeepLinks', () => {
         });
 
         test('should parse URI with session only', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=test.log');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=test.log');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.session, 'test.log');
@@ -23,19 +23,19 @@ suite('DeepLinks', () => {
         });
 
         test('should return undefined for wrong path', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/wrong?session=test.log');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/wrong?session=test.log');
             const params = parseDeepLinkUri(uri);
             assert.strictEqual(params, undefined);
         });
 
         test('should return undefined for missing session', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?line=42');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?line=42');
             const params = parseDeepLinkUri(uri);
             assert.strictEqual(params, undefined);
         });
 
         test('should handle invalid line number', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=test.log&line=abc');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=test.log&line=abc');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.session, 'test.log');
@@ -43,7 +43,7 @@ suite('DeepLinks', () => {
         });
 
         test('should handle URL-encoded session names', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=20260128_143200_my%20app.log&line=1');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=20260128_143200_my%20app.log&line=1');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.session, '20260128_143200_my app.log');
@@ -56,7 +56,7 @@ suite('DeepLinks', () => {
             const link = generateDeepLink('test.log', 42);
             assert.ok(link.includes('session=test.log'));
             assert.ok(link.includes('line=42'));
-            assert.ok(link.startsWith('vscode://saropa.saropa-log-capture/open'));
+            assert.ok(link.startsWith('vscode://saropa.saropa-capture/open'));
         });
 
         test('should generate link with session only', () => {
@@ -91,41 +91,41 @@ suite('DeepLinks', () => {
 
     suite('parseDeepLinkUri - defensive', () => {
         test('should return undefined for path traversal in session', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=../../../etc/passwd');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=../../../etc/passwd');
             assert.strictEqual(parseDeepLinkUri(uri), undefined);
         });
 
         test('should return undefined for session with backslash', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=..\\foo.log');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=..\\foo.log');
             assert.strictEqual(parseDeepLinkUri(uri), undefined);
         });
 
         test('should return undefined for session starting with slash', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=/absolute.log');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=/absolute.log');
             assert.strictEqual(parseDeepLinkUri(uri), undefined);
         });
 
         test('should return undefined for empty session', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=');
             assert.strictEqual(parseDeepLinkUri(uri), undefined);
         });
 
         test('should clamp line to safe range (valid line accepted)', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=1');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=app.log&line=1');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.line, 1);
         });
 
         test('should drop line when zero', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=0');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=app.log&line=0');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.line, undefined);
         });
 
         test('should drop line when negative', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=-1');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-capture/open?session=app.log&line=-1');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
             assert.strictEqual(params.line, undefined);
@@ -163,7 +163,7 @@ suite('DeepLinks', () => {
             stubConsent(undefined);
             const r = recordingHandlers();
             await createUriHandler(r.handlers).handleUri(
-                vscode.Uri.parse('vscode://saropa.saropa-log-capture/import?gist=abc123'));
+                vscode.Uri.parse('vscode://saropa.saropa-capture/import?gist=abc123'));
             assert.deepStrictEqual(r.gist, [], 'import must not run when consent is declined');
         });
 
@@ -171,7 +171,7 @@ suite('DeepLinks', () => {
             stubConsent(t('msg.confirmImport.proceed'));
             const r = recordingHandlers();
             await createUriHandler(r.handlers).handleUri(
-                vscode.Uri.parse('vscode://saropa.saropa-log-capture/import?gist=abc123'));
+                vscode.Uri.parse('vscode://saropa.saropa-capture/import?gist=abc123'));
             assert.deepStrictEqual(r.gist, ['abc123'], 'import runs with the gist id once consent is given');
         });
 
@@ -179,7 +179,7 @@ suite('DeepLinks', () => {
             stubConsent(undefined);
             const r = recordingHandlers();
             await createUriHandler(r.handlers).handleUri(
-                vscode.Uri.parse('vscode://saropa.saropa-log-capture/import?url=https://example.com/x.slc'));
+                vscode.Uri.parse('vscode://saropa.saropa-capture/import?url=https://example.com/x.slc'));
             assert.deepStrictEqual(r.url, [], 'url import must not run when consent is declined');
         });
     });

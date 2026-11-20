@@ -1,7 +1,7 @@
 # 105 Saropa Suite Integration — Log Capture side
 
 > **Status: Shipped — reference guide, not an active plan (2026-06-14).** The Log-Capture side of the
-> suite (R1–R5) shipped in Saropa Log Capture and is per-repo unit-tested; the extension is published.
+> suite (R1–R5) shipped in Saropa Capture and is per-repo unit-tested; the extension is published.
 > The one outstanding check — the live cross-tool handshake against running siblings — is a manual
 > LAUNCH_TEST item (see [guides/suite-handshake-verification.md](guides/suite-handshake-verification.md)),
 > not tracked active work here. This document is retained as the reference for how the Log-Capture side
@@ -17,8 +17,8 @@
 - **Shipped (suite protocol groundwork):** the typed **Saropa Diagnostic Envelope**
   (`src/modules/diagnostics/`) — produce side writes `.saropa/diagnostics/log-capture.json` on
   session end keyed on `commitSha` (R1); consume side parses sibling `advisor.json`/`lints.json`
-  malformed-safe (R2 reader); deep-link **in** via the two public commands `saropaLogCapture.openSignal`
-  and `saropaLogCapture.openSqlHistoryForFingerprint` with webview focus/flash (R4); crash-family
+  malformed-safe (R2 reader); deep-link **in** via the two public commands `saropaCapture.openSignal`
+  and `saropaCapture.openSqlHistoryForFingerprint` with webview focus/flash (R4); crash-family
   **signatures** emitted on crash diagnostics for the Lints mapping (R3 producer half). Unit-tested.
 - **Shipped (deep-link out + attribution):** SQL Query History rows now offer a gated **Explain this
   query in Drift Advisor** action and Lints finding rows a gated **Show rule in Saropa Lints** action
@@ -58,7 +58,7 @@ This is the **Log Capture** half of a three-repo plan. The sibling docs:
 |------|------|------|-------|
 | `saropa_lints` | Static **code** (AST) | Compile-time | findings |
 | `saropa_drift_advisor` | Live **DB data + schema** | Debug runtime | issues |
-| `saropa-log-capture` (this) | **Behavior / telemetry** (logs, crashes) | Debug + production | signals |
+| `saropa-capture` (this) | **Behavior / telemetry** (logs, crashes) | Debug + production | signals |
 
 Log Capture is the only one that sees production reality — crashes, real SQL timings, the order
 events actually fired. That makes it the source of the "did it actually happen?" leg that the other
@@ -101,8 +101,8 @@ Capture is responsible for:
    attribution, severity color, and a `fix` action. The existing "Checking…/error" states for these
    sections stay.
 3. **Deep-link command ids — public API (R4).** Contribute and never rename:
-   `saropaLogCapture.openSignal { id }`,
-   `saropaLogCapture.openSqlHistoryForFingerprint { sql | fingerprint }`. A sibling envelope's
+   `saropaCapture.openSignal { id }`,
+   `saropaCapture.openSqlHistoryForFingerprint { sql | fingerprint }`. A sibling envelope's
    `fix.command` targeting Log Capture uses one of these.
 4. **Deep-link out (R5).** A slow-query or DB signal offers, as inline actions when those extensions
    are present: `driftViewer.openExplainForSql { sql, table }` (Advisor) and
@@ -219,8 +219,8 @@ A new module group under `src/modules/diagnostics/` carries the protocol:
 - `suite-mirror-read.ts` — reads the sibling `advisor.json`/`lints.json` mirrors, narrowed to
   DB-relevant categories, as the fallback data source for the SQL panel.
 
-Deep-link **in** (R4): two palette-hidden public commands, `saropaLogCapture.openSignal` (reveals and
-flashes a signal by id) and `saropaLogCapture.openSqlHistoryForFingerprint` (focuses SQL Query History
+Deep-link **in** (R4): two palette-hidden public commands, `saropaCapture.openSignal` (reveals and
+flashes a signal by id) and `saropaCapture.openSqlHistoryForFingerprint` (focuses SQL Query History
 on a query by literal SQL or fingerprint), registered in `commands-suite.ts` with webview focus-flash
 on both panels.
 

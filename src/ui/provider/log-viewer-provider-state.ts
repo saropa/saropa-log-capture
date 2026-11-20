@@ -92,7 +92,7 @@ export function setHighlightRulesImpl(target: ProviderStateTarget, rules: Serial
   target.postMessage({ type: "setHighlightRules", rules });
 }
 export function setPresetsImpl(target: ProviderStateTarget, presets: readonly FilterPreset[]): void {
-  const lastUsed = target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName");
+  const lastUsed = target.getContext().workspaceState.get<string>("saropaCapture.lastUsedPresetName");
   target.postMessage({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
 }
 export function setScopeContextImpl(target: ProviderStateTarget, ctx: ScopeContext): void {

@@ -78,7 +78,7 @@ document.addEventListener('click', function(e) {
         else if (action === 'exportJson') { vscodeApi.postMessage({ type: 'exportError', format: 'json' }); }
         else if (action === 'exportCsv') { vscodeApi.postMessage({ type: 'exportError', format: 'csv' }); }
         // 'aiExplain' branch removed with the button itself (bug_005) — the
-        // target command 'saropaLogCapture.explainError' was never registered.
+        // target command 'saropaCapture.explainError' was never registered.
         return;
     }
     var frame = e.target.closest('.frame-app[data-frame-file]');

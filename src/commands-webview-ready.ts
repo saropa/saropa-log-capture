@@ -3,7 +3,7 @@
  *
  * `vscode.WebviewViewProvider.resolveWebviewView()` runs asynchronously, some time
  * after VS Code decides to reveal the view — it is NOT guaranteed to have completed by
- * the time `saropaLogCapture.logViewer.focus` returns. A command that posts to the
+ * the time `saropaCapture.logViewer.focus` returns. A command that posts to the
  * webview immediately after requesting focus can race ahead of that resolution and
  * have `vscode.Webview.postMessage()` silently drop the message into an empty view
  * set (the view simply does not exist yet). Every command that posts to the viewer
@@ -34,7 +34,7 @@ export async function ensureWebviewReady(
     // Reveal (or create) the sidebar view. This triggers resolveWebviewView() on the
     // provider, but that callback fires asynchronously — the poll below is still
     // required even after this command finishes.
-    await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+    await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
     const maxAttempts = Math.ceil(timeoutMs / pollIntervalMs);
     for (let i = 0; i < maxAttempts && !viewerProvider.getView(); i++) {
         await new Promise<void>((resolve) => setTimeout(resolve, pollIntervalMs));

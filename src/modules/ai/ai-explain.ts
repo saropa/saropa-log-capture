@@ -16,7 +16,7 @@ export interface ExplainResult {
 
 /**
  * Request an explanation from an available chat model.
- * Uses cache when saropaLogCapture.ai.cacheExplanations is true; respects modelPreference.
+ * Uses cache when saropaCapture.ai.cacheExplanations is true; respects modelPreference.
  * Throws if no model is available.
  */
 export async function explainError(
@@ -29,7 +29,7 @@ export async function explainError(
         if (cached) { return cached; }
     }
 
-    const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
+    const aiCfg = vscode.workspace.getConfiguration('saropaCapture.ai');
     const preference = (aiCfg.get<string>('modelPreference', '') || '').trim().toLowerCase();
     const selector = preference ? { vendor: preference } : undefined;
     const models = await Promise.resolve(vscode.lm.selectChatModels(selector)).catch(() => []);

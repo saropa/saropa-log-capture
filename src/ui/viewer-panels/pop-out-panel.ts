@@ -98,8 +98,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     const codiconsUri = vscode.Uri.joinPath(this.extensionUri, 'media', 'codicons');
     try {
       this.panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.popOutViewer',
-        'Saropa Log Capture',
+        'saropaCapture.popOutViewer',
+        'Saropa Capture',
         vscode.ViewColumn.Active,
         { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [audioUri, codiconsUri] },
       );
@@ -211,7 +211,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   }
   setPresets(presets: readonly FilterPreset[]): void {
     this.cachedPresets = presets;
-    const lastUsed = this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName");
+    const lastUsed = this.context.workspaceState.get<string>("saropaCapture.lastUsedPresetName");
     this.post({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
   }
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }

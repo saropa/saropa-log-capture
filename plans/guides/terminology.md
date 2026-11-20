@@ -1,4 +1,4 @@
-# Terminology — Saropa Log Capture
+# Terminology — Saropa Capture
 
 Canonical dictionary for user-facing text. All UI labels, tooltips, command
 titles, descriptions, documentation, and changelog entries **must** use the

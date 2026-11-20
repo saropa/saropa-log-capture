@@ -50,7 +50,7 @@ export function disposeScreenshotGalleryPanel(): void { panel?.dispose(); panel 
 function ensurePanel(): void {
     if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.screenshotGallery', t('panel.screenshotGallery.title'),
+        'saropaCapture.screenshotGallery', t('panel.screenshotGallery.title'),
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);

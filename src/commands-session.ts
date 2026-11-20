@@ -50,8 +50,8 @@ export function sessionLifecycleCommands(
 ): vscode.Disposable[] {
     const { context, sessionManager, viewerProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.toggleCapture', async () => {
-            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        vscode.commands.registerCommand('saropaCapture.toggleCapture', async () => {
+            const cfg = vscode.workspace.getConfiguration('saropaCapture');
             const current = cfg.get<boolean>('enabled', true);
             const newValue = !current;
             /* Capture the active-session count BEFORE writing the setting: the config-change
@@ -73,7 +73,7 @@ export function sessionLifecycleCommands(
                     : t('captureToggle.disabled');
             vscode.window.showInformationMessage(message);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.start', () => {
+        vscode.commands.registerCommand('saropaCapture.start', () => {
             const active = vscode.debug.activeDebugSession;
             if (active && !sessionManager.hasSession(active.id)) {
                 sessionManager.startSession(active, context);
@@ -85,7 +85,7 @@ export function sessionLifecycleCommands(
             // else: a session already exists for the active debug session — nothing to do,
             // and no message needed since capture is already running as the user expects.
         }),
-        vscode.commands.registerCommand('saropaLogCapture.stop', async () => {
+        vscode.commands.registerCommand('saropaCapture.stop', async () => {
             const active = vscode.debug.activeDebugSession;
             if (active) {
                 await sessionManager.stopSession(active);
@@ -94,7 +94,7 @@ export function sessionLifecycleCommands(
                 void vscode.window.showInformationMessage(t('msg.noActiveCaptureSession'));
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.pause', () => {
+        vscode.commands.registerCommand('saropaCapture.pause', () => {
             const paused = sessionManager.togglePause();
             if (paused !== undefined) {
                 viewerProvider.setPaused(paused);
@@ -104,20 +104,20 @@ export function sessionLifecycleCommands(
                 void vscode.window.showInformationMessage(t('msg.noActiveCaptureSession'));
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.open', async () => {
+        vscode.commands.registerCommand('saropaCapture.open', async () => {
             const s = sessionManager.getActiveSession();
             // Route through openSession (not showTextDocument) so the status bar click
             // opens the log in the viewer webview like every other open-a-log action —
             // showTextDocument dumped raw text into a plain editor tab (bug_038).
-            if (s) { await vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: s.fileUri }); }
+            if (s) { await vscode.commands.executeCommand('saropaCapture.openSession', { uri: s.fileUri }); }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openFolder', async () => {
+        vscode.commands.registerCommand('saropaCapture.openFolder', async () => {
             const folder = vscode.workspace.workspaceFolders?.[0];
             if (folder) {
                 await vscode.commands.executeCommand('revealFileInOS', getLogDirectoryUri(folder));
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.clear', () => {
+        vscode.commands.registerCommand('saropaCapture.clear', () => {
             sessionManager.clearActiveSession();
         }),
     ];
@@ -126,13 +126,13 @@ export function sessionLifecycleCommands(
 export function sessionActionCommands(deps: CommandDeps): vscode.Disposable[] {
     const { sessionManager, historyProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.delete', async () => {
+        vscode.commands.registerCommand('saropaCapture.delete', async () => {
             // bug_016: pass the shared metadata store so bulk delete cleans up metadata/
             // search-index entries the same way the single-file and empty-trash paths do.
             await handleDeleteCommand(historyProvider.getMetaStore());
             historyProvider.refresh();
         }),
-        vscode.commands.registerCommand('saropaLogCapture.insertMarker', async () => {
+        vscode.commands.registerCommand('saropaCapture.insertMarker', async () => {
             // bug_037: check for a session BEFORE prompting — asking the user to type marker
             // text only to silently discard it (insertMarker() is a no-op without a session)
             // was the actual bug; failing fast here also skips a pointless prompt.
@@ -146,7 +146,7 @@ export function sessionActionCommands(deps: CommandDeps): vscode.Disposable[] {
             });
             if (text !== undefined) { sessionManager.insertMarker(text || undefined); }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.splitNow', async () => {
+        vscode.commands.registerCommand('saropaCapture.splitNow', async () => {
             const session = sessionManager.getActiveSession();
             if (!session) {
                 vscode.window.showWarningMessage(t('msg.noActiveSessionToSplit'));
@@ -162,42 +162,42 @@ export function sessionActionCommands(deps: CommandDeps): vscode.Disposable[] {
 export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
     const { viewerProvider, historyProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.refreshHistory', () => {
+        vscode.commands.registerCommand('saropaCapture.refreshHistory', () => {
             historyProvider.refresh();
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openSession', async (item: { uri: vscode.Uri }) => {
+        vscode.commands.registerCommand('saropaCapture.openSession', async (item: { uri: vscode.Uri }) => {
             // bug_013: this command only makes sense on a Logs panel item; when invoked from the
             // Command Palette `item` is undefined and the command used to silently no-op.
             if (!item?.uri) {
                 void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
                 return;
             }
-            await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+            await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
             await viewerProvider.loadFromFile(item.uri);
             await updateLastViewed(deps.context, item.uri);
         }),
         // Open-a-file entry point: a native picker that loads ANY log directly into the viewer,
         // bypassing the folder-scan session list. Reaches files outside the configured reports
         // directory (e.g. another project's logs) which the list-root browse can't open by path.
-        vscode.commands.registerCommand('saropaLogCapture.openLogFile', async () => {
+        vscode.commands.registerCommand('saropaCapture.openLogFile', async () => {
             const uri = await pickLogFile();
             if (!uri) { return; }
-            await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+            await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
             await viewerProvider.loadFromFile(uri);
             await updateLastViewed(deps.context, uri);
         }),
         // Download a log from a URL into temp storage and render it — for logs shared as a link
         // (CI artifact, gist raw, internal dashboard) without saving them by hand first.
-        vscode.commands.registerCommand('saropaLogCapture.openLogFromUrl', async () => {
+        vscode.commands.registerCommand('saropaCapture.openLogFromUrl', async () => {
             const url = await promptForLogUrl();
             if (!url) { return; }
             await downloadAndLoadUrl(url, (uri) => viewerProvider.loadFromFile(uri), deps.context);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.replay', async () => {
-            await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+        vscode.commands.registerCommand('saropaCapture.replay', async () => {
+            await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
             viewerProvider.startReplay();
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openTailedFile', async () => {
+        vscode.commands.registerCommand('saropaCapture.openTailedFile', async () => {
             const folder = vscode.workspace.workspaceFolders?.[0];
             if (!folder) {
                 void vscode.window.showWarningMessage(t('msg.openWorkspaceFirst'));
@@ -222,11 +222,11 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
                 { placeHolder: t('msg.selectTailedFile') },
             );
             if (picked?.uri) {
-                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
                 await viewerProvider.loadFromFile(picked.uri, { tail: true });
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.deleteSession',
+        vscode.commands.registerCommand('saropaCapture.deleteSession',
           async (item: { uri: vscode.Uri; filename: string }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
@@ -254,7 +254,7 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
 export function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
     const { historyProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.renameSession',
+        vscode.commands.registerCommand('saropaCapture.renameSession',
           async (item: { uri: vscode.Uri; filename: string }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
@@ -271,7 +271,7 @@ export function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
             await metaStore.setDisplayName(newUri, name.trim());
             historyProvider.refresh();
         }),
-        vscode.commands.registerCommand('saropaLogCapture.tagSession',
+        vscode.commands.registerCommand('saropaCapture.tagSession',
           async (item: { uri: vscode.Uri }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
@@ -290,7 +290,7 @@ export function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
         }),
         // Idea #7: attach a free-text note to a session (e.g. "Regression from PR #142").
         // Pre-fills the existing note so the prompt edits rather than replaces; an empty value clears it.
-        vscode.commands.registerCommand('saropaLogCapture.addSessionNote',
+        vscode.commands.registerCommand('saropaCapture.addSessionNote',
           async (item: { uri: vscode.Uri }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {

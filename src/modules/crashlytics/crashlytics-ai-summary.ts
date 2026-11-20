@@ -5,7 +5,7 @@ import type { CrashlyticsEventDetail } from './firebase-crashlytics';
 
 /** Generate a one-paragraph summary + suggested fix for a crash event. */
 export async function generateCrashSummary(detail: CrashlyticsEventDetail): Promise<string | undefined> {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture.ai');
     if (!cfg.get<boolean>('enabled', false)) { return undefined; }
     // Select any available chat model — family names vary by provider
     const models = await Promise.resolve(vscode.lm.selectChatModels()).catch(() => []);

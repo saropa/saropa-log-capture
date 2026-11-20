@@ -98,9 +98,9 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "rejectFilterSuggestion": panelHandlers.handleRejectFilterSuggestion(String(msg.id ?? ''), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "openSignals": ctx.post({ type: 'openSignalPanel', tab: 'recurring' }); return true;
       case "addSignalItemToCollection":
-        vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCollection', msg.payload);
+        vscode.commands.executeCommand('saropaCapture.addSignalItemToCollection', msg.payload);
         return true;
-      case "exportSignalsSummary": vscode.commands.executeCommand('saropaLogCapture.exportSignalsSummary'); return true;
+      case "exportSignalsSummary": vscode.commands.executeCommand('saropaCapture.exportSignalsSummary'); return true;
       case "requestProjectStateData":
         handleProjectStateRequest(ctx.post).catch(() => {});
         return true;
@@ -108,13 +108,13 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         void loadAndPostAboutContent(ctx.context, ctx.extensionVersion, ctx.post);
         return true;
       case "resetAllSettings":
-        void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
+        void vscode.commands.executeCommand('saropaCapture.resetAllSettings');
         return true;
       case "openSeverityKeywordsSettings":
-        void vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.severityKeywords');
+        void vscode.commands.executeCommand('workbench.action.openSettings', 'saropaCapture.severityKeywords');
         return true;
       case "setCaptureEnabled": {
-        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const cfg = vscode.workspace.getConfiguration('saropaCapture');
         const enabled = msg.enabled === true;
         void cfg.update('enabled', enabled, vscode.ConfigurationTarget.Workspace).then(() => {
           ctx.post({ type: 'captureEnabled', enabled });
@@ -124,7 +124,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "setDiagnosticCapture": {
         // Per-line fate trace (plan 102) — write to Workspace so the running session picks it up;
         // echo back so the Options checkbox reflects the persisted value.
-        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const cfg = vscode.workspace.getConfiguration('saropaCapture');
         const enabled = msg.enabled === true;
         void cfg.update('diagnosticCapture', enabled, vscode.ConfigurationTarget.Workspace).then(() => {
           ctx.post({ type: 'diagnosticCapture', enabled });
@@ -190,7 +190,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         ).catch(() => {});
         return true;
       case "openQualityReport":
-        void vscode.commands.executeCommand('saropaLogCapture.openQualityReport');
+        void vscode.commands.executeCommand('saropaCapture.openQualityReport');
         return true;
       case "openLintRule":
         // Open VS Code settings filtered to the lint rule name so the user can

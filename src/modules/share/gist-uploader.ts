@@ -15,13 +15,13 @@ const GIST_API = 'https://api.github.com/gists';
 function generateReadme(gistId: string, collection: Collection): string {
     return `# ${collection.name}
 
-Shared via [Saropa Log Capture](${buildItemUrl('saropa.saropa-log-capture')})
+Shared via [Saropa Capture](${buildItemUrl('saropa.saropa-capture')})
 
 ## Open in VS Code
 
 Click this link to open in VS Code:
 \`\`\`
-vscode://saropa.saropa-log-capture/import?gist=${gistId}
+vscode://saropa.saropa-capture/import?gist=${gistId}
 \`\`\`
 
 ## Contents
@@ -52,7 +52,7 @@ export async function shareViaGist(
     const slcBase64 = slcBuffer.toString('base64');
 
     const token = await getGitHubToken(context);
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const publicGist = cfg.get<boolean>('share.gistPublic', false);
 
     const createPayload = {
@@ -106,7 +106,7 @@ export async function shareViaGist(
     }
 
     const rawUrl = gist.files['collection.slc.b64']?.raw_url ?? '';
-    const deepLinkUrl = `vscode://saropa.saropa-log-capture/import?gist=${gist.id}`;
+    const deepLinkUrl = `vscode://saropa.saropa-capture/import?gist=${gist.id}`;
 
     return {
         gistId: gist.id,

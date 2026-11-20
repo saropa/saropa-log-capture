@@ -83,7 +83,7 @@ function notifyIfActionable(summary: SessionSignalSummary, out: vscode.OutputCha
     out.appendLine(msg);
     void vscode.window.showInformationMessage(msg, t('action.openSignals')).then((action) => {
         if (action === t('action.openSignals')) {
-            void vscode.commands.executeCommand('saropaLogCapture.showSignals');
+            void vscode.commands.executeCommand('saropaCapture.showSignals');
         }
     });
 }

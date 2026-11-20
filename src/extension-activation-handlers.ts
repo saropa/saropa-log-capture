@@ -168,7 +168,7 @@ export function wireViewerSpecificHandlers(deps: ViewerHandlerDeps): { refreshLo
     });
 
     viewerProvider.setRevealLogFileHandler(async () => {
-        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+        await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
     });
 
     viewerProvider.setFindInFilesHandler(async (query, options) => {

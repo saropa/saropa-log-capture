@@ -15,10 +15,10 @@ import { writeEnvelope } from './envelope-io';
 import { LOG_CAPTURE_SOURCE } from './saropa-diagnostic-envelope';
 
 /** Full extension id (`publisher.name`) used to read our own version at runtime. */
-const EXTENSION_ID = 'saropa.saropa-log-capture';
+const EXTENSION_ID = 'saropa.saropa-capture';
 
 /** Producer `name` field — matches the package name the siblings expect. */
-const PRODUCER_NAME = 'saropa-log-capture';
+const PRODUCER_NAME = 'saropa-capture';
 
 /** Read this extension's version from its manifest, or a safe placeholder if unavailable. */
 function getProducerVersion(): string {

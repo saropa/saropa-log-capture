@@ -108,7 +108,7 @@ suite('Token Extractor Core', () => {
         test('extracts tables, keys, key paths, and string values', () => {
             const toml = [
                 '[tool.poetry]',
-                'name = "saropa-log-capture"',
+                'name = "saropa-capture"',
                 'version = "3.9.0"',
                 '',
                 '[tool.poetry.dependencies]',

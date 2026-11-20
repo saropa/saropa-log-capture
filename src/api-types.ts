@@ -1,9 +1,9 @@
 /**
- * Public API types for Saropa Log Capture.
+ * Public API types for Saropa Capture.
  *
  * Consuming extensions access the API via:
  * ```typescript
- * const ext = vscode.extensions.getExtension<SaropaLogCaptureApi>('saropa.saropa-log-capture');
+ * const ext = vscode.extensions.getExtension<SaropaLogCaptureApi>('saropa.saropa-capture');
  * const api = ext?.isActive ? ext.exports : await ext?.activate();
  * ```
  */
@@ -94,7 +94,7 @@ export interface SaropaDailyTroubleItem {
     readonly label: string;
     /** Optional supporting detail (excerpt, count, category). */
     readonly detail?: string;
-    /** Deep-link command id to jump into Log Capture, e.g. 'saropaLogCapture.openSignal'. */
+    /** Deep-link command id to jump into Log Capture, e.g. 'saropaCapture.openSignal'. */
     readonly command?: string;
     /** Argument object passed to {@link command} (shape is command-specific). */
     readonly args?: unknown;
@@ -142,7 +142,7 @@ export interface SaropaSignalDelta {
  */
 export interface SaropaDailySummary {
     /** Fixed tool discriminator so a caller merging several tools' summaries can tell them apart. */
-    readonly tool: 'saropa-log-capture';
+    readonly tool: 'saropa-capture';
     /** Echo of the requested day (YYYY-MM-DD). */
     readonly date: string;
     /** One plain-language sentence for the caller's executive summary. */

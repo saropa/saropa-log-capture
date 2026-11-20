@@ -1,4 +1,4 @@
-# Query Open VSX and VS Marketplace APIs for saropa-log-capture (single source of truth for store checks).
+# Query Open VSX and VS Marketplace APIs for saropa-capture (single source of truth for store checks).
 #
 # Report once (no polling):
 #   .\check-stores-version.ps1 -ReportOnly [-ExpectedVersion "3.12.0"]

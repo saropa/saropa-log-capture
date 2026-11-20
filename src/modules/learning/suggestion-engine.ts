@@ -67,7 +67,7 @@ export class SuggestionEngine {
      * Recompute pending suggestions from recent interactions and return pending rows for UI/notifications.
      */
     async refreshAndListPending(): Promise<RuleSuggestion[]> {
-        const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+        const cfg = vscode.workspace.getConfiguration("saropaCapture");
         const minConfidence = cfg.get<number>("learning.minConfidence", 0.8);
         const exclusions = cfg.get<string[]>("exclusions", []);
 

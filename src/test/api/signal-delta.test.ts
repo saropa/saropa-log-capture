@@ -76,7 +76,7 @@ test('diffFingerprints: reports entries in after not present in before', () => {
     assert.strictEqual(result[0].label, 'new one');
     assert.strictEqual(result[0].detail, 'boom');
     assert.deepStrictEqual(result[0].args, { id: 'error:h2' });
-    assert.strictEqual(result[0].command, 'saropaLogCapture.openSignal');
+    assert.strictEqual(result[0].command, 'saropaCapture.openSignal');
 });
 
 test('diffFingerprints: empty when after is a subset of before', () => {

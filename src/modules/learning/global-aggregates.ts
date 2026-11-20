@@ -18,7 +18,7 @@ import * as vscode from "vscode";
 import type { ExtractedPattern } from "./pattern-extractor";
 import { checkPromotionDenyList } from "./global-aggregates-denylist";
 
-const GLOBAL_KEY = "saropaLogCapture.learning.global.v1";
+const GLOBAL_KEY = "saropaCapture.learning.global.v1";
 const MAX_PATTERNS = 200;
 
 /** Framework-class categories eligible for promotion. `noise` is excluded (too generic). */

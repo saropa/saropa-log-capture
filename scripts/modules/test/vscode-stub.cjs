@@ -155,7 +155,7 @@ const stubConfiguration = {
  */
 function makeStubOutputChannel() {
   return {
-    name: 'Saropa Log Capture',
+    name: 'Saropa Capture',
     appendLine: () => undefined,
     append: () => undefined,
     replace: () => undefined,

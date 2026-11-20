@@ -9,7 +9,7 @@ export const stringsKbd: Record<string, string> = {
     'kbd.chrome.panelTitle': 'Saropa Keyboard Shortcuts',
     'kbd.chrome.mainAria': 'Keyboard shortcuts reference',
     'kbd.chrome.title': 'Keyboard shortcuts',
-    'kbd.chrome.intro': 'All power shortcuts work inside the Saropa Log Capture viewer panel. Double-click a row in the viewer\'s Options → Keyboard shortcuts screen to rebind a key.',
+    'kbd.chrome.intro': 'All power shortcuts work inside the Saropa Capture viewer panel. Double-click a row in the viewer\'s Options → Keyboard shortcuts screen to rebind a key.',
     'kbd.chrome.searchPlaceholder': 'Filter shortcuts…',
     'kbd.chrome.searchAria': 'Filter shortcuts by key, name, or description',
     'kbd.chrome.clearAria': 'Clear filter',

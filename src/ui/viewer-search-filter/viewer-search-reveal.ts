@@ -1,5 +1,5 @@
 /**
- * Search match reveal — webview script for the Saropa Log Capture viewer.
+ * Search match reveal — webview script for the Saropa Capture viewer.
  *
  * **Problem this solves:** a search match can be invisible even when the count
  * badge says "1 of 1" — the line sits inside a collapsed group (continuation /

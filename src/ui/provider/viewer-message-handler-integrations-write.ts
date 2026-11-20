@@ -29,7 +29,7 @@ export function applyIntegrationsAdaptersWrite(rawAdapterIds: unknown, post: (ms
     const adbLogcatEnabled = adapterIds.includes(ADB_LOGCAT_ADAPTER_ID);
     // Screenshots follows the same checkbox-to-boolean routing as adbLogcat (plan 114).
     const screenshotsEnabled = adapterIds.includes(SCREENSHOTS_ADAPTER_ID);
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     // The checkbox controls integrations.adbLogcat.enabled, not array membership. But a power user
     // can hand-add 'adbLogcat' to integrations.adapters to force logcat on a NON-Dart session; that
     // explicit entry must survive a UI toggle of any OTHER checkbox. Preserve it while the box stays
@@ -43,7 +43,7 @@ export function applyIntegrationsAdaptersWrite(rawAdapterIds: unknown, post: (ms
     let sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds)
         .filter((id) => id !== ADB_LOGCAT_ADAPTER_ID && id !== SCREENSHOTS_ADAPTER_ID);
     if (adbLogcatEnabled && adbWasExplicit) { sessionOnly = [...sessionOnly, ADB_LOGCAT_ADAPTER_ID]; }
-    const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
+    const aiCfg = vscode.workspace.getConfiguration('saropaCapture.ai');
     void Promise.all([
         cfg.update('integrations.adapters', sessionOnly, vscode.ConfigurationTarget.Workspace),
         cfg.update('integrations.adbLogcat.enabled', adbLogcatEnabled, vscode.ConfigurationTarget.Workspace),

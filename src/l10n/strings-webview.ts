@@ -148,7 +148,7 @@ export const stringsWebview: Record<string, string> = {
     // stay literal; the MT pipeline shields them.
     'viewer.crashlytics.setup.checkAgain': 'Check Again',
     'viewer.crashlytics.setup.testConnection': 'Test connection',
-    'viewer.crashlytics.setup.connUnavailable': 'Connection check unavailable — see the Saropa Log Capture output channel.',
+    'viewer.crashlytics.setup.connUnavailable': 'Connection check unavailable — see the Saropa Capture output channel.',
     'viewer.crashlytics.setup.connected': 'Connected',
     'viewer.crashlytics.setup.notConnected': 'Not connected yet — fix the steps marked below.',
     'viewer.crashlytics.setup.details': 'Details',
@@ -175,7 +175,7 @@ export const stringsWebview: Record<string, string> = {
     'viewer.crashlytics.setup.downloadGcloud': 'Download Google Cloud CLI',
     'viewer.crashlytics.setup.signInExternalHint': 'If sign-in fails in the VS Code terminal, run the command below in an external terminal (where <code>gcloud</code> is in PATH), then click Check Again.',
     'viewer.crashlytics.setup.permissionDeniedHint': 'If you see &quot;Permission denied&quot;, your account needs the Firebase Crashlytics Viewer role on the project.',
-    'viewer.crashlytics.setup.serviceAccountHint': 'Alternatively, set <code>saropaLogCapture.firebase.serviceAccountKeyPath</code> to a service account JSON key file (e.g. when gcloud is not available).',
+    'viewer.crashlytics.setup.serviceAccountHint': 'Alternatively, set <code>saropaCapture.firebase.serviceAccountKeyPath</code> to a service account JSON key file (e.g. when gcloud is not available).',
     'viewer.crashlytics.setup.signInTitle': 'Sign in to Google Cloud',
     'viewer.crashlytics.setup.signInBody': 'Authenticate with your Google account to access Crashlytics data.',
     'viewer.crashlytics.setup.useExistingFile': 'Use existing file: {0}',

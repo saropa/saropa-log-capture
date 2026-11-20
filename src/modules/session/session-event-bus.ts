@@ -91,7 +91,7 @@ export class EarlyOutputBuffer {
         if (dropped === 0) { return bodies; }
         const noun = dropped === 1 ? 'line' : 'lines';
         // Log-content marker (English, like the SESSION END footer) — a technical artifact, not UI chrome.
-        const output = `[Saropa Log Capture] ${dropped} early output ${noun} dropped before capture started `
+        const output = `[Saropa Capture] ${dropped} early output ${noun} dropped before capture started `
             + `(pre-session buffer cap ${maxEarlyBuffer} reached).`;
         return [...bodies, { output, category: 'console' }];
     }

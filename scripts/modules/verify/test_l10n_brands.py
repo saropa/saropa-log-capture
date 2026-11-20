@@ -50,7 +50,7 @@ class ShieldUnshieldRoundTripTests(unittest.TestCase):
     """shield_brands + unshield_brands is lossless."""
 
     def test_round_trip_restores_original(self) -> None:
-        original = "Configure Saropa Log Capture in VS Code"
+        original = "Configure Saropa Capture in VS Code"
         shielded, replacements = shield_brands(original)
         self.assertNotEqual(shielded, original)
         restored = unshield_brands(shielded, replacements)
@@ -63,7 +63,7 @@ class ShieldUnshieldRoundTripTests(unittest.TestCase):
         self.assertEqual(replacements, [])
 
     def test_multiple_brands(self) -> None:
-        text = "Use Saropa Log Capture with Google"
+        text = "Use Saropa Capture with Google"
         shielded, replacements = shield_brands(text)
         self.assertEqual(len(replacements), 2)
         restored = unshield_brands(shielded, replacements)

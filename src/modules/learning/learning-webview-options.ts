@@ -12,7 +12,7 @@ export type SetLearningOptionsMessage = {
 };
 
 export function getLearningWebviewOptions(): SetLearningOptionsMessage {
-    const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+    const cfg = vscode.workspace.getConfiguration("saropaCapture");
     return {
         type: "setLearningOptions",
         enabled: cfg.get<boolean>("learning.enabled", true) !== false,

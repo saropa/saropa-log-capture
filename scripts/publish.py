@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # ##############################################################################
-# Saropa Log Capture — Developer Toolkit & Publish Pipeline
+# Saropa Capture — Developer Toolkit & Publish Pipeline
 # ##############################################################################
 #
 # .SYNOPSIS
@@ -201,7 +201,7 @@ _CLI_FLAGS = [
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Saropa Log Capture — Developer Toolkit & Publish Pipeline",
+        description="Saropa Capture — Developer Toolkit & Publish Pipeline",
         # RawDescriptionHelpFormatter preserves whitespace in the epilog/description
         # so the .USAGE block renders correctly with `--help`.
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -436,7 +436,7 @@ def _print_banner(args: argparse.Namespace, version: str) -> None:
     else:
         # Compact one-liner — used in CI or when piping output, where the
         # multi-line logo would just add noise.
-        print(f"\n  {C.BOLD}Saropa Log Capture — Developer Toolkit{C.RESET}"
+        print(f"\n  {C.BOLD}Saropa Capture — Developer Toolkit{C.RESET}"
               f"  {dim(f'v{version}')}")
     # Always show the project root so the user can verify the script is
     # operating on the intended directory (guards against running from

@@ -1,5 +1,5 @@
 /**
- * Auto-tag rule engine for Saropa Log Capture.
+ * Auto-tag rule engine for Saropa Capture.
  *
  * Automatically tags sessions based on content patterns, eliminating the need
  * for manual tagging. Useful for categorizing sessions by build status, error
@@ -7,7 +7,7 @@
  *
  * Rules are defined in settings as pattern → tag mappings:
  * ```json
- * "saropaLogCapture.autoTagRules": [
+ * "saropaCapture.autoTagRules": [
  *   { "pattern": "BUILD FAILED", "tag": "build-fail" },
  *   { "pattern": "/Exception.*null/i", "tag": "npe" }
  * ]

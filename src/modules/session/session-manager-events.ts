@@ -175,7 +175,7 @@ export function processOutputEvent(
 /**
  * Log a DAP category that was dropped by the captureAll whitelist, at most once per
  * category. The first time a category is filtered out, users get an actionable hint in
- * the Saropa Log Capture output channel naming the category and how to capture it.
+ * the Saropa Capture output channel naming the category and how to capture it.
  */
 function reportDroppedCategory(deps: OutputEventDeps, category: string): void {
     const logged = deps.droppedCategoriesLogged;
@@ -183,8 +183,8 @@ function reportDroppedCategory(deps: OutputEventDeps, category: string): void {
     logged.add(category);
     deps.outputChannel?.appendLine(
         `[capture] Dropped DAP output category "${category}" — captureAll is off and this ` +
-        `category is not in saropaLogCapture.categories, so its lines are not captured. ` +
-        `Enable saropaLogCapture.captureAll, or add "${category}" to saropaLogCapture.categories.`,
+        `category is not in saropaCapture.categories, so its lines are not captured. ` +
+        `Enable saropaCapture.captureAll, or add "${category}" to saropaCapture.categories.`,
     );
 }
 
@@ -200,7 +200,7 @@ function reportExcludedLine(deps: OutputEventDeps, pattern: string): void {
     logged.add(pattern);
     deps.outputChannel?.appendLine(
         `[capture] Hid a Debug Console line matching exclusion pattern "${pattern}" ` +
-        `(saropaLogCapture.exclusions). Remove or adjust the pattern to capture these lines.`,
+        `(saropaCapture.exclusions). Remove or adjust the pattern to capture these lines.`,
     );
 }
 

@@ -20,7 +20,7 @@
  * (`drift-n-plus-one-detector.ts`).
  *
  * ## Settings
- * `saropaLogCapture.repeatCollapseGlobalMinCount`, `repeatCollapseReadMinCount`,
+ * `saropaCapture.repeatCollapseGlobalMinCount`, `repeatCollapseReadMinCount`,
  * `repeatCollapseTransactionMinCount`, `repeatCollapseDmlMinCount` (each clamped 2–50).
  */
 

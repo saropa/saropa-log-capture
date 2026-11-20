@@ -48,7 +48,7 @@ export function getTroubleChartScript(): string {
    trouble-level-constants.ts). Only levels present in TROUBLE_LEVELS are drawn. */
 var TROUBLE_CHART_LEVEL_ORDER = ${orderJson};
 /* Seconds per tumbling window; overwritten by the host 'setTroubleChartInterval'
-   message (saropaLogCapture.troubleMode.chartInterval). Clamped 1..60. */
+   message (saropaCapture.troubleMode.chartInterval). Clamped 1..60. */
 var troubleChartIntervalSec = 5;
 /* Rolling-window cap: only the most recent N windows render, so the SVG and the
    scan cost stay bounded regardless of session length. 180 windows = 3 min at 1s,

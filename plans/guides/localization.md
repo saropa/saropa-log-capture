@@ -1,4 +1,4 @@
-# Localization (l10n) — Saropa Log Capture
+# Localization (l10n) — Saropa Capture
 
 How this extension translates every user-facing string: the two pipelines, the
 source-of-truth files, the runtime utilities, the translation toolchain, the
@@ -230,7 +230,7 @@ Brand names must appear verbatim in every locale (Google mangles them —
 that drops a brand is rejected and retried once. Categories:
 
 - **`BRAND_ONLY_STRINGS` / `BRAND_TOKENS`** — forced English in **every** locale
-  (e.g. `Saropa Log Capture`, `Crashlytics`, `Docker`, `.gitignore`).
+  (e.g. `Saropa Capture`, `Crashlytics`, `Docker`, `.gitignore`).
 - **`ACRONYM_ONLY_STRINGS`** — `ANR`, `SQL`, `OS`, `DB`, `OK`, `TODO`.
 - **`VERIFIED_IDENTICAL`** — **per-locale** cognates a human confirmed (e.g. German
   "Pause", Spanish "Error"). Add an entry **only after verifying** the word is genuinely

@@ -1,6 +1,6 @@
 # Integrations (user index)
 
-Optional **Saropa Log Capture** integration adapters add session headers, metadata, and sidecar files. Enable them under **Options → Integrations** (or the **Session integrations** QuickPick).
+Optional **Saropa Capture** integration adapters add session headers, metadata, and sidecar files. Enable them under **Options → Integrations** (or the **Session integrations** QuickPick).
 
 ## Saropa Drift Advisor
 

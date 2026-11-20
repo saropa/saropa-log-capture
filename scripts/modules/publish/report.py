@@ -27,7 +27,7 @@ def _build_report_header(
     kind = "Publish" if is_publish else "Analysis"
 
     lines = [
-        f"Saropa Log Capture — {kind} Report",
+        f"Saropa Capture — {kind} Report",
         f"Generated: {datetime.datetime.now().isoformat()}",
         f"Extension version: {version}",
         "",

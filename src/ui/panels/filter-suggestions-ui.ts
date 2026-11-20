@@ -41,7 +41,7 @@ export async function showFilterSuggestionsQuickPick(
         t("learning.reject"),
     );
     if (action === t("learning.accept")) {
-        const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+        const cfg = vscode.workspace.getConfiguration("saropaCapture");
         const cur = cfg.get<string[]>("exclusions", []);
         const next = cur.includes(picked.pattern) ? cur : [...cur, picked.pattern];
         try {

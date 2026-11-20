@@ -19,7 +19,7 @@ export interface AiSessionInfo {
 
 /**
  * Convert a workspace folder path to a Claude Code project slug.
- * Example: `d:\src\saropa-log-capture` → `d--src-saropa-log-capture`
+ * Example: `d:\src\saropa-log-capture` → `d--src-saropa-capture`
  */
 export function workspaceToProjectSlug(workspacePath: string): string {
     return workspacePath

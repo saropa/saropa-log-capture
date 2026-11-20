@@ -214,7 +214,7 @@ function buildInteractiveHtmlDocument(headerHtml: string, bodyHtml: string, cate
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Saropa Log Capture</title>
+<title>Saropa Capture</title>
 <style>
 ${getInteractiveStyles()}
 </style>

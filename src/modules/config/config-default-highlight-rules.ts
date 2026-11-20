@@ -3,7 +3,7 @@ import type { HighlightRule } from "../storage/highlight-rules";
 /**
  * Default highlight rules for common log patterns.
  * Priority-ordered: first match wins when multiple rules could apply.
- * Users can override via the `saropaLogCapture.highlightRules` setting.
+ * Users can override via the `saropaCapture.highlightRules` setting.
  */
 export function defaultHighlightRules(): HighlightRule[] {
   return [

@@ -1,6 +1,6 @@
 /**
  * Tests for the user-configurable capture patterns (plan 117, Phase D) —
- * `saropaLogCapture.flowMap.customBreadcrumbs` / `customIssues`. Covers the pure compile/match
+ * `saropaCapture.flowMap.customBreadcrumbs` / `customIssues`. Covers the pure compile/match
  * helpers directly, plus their end-to-end effect once threaded through `parseLog`/`buildGraph`.
  */
 

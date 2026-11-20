@@ -20,7 +20,7 @@ let comparisonMarkUri: vscode.Uri | undefined;
 /** Register session comparison commands. */
 export function comparisonCommands(extensionUri: vscode.Uri, broadcaster: ViewerBroadcaster): vscode.Disposable[] {
     return [
-        vscode.commands.registerCommand('saropaLogCapture.markForComparison',
+        vscode.commands.registerCommand('saropaCapture.markForComparison',
           (item: { uri: vscode.Uri; filename: string }) => {
             // Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
@@ -32,14 +32,14 @@ export function comparisonCommands(extensionUri: vscode.Uri, broadcaster: Viewer
                 t('msg.markedForComparison', item.filename),
             );
         }),
-        vscode.commands.registerCommand('saropaLogCapture.compareSessions', async () => {
+        vscode.commands.registerCommand('saropaCapture.compareSessions', async () => {
             const sessions = await pickTwoSessions();
             if (sessions) {
                 const panel = getComparisonPanel(extensionUri, broadcaster);
                 await panel.compare(sessions[0], sessions[1]);
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.compareThreeSessions', async () => {
+        vscode.commands.registerCommand('saropaCapture.compareThreeSessions', async () => {
             const picked = await pickThreeSessions();
             if (picked) { await openThreeWayComparison(picked); }
         }),

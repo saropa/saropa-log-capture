@@ -189,7 +189,7 @@ export async function finalizeSession(
     // failures, memory events, slow ops, etc. are still captured.
     const pSignal = Promise.resolve().then(async () => {
         // Respect the signalAutoTrack setting — skip persistence if disabled
-        const autoTrack = vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('signalAutoTrack', true);
+        const autoTrack = vscode.workspace.getConfiguration('saropaCapture').get<boolean>('signalAutoTrack', true);
         if (!autoTrack) { return; }
         const bundle = getLastSignalBundle();
         const summary = bundle
@@ -232,7 +232,7 @@ export async function finalizeSession(
     storeSessionDeviceInfo(logSession.fileUri, params.debugAdapterType, metadataStore, outputChannel);
 
     // Refresh signals sidebar after metadata scans complete
-    setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringSignals'), 3000);
+    setTimeout(() => vscode.commands.executeCommand('saropaCapture.refreshRecurringSignals'), 3000);
 
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
 
@@ -241,7 +241,7 @@ export async function finalizeSession(
     // - "openLog": silently open the log in the viewer (no toast)
     // - "nothing": do nothing (no toast, no auto-open)
     if (config.afterCaptureAction === 'openLog') {
-        void vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: logSession.fileUri });
+        void vscode.commands.executeCommand('saropaCapture.openSession', { uri: logSession.fileUri });
     } else if (config.afterCaptureAction === 'ask') {
         showSummaryNotification(withLogUri(generateSummary(filename, stats), logSession.fileUri));
     }

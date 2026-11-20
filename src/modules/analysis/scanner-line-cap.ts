@@ -34,7 +34,7 @@ export interface LineScanOptions {
 }
 
 /**
- * Log a warning to the "Saropa Log Capture" output channel when a scan was
+ * Log a warning to the "Saropa Capture" output channel when a scan was
  * truncated by MAX_SCAN_LINES, so content past the cap is a visible, diagnosable
  * condition rather than a silent gap in fingerprints/signals/tags.
  */

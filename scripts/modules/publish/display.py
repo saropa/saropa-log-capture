@@ -127,7 +127,7 @@ def show_logo(version: str) -> None:
 {C.BLUE_57}                       `-+shdNNMMMMNNdhs+-{C.RESET}
 {C.BLUE_57}                               ````{C.RESET}
 
-  {C.PINK_195}Saropa Log Capture — Developer Toolkit{C.RESET}
+  {C.PINK_195}Saropa Capture — Developer Toolkit{C.RESET}
   {C.LIGHT_BLUE_117}Extension v{version}{C.RESET}
 """
     print(logo)

@@ -64,7 +64,7 @@ function basename(p: string): string {
 }
 
 async function focusAndLoad(uri: vscode.Uri, ctx: ViewerMessageContext): Promise<void> {
-    await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+    await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
     await ctx.load(uri);
 }
 

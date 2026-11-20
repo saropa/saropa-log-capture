@@ -12,7 +12,7 @@ Suggested steps
 ---------------
 1. Capture or open two `.log` files that both include Drift SQL traffic (or one with and one without
    to see the “no Drift: Sent lines” hint).
-2. Run **Saropa Log Capture: Compare Log Sessions** (or the command your build registers) and pick
+2. Run **Saropa Capture: Compare Log Sessions** (or the command your build registers) and pick
    file A and file B.
 3. Expand **Database (Drift SQL)** — counts and change badges should match expectations; with
    large diffs, confirm the “first N rows” truncation note appears.

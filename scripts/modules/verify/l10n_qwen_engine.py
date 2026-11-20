@@ -265,7 +265,7 @@ def _build_prompt(
     )
 
     parts = [
-        "Context: A VS Code extension called Saropa Log Capture for viewing "
+        "Context: A VS Code extension called Saropa Capture for viewing "
         "debug console logs from Flutter and mobile app development. "
         "Tone should be clear and concise, matching typical IDE UI text.\n\n",
         f"Task: Translate the following English text into {lang_label}.\n\n",

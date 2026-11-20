@@ -15,12 +15,12 @@ export interface QualityCommandDeps {
 /** Register code quality commands. */
 export function qualityCommands(deps: QualityCommandDeps): vscode.Disposable[] {
     return [
-        vscode.commands.registerCommand('saropaLogCapture.showCodeQualityForFrame', () => {
+        vscode.commands.registerCommand('saropaCapture.showCodeQualityForFrame', () => {
             vscode.window.showInformationMessage(
                 t('msg.rightClickShowCodeQuality'),
             );
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openQualityReport', () => {
+        vscode.commands.registerCommand('saropaCapture.openQualityReport', () => {
             const fileUri = deps.getFileUri();
             if (!fileUri) {
                 vscode.window.showInformationMessage(t('msg.noActiveSession'));

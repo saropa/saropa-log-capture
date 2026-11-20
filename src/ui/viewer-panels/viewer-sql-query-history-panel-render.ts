@@ -135,7 +135,7 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (sqlQueryHistoryPanelOpen) renderSqlQueryHistoryPanel();
     };
 
-    /* Deep-link target for saropaLogCapture.openSqlHistoryForFingerprint: find the row whose
+    /* Deep-link target for saropaCapture.openSqlHistoryForFingerprint: find the row whose
        normalized fingerprint matches, expand it, scroll to it, and flash it. Deferred a frame
        so the panel's render pass (triggered by setActivePanel) has built the rows first.
        Compares the attribute directly so SQL fingerprints with quotes/spaces need no escaping.

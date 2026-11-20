@@ -38,7 +38,7 @@ function readSrcTsFiles(dir, out = []) {
 
 /**
  * Helper functions in src/commands-export-helpers.ts build the id from a template literal
- * (`` `saropaLogCapture.${name}` ``) rather than a literal string, so the direct regex below
+ * (`` `saropaCapture.${name}` ``) rather than a literal string, so the direct regex below
  * can't see the final id — it has to be resolved from each helper's call sites instead. This
  * table is a documented heuristic, not general call-graph resolution: a new indirection
  * pattern needs its own entry here or the bidirectional check will miss it silently.
@@ -75,7 +75,7 @@ function collectRegisteredCommandIds(dir) {
 		for (const { re } of FORWARDING_HELPERS) {
 			re.lastIndex = 0;
 			let helperMatch;
-			while ((helperMatch = re.exec(text))) { ids.add(`saropaLogCapture.${helperMatch[1]}`); }
+			while ((helperMatch = re.exec(text))) { ids.add(`saropaCapture.${helperMatch[1]}`); }
 		}
 	}
 	return ids;

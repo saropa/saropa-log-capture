@@ -25,7 +25,7 @@ let panel: vscode.WebviewPanel | undefined;
 export function showKeyboardShortcutsPanel(): void {
     if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.keyboardShortcuts',
+        'saropaCapture.keyboardShortcuts',
         t('kbd.chrome.panelTitle'),
         vscode.ViewColumn.Beside,
         { enableScripts: true, localResourceRoots: [] },

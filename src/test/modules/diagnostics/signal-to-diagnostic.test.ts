@@ -100,7 +100,7 @@ test('signalsToDiagnostics filters to in-scope categories by default', () => {
 });
 
 test('buildEnvelope wraps diagnostics with schemaVersion, producer, and generatedAt', () => {
-  const env = buildEnvelope([], { name: 'saropa-log-capture', version: '1.2.3' }, '2026-06-13T00:00:00.000Z');
+  const env = buildEnvelope([], { name: 'saropa-capture', version: '1.2.3' }, '2026-06-13T00:00:00.000Z');
   assert.strictEqual(env.schemaVersion, 1);
   assert.strictEqual(env.producer.version, '1.2.3');
   assert.strictEqual(env.generatedAt, '2026-06-13T00:00:00.000Z');

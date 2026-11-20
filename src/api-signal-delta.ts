@@ -193,7 +193,7 @@ export function diffFingerprints(before: readonly FingerprintEntry[], after: rea
         .map((fp) => ({
             label: fp.n,
             detail: fp.e,
-            command: 'saropaLogCapture.openSignal',
+            command: 'saropaCapture.openSignal',
             args: { id: `${kind}:${fp.h}` },
         }));
 }
@@ -206,7 +206,7 @@ export function diffPerf(before: readonly PerfFingerprintEntry[], after: readonl
         .map((pf) => ({
             label: pf.name,
             detail: `${pf.count} occurrence${pf.count === 1 ? '' : 's'}, avg ${pf.avgMs}ms`,
-            command: 'saropaLogCapture.openSignal',
+            command: 'saropaCapture.openSignal',
             args: { id: `perf:${pf.name}` },
         }));
 }

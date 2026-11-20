@@ -72,10 +72,10 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   });
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();
-  queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
+  queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaCapture.lastUsedPresetName")));
   queueMicrotask(() => {
     const c = getConfig();
-    const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
+    const aiOn = vscode.workspace.getConfiguration("saropaCapture.ai").get<boolean>("enabled", false);
     target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn, c.integrationsAdbLogcat.enabled, c.integrationsScreenshots.enabled));
     // Footer camera menu state (plan 114) — checkboxes render from this, not from defaults.
     target.postMessage({ type: 'screenshotSettings', ...buildScreenshotSettingsPayload() });

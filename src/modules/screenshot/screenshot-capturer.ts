@@ -324,7 +324,7 @@ export class ScreenshotCapturer {
         if (best === undefined || best < NEAR_MISS_FLOOR) { return; }
         this.warnedNearMiss = true;
         const pct = (best * 100).toFixed(1);
-        this.deps.log(`screenshot: kept a capture that was ${pct}% similar to a recent one — lower saropaLogCapture.integrations.screenshots.duplicateSimilarity to skip captures like it`);
+        this.deps.log(`screenshot: kept a capture that was ${pct}% similar to a recent one — lower saropaCapture.integrations.screenshots.duplicateSimilarity to skip captures like it`);
     }
 
     /** Captures dropped as near-duplicates this session — surfaced in the flow map's gallery. */

@@ -15,8 +15,8 @@ import { getGlobalSearchIndex } from './modules/search/search-index-global';
 import { logExtensionWarn } from './modules/misc/extension-logger';
 import { ensureWebviewReadyOrWarn } from './commands-webview-ready';
 
-const extensionId = 'saropa.saropa-log-capture';
-const settingsSection = 'saropaLogCapture';
+const extensionId = 'saropa.saropa-capture';
+const settingsSection = 'saropaCapture';
 
 export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
     const { viewerProvider, inlineDecorations, popOutPanel, sessionManager, broadcaster } = deps;
@@ -25,19 +25,19 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         // before the sidebar webview has ever resolved (e.g. right after activation) — post
         // immediately and vscode.Webview.postMessage() silently drops it. Wait for readiness
         // first so the user gets a warning instead of a no-op.
-        vscode.commands.registerCommand('saropaLogCapture.explainRootCauseHypotheses', async () => {
+        vscode.commands.registerCommand('saropaCapture.explainRootCauseHypotheses', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerExplainRootCauseHypotheses' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openSqlQueryHistory', async () => {
+        vscode.commands.registerCommand('saropaCapture.openSqlQueryHistory', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'openSqlQueryHistoryPanel' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.showRelatedQueries', async () => {
+        vscode.commands.registerCommand('saropaCapture.showRelatedQueries', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerShowRelatedQueries' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
+        vscode.commands.registerCommand('saropaCapture.rebuildProjectIndex', async () => {
             const indexer = getGlobalProjectIndexer();
             if (!indexer) {
                 logExtensionWarn('rebuildProjectIndex', 'Project index not available (no workspace folder)');
@@ -53,7 +53,7 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             );
             vscode.window.showInformationMessage('Project index rebuilt.');
         }),
-        vscode.commands.registerCommand('saropaLogCapture.rebuildSearchIndex', async () => {
+        vscode.commands.registerCommand('saropaCapture.rebuildSearchIndex', async () => {
             const index = getGlobalSearchIndex();
             if (!index) {
                 logExtensionWarn('rebuildSearchIndex', 'Search index not available (no workspace folder)');
@@ -66,7 +66,7 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             );
             vscode.window.showInformationMessage(`Search index rebuilt (${count} log files).`);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.debugProjectIndexRanking', async () => {
+        vscode.commands.registerCommand('saropaCapture.debugProjectIndexRanking', async () => {
             const indexer = getGlobalProjectIndexer();
             if (!indexer) {
                 vscode.window.showWarningMessage('Project index is not available (no workspace folder).');
@@ -148,27 +148,27 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         }),
         // bug_015: same "may not be resolved yet" hazard as above for every command below
         // that posts to the webview — guard each with ensureWebviewReadyOrWarn().
-        vscode.commands.registerCommand('saropaLogCapture.copyAllFilteredLines', async () => {
+        vscode.commands.registerCommand('saropaCapture.copyAllFilteredLines', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerCopyAllFiltered' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.collapseAllSections', async () => {
+        vscode.commands.registerCommand('saropaCapture.collapseAllSections', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerCollapseAllSections' });
             /* Toggle the context key so the view title bar swaps to the expand-all icon */
-            vscode.commands.executeCommand('setContext', 'saropaLogCapture.allCollapsed', true);
+            vscode.commands.executeCommand('setContext', 'saropaCapture.allCollapsed', true);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.expandAllSections', async () => {
+        vscode.commands.registerCommand('saropaCapture.expandAllSections', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerExpandAllSections' });
             /* Toggle the context key so the view title bar swaps to the collapse-all icon */
-            vscode.commands.executeCommand('setContext', 'saropaLogCapture.allCollapsed', false);
+            vscode.commands.executeCommand('setContext', 'saropaCapture.allCollapsed', false);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.maximizePanel', () => {
+        vscode.commands.registerCommand('saropaCapture.maximizePanel', () => {
             /* Delegate to VS Code's built-in panel maximize toggle */
             vscode.commands.executeCommand('workbench.action.toggleMaximizedPanel');
         }),
-        vscode.commands.registerCommand('saropaLogCapture.toggleSearchOverlay', async () => {
+        vscode.commands.registerCommand('saropaCapture.toggleSearchOverlay', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerToggleSearch' });
         }),
@@ -176,19 +176,19 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
            and shows only errors, warnings, and performance issues. Fire-and-forget —
            the webview owns and persists the active state (setState), so a bare toggle
            message is all the host sends. */
-        vscode.commands.registerCommand('saropaLogCapture.troubleMode.toggle', async () => {
+        vscode.commands.registerCommand('saropaCapture.troubleMode.toggle', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerToggleTroubleMode' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.troubleMode.errorsOnly', async () => {
-            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        vscode.commands.registerCommand('saropaCapture.troubleMode.errorsOnly', async () => {
+            const cfg = vscode.workspace.getConfiguration('saropaCapture');
             const target = vscode.workspace.workspaceFolders
                 ? vscode.ConfigurationTarget.Workspace
                 : vscode.ConfigurationTarget.Global;
             await cfg.update('troubleMode.levels', ['error'], target);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.troubleMode.resetLevels', async () => {
-            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        vscode.commands.registerCommand('saropaCapture.troubleMode.resetLevels', async () => {
+            const cfg = vscode.workspace.getConfiguration('saropaCapture');
             const target = vscode.workspace.workspaceFolders
                 ? vscode.ConfigurationTarget.Workspace
                 : vscode.ConfigurationTarget.Global;
@@ -198,25 +198,25 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
            `when` clause, so without this it preempts the webview keydown handler and opens
            Quick Open instead. The package.json keybinding scopes Ctrl+G to the log viewer
            view + pop-out panel; this command then forwards to the webview's openGotoLine(). */
-        vscode.commands.registerCommand('saropaLogCapture.gotoLineInViewer', async () => {
+        vscode.commands.registerCommand('saropaCapture.gotoLineInViewer', async () => {
             if (!(await ensureWebviewReadyOrWarn(viewerProvider))) { return; }
             broadcaster.postToWebview({ type: 'triggerGotoLine' });
         }),
-        vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
-        vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
+        vscode.commands.registerCommand('saropaCapture.popOutViewer', async () => { await popOutPanel.open(); }),
+        vscode.commands.registerCommand('saropaCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();
             if (match) { await openLogAtLine(match); }
         }),
         // Idea #6: right-click a source file in the Explorer → search every session for its
         // filename, grouped by session. Reuses the cross-session search Quick Pick with the
         // basename pre-filled, then opens the chosen match at its line.
-        vscode.commands.registerCommand('saropaLogCapture.showLogReferences', async (uri?: vscode.Uri) => {
+        vscode.commands.registerCommand('saropaCapture.showLogReferences', async (uri?: vscode.Uri) => {
             const filename = uri?.fsPath.split(/[/\\]/).pop();
             if (!filename) { return; }
             const match = await showSearchQuickPick(filename);
             if (match) { await openLogAtLine(match); }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.copyDeepLink',
+        vscode.commands.registerCommand('saropaCapture.copyDeepLink',
           async (item: { uri: vscode.Uri; filename: string }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.filename) {
@@ -225,7 +225,7 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             }
             await copyDeepLinkToClipboard(item.filename);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.copyFilePath', async (item: { uri: vscode.Uri }) => {
+        vscode.commands.registerCommand('saropaCapture.copyFilePath', async (item: { uri: vscode.Uri }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
                 void vscode.window.showInformationMessage(t('msg.paletteRequiresLog'));
@@ -234,34 +234,34 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             await vscode.env.clipboard.writeText(item.uri.fsPath);
             vscode.window.showInformationMessage(t('msg.filePathCopied'));
         }),
-        vscode.commands.registerCommand('saropaLogCapture.applyPreset', async () => {
+        vscode.commands.registerCommand('saropaCapture.applyPreset', async () => {
             const preset = await pickPreset();
             if (preset) { viewerProvider.applyPreset(preset.name); }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.savePreset', async () => {
+        vscode.commands.registerCommand('saropaCapture.savePreset', async () => {
             const preset = await promptSavePreset({});
             if (preset) { viewerProvider.setPresets(loadPresets()); }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.toggleInlineDecorations', () => {
+        vscode.commands.registerCommand('saropaCapture.toggleInlineDecorations', () => {
             const enabled = inlineDecorations.toggle();
             vscode.window.showInformationMessage(
                 enabled ? t('msg.inlineDecorationsEnabled') : t('msg.inlineDecorationsDisabled'),
             );
         }),
-        vscode.commands.registerCommand('saropaLogCapture.applyTemplate', async () => {
+        vscode.commands.registerCommand('saropaCapture.applyTemplate', async () => {
             const template = await pickTemplate();
             if (template) {
                 await applyTemplate(template);
                 vscode.window.showInformationMessage(t('msg.templateApplied', template.name));
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
-        vscode.commands.registerCommand('saropaLogCapture.resetAllSettings', resetAllSettings),
-        vscode.commands.registerCommand('saropaLogCapture.configureIntegrations', () => showIntegrationsPicker()),
-        vscode.commands.registerCommand('saropaLogCapture.openSettings', () => {
+        vscode.commands.registerCommand('saropaCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
+        vscode.commands.registerCommand('saropaCapture.resetAllSettings', resetAllSettings),
+        vscode.commands.registerCommand('saropaCapture.configureIntegrations', () => showIntegrationsPicker()),
+        vscode.commands.registerCommand('saropaCapture.openSettings', () => {
             void vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${extensionId}`);
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openChangelog', () => {
+        vscode.commands.registerCommand('saropaCapture.openChangelog', () => {
             void vscode.commands.executeCommand('extension.open', extensionId);
         }),
     ];

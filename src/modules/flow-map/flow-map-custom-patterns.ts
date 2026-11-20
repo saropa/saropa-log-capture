@@ -4,7 +4,7 @@
  * The breadcrumb/issue heuristics in `flow-map-breadcrumbs.ts` and `flow-map-issues.ts` target one
  * app's log dialect (the `[flowmap]` tag family plus a handful of contacts-app-shaped text patterns).
  * Any other project's log gets an empty map unless it adopts those exact tags. These two settings —
- * `saropaLogCapture.flowMap.customBreadcrumbs` and `saropaLogCapture.flowMap.customIssues` — let a
+ * `saropaCapture.flowMap.customBreadcrumbs` and `saropaCapture.flowMap.customIssues` — let a
  * project map its OWN log lines to nodes/actions/issues without a code change.
  *
  * Kept as a pure module (no vscode import) so the command layer can compile the raw settings values
@@ -14,7 +14,7 @@
 
 import type { IssueEvent, IssueSeverity, NodeKind, TimelineEvent } from './flow-map-model';
 
-/** Raw shape of one `saropaLogCapture.flowMap.customBreadcrumbs` entry (validated on compile). */
+/** Raw shape of one `saropaCapture.flowMap.customBreadcrumbs` entry (validated on compile). */
 export interface CustomBreadcrumbDef {
     readonly pattern: string;
     readonly kind?: 'nav' | 'action' | 'viewed' | 'handoff';
@@ -22,7 +22,7 @@ export interface CustomBreadcrumbDef {
     readonly label?: string;
 }
 
-/** Raw shape of one `saropaLogCapture.flowMap.customIssues` entry (validated on compile). */
+/** Raw shape of one `saropaCapture.flowMap.customIssues` entry (validated on compile). */
 export interface CustomIssueDef {
     readonly pattern: string;
     readonly category: string;
@@ -126,7 +126,7 @@ function compileIssue(raw: unknown): CompiledIssue | undefined {
 }
 
 /**
- * Validate + compile the two `saropaLogCapture.flowMap.*` settings arrays into ready-to-use
+ * Validate + compile the two `saropaCapture.flowMap.*` settings arrays into ready-to-use
  * matchers. Never throws: non-array input yields an empty set, and each entry is validated
  * independently so one malformed rule never discards the rest.
  */

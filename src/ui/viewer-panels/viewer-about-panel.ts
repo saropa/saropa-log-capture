@@ -22,7 +22,7 @@ export function getAboutPanelHtml(): string {
     </div>
     <div class="about-panel-content">
         <div id="ab-title-row" class="ab-version-row" title="${t('viewer.about.copyHint')}">
-            <span class="ab-version-label">Saropa Log Capture</span>
+            <span class="ab-version-label">Saropa Capture</span>
             <span id="ab-version-badge" class="ab-version-badge"></span>
         </div>
         <p class="ab-tagline">${t('viewer.about.tagline')}</p>
@@ -142,7 +142,7 @@ export function getAboutPanelScript(): string {
         renderAboutDebugList(e.data.metaPaths);
     });
 
-    /* ---- Long-press on the title to copy "Saropa Log Capture vX.Y.Z" ----
+    /* ---- Long-press on the title to copy "Saropa Capture vX.Y.Z" ----
        500 ms threshold matches the platform mobile long-press convention and is
        long enough to avoid stealing accidental clicks from selection drags inside
        the panel. Mouse and touch are both wired so the gesture works in VS Code
@@ -266,10 +266,10 @@ function getProjectLinksHtml(): string {
             url: 'https://saropa.com/'
         }),
         linkHtml({
-            icon: '\u{1F4CB}', title: 'Saropa Log Capture',
+            icon: '\u{1F4CB}', title: 'Saropa Capture',
             badge: 'VS Code Marketplace',
             desc: t('viewer.about.project.logCapture.desc'),
-            url: buildItemUrl('saropa.saropa-log-capture')
+            url: buildItemUrl('saropa.saropa-capture')
         }),
         linkHtml({
             icon: '\u{1F50D}', title: 'saropa_lints', badge: 'pub.dev \u00b7 Dart & Flutter',

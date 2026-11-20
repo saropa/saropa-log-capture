@@ -16,7 +16,7 @@ import { getRecurringPanelStyles } from "../viewer-styles/viewer-styles-recurrin
 import { getPerformancePanelStyles } from "../viewer-styles/viewer-styles-performance";
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
 
-const VIEW_TYPE = "saropaLogCapture.signalTab";
+const VIEW_TYPE = "saropaCapture.signalTab";
 const TITLE = "Signals";
 
 let panel: vscode.WebviewPanel | undefined;

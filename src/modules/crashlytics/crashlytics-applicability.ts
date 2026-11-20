@@ -11,7 +11,7 @@
  * projects (it stays fully available the moment real app config appears).
  *
  * App evidence is any ONE of (cheapest signal first):
- *   1. Explicit `saropaLogCapture.firebase.*` settings (projectId / appId /
+ *   1. Explicit `saropaCapture.firebase.*` settings (projectId / appId /
  *      packageName) — the user has pointed the extension at a real app.
  *   2. A real `google-services.json` (Android / Flutter app) — excluding a
  *      package's bundled `example/` app, see workspace-app-detection.
@@ -31,7 +31,7 @@ import {
 
 /** True when explicit firebase.* settings name a real app (no file scan needed). */
 function hasFirebaseSettings(): boolean {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
     const projectId = cfg.get<string>('projectId', '');
     const appId = cfg.get<string>('appId', '');
     const packageName = cfg.get<string>('packageName', '');

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report incorrect behavior in Saropa Log Capture
+description: Report incorrect behavior in Saropa Capture
 labels: []
 body:
   - type: markdown
@@ -17,7 +17,7 @@ body:
   - type: input
     id: extension
     attributes:
-      label: Saropa Log Capture version
+      label: Saropa Capture version
       placeholder: e.g. 7.5.7
     validations:
       required: false
@@ -56,4 +56,4 @@ body:
     id: logs
     attributes:
       label: Logs / screenshots (optional)
-      description: Redact secrets. Output channel “Saropa Log Capture” if relevant.
+      description: Redact secrets. Output channel “Saropa Capture” if relevant.

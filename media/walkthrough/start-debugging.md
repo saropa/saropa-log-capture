@@ -1,6 +1,6 @@
 # Automatic Capture
 
-Saropa Log Capture works with **any debug adapter** - Dart, Node.js, Python, Go, C++, Java, and more.
+Saropa Capture works with **any debug adapter** - Dart, Node.js, Python, Go, C++, Java, and more.
 
 ## How it works
 

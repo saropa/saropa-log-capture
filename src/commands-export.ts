@@ -27,7 +27,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
         fileExportCmd('exportJson', exportToJson),
         fileExportCmd('exportJsonl', exportToJsonl),
         exportSignalsSummaryCmd(viewerProvider, collectionStore),
-        vscode.commands.registerCommand('saropaLogCapture.exportSlc',
+        vscode.commands.registerCommand('saropaCapture.exportSlc',
             async (item: { uri: vscode.Uri } | undefined) => {
                 const uri = item?.uri ?? viewerProvider.getCurrentFileUri();
                 if (!uri) {
@@ -46,7 +46,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                     if (action === t('action.open')) { await vscode.window.showTextDocument(outUri); }
                 }
             }),
-        vscode.commands.registerCommand('saropaLogCapture.importSlc', async () => {
+        vscode.commands.registerCommand('saropaCapture.importSlc', async () => {
             const uris = await vscode.window.showOpenDialog({
                 filters: { [t('filter.slcBundles')]: ['slc'] },
                 canSelectMany: true,
@@ -65,13 +65,13 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
             );
             if (lastResult && 'mainLogUri' in lastResult) {
                 historyProvider.refresh();
-                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
                 await viewerProvider.loadFromFile(lastResult.mainLogUri);
             } else if (lastResult) {
                 await importCollectionFromSlc(lastResult.collection, collectionStore, historyProvider);
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.exportToLoki',
+        vscode.commands.registerCommand('saropaCapture.exportToLoki',
             async (item: { uri: vscode.Uri } | undefined) => {
                 const config = getConfig();
                 const loki = config.integrationsLoki;
@@ -96,7 +96,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                     );
                 }
             }),
-        vscode.commands.registerCommand('saropaLogCapture.setLokiApiKey', async () => {
+        vscode.commands.registerCommand('saropaCapture.setLokiApiKey', async () => {
             const token = await vscode.window.showInputBox({
                 prompt: t('prompt.lokiApiKey'),
                 password: true,
@@ -117,7 +117,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
         buildCiTokenCmd(context, { commandId: 'clearBuildCiAzurePat', label: 'Azure PAT', clearFn: deleteBuildCiAzurePat }),
         buildCiTokenCmd(context, { commandId: 'setBuildCiGitlabToken', label: 'GitLab', setFn: setBuildCiGitlabToken }),
         buildCiTokenCmd(context, { commandId: 'clearBuildCiGitlabToken', label: 'GitLab', clearFn: deleteBuildCiGitlabToken }),
-        vscode.commands.registerCommand('saropaLogCapture.setDatabaseApiToken', async () => {
+        vscode.commands.registerCommand('saropaCapture.setDatabaseApiToken', async () => {
             const token = await vscode.window.showInputBox({
                 prompt: t('prompt.databaseApiToken'),
                 password: true,
@@ -132,7 +132,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
             await setDatabaseApiToken(context, trimmed);
             void vscode.window.showInformationMessage(t('msg.databaseApiTokenStored'));
         }),
-        vscode.commands.registerCommand('saropaLogCapture.clearDatabaseApiToken', async () => {
+        vscode.commands.registerCommand('saropaCapture.clearDatabaseApiToken', async () => {
             await deleteDatabaseApiToken(context);
             void vscode.window.showInformationMessage(t('msg.databaseApiTokenCleared'));
         }),

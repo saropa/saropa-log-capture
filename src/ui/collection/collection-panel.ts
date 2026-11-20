@@ -48,7 +48,7 @@ function ensurePanel(): void {
         return;
     }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.collection',
+        'saropaCapture.collection',
         'Collection',
         vscode.ViewColumn.Beside,
         { enableScripts: true, localResourceRoots: [] },
@@ -141,16 +141,16 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             break;
 
         case 'export':
-            await vscode.commands.executeCommand('saropaLogCapture.exportCollection');
+            await vscode.commands.executeCommand('saropaCapture.exportCollection');
             break;
 
         case 'openSlc':
             // Opens file picker for .slc (session or collection bundle); same as Command Palette → Import .slc Bundle
-            await vscode.commands.executeCommand('saropaLogCapture.importSlc');
+            await vscode.commands.executeCommand('saropaCapture.importSlc');
             break;
 
         case 'share':
-            await vscode.commands.executeCommand('saropaLogCapture.shareCollection');
+            await vscode.commands.executeCommand('saropaCapture.shareCollection');
             break;
 
         case 'generateReport': {
@@ -179,7 +179,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         }
 
         case 'create':
-            await vscode.commands.executeCommand('saropaLogCapture.createCollection');
+            await vscode.commands.executeCommand('saropaCapture.createCollection');
             break;
     }
 }

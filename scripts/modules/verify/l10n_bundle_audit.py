@@ -307,7 +307,7 @@ def run_audit() -> AuditResult:
             and provenance.get(k) != ENGINE_MANUAL
         ]
         # Brand-mangled = translated but a brand token got transliterated
-        # or removed (e.g. "Saropa Log Capture" → "Saropa-Protokollerfassung").
+        # or removed (e.g. "Saropa Capture" → "Saropa-Protokollerfassung").
         brand_mangled_keys = [
             k
             for k in bundle_keys

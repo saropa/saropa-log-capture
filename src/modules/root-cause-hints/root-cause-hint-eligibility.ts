@@ -14,7 +14,7 @@ export const ROOT_CAUSE_WARNING_MIN_COUNT = 3;
 
 /**
  * Default minimum duration (ms) for a slow operation to qualify as a signal.
- * The actual threshold is user-configurable via `saropaLogCapture.signalSlowOpThresholdMs`
+ * The actual threshold is user-configurable via `saropaCapture.signalSlowOpThresholdMs`
  * and applied in the webview collector — the host treats any item in the bundle as qualifying.
  */
 export const ROOT_CAUSE_SLOW_OP_MIN_MS_DEFAULT = 500;

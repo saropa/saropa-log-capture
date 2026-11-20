@@ -14,7 +14,7 @@ export function trashCommands(
 ): vscode.Disposable[] {
     const metaStore = historyProvider.getMetaStore();
     return [
-        vscode.commands.registerCommand('saropaLogCapture.trashSession',
+        vscode.commands.registerCommand('saropaCapture.trashSession',
           async (item?: { uri: vscode.Uri; filename: string }) => {
             const uri = item?.uri ?? getCurrentFileUri();
             if (!uri) { return; }
@@ -26,7 +26,7 @@ export function trashCommands(
             historyProvider.invalidateMeta(uri);
             historyProvider.refresh();
         }),
-        vscode.commands.registerCommand('saropaLogCapture.restoreSession',
+        vscode.commands.registerCommand('saropaCapture.restoreSession',
           async (item?: { uri: vscode.Uri; filename: string }) => {
             const uri = item?.uri ?? getCurrentFileUri();
             if (!uri) { return; }
@@ -40,12 +40,12 @@ export function trashCommands(
             historyProvider.invalidateMeta(uri);
             historyProvider.refresh();
         }),
-        vscode.commands.registerCommand('saropaLogCapture.emptyTrash', async () => {
+        vscode.commands.registerCommand('saropaCapture.emptyTrash', async () => {
             const count = await emptyTrash(metaStore);
             if (count === 0) { vscode.window.showInformationMessage(t('msg.trashEmpty')); }
             if (count > 0) { historyProvider.refresh(); }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.toggleTrash', () => {
+        vscode.commands.registerCommand('saropaCapture.toggleTrash', () => {
             const show = !historyProvider.getShowTrash();
             historyProvider.setShowTrash(show);
         }),

@@ -21,7 +21,7 @@ export function buildCiTokenCmd(
     opts: CiTokenCmdOptions,
 ): vscode.Disposable {
     const { commandId, label, setFn, clearFn } = opts;
-    return vscode.commands.registerCommand(`saropaLogCapture.${commandId}`, async () => {
+    return vscode.commands.registerCommand(`saropaCapture.${commandId}`, async () => {
         if (setFn) {
             const token = await vscode.window.showInputBox({
                 prompt: `Build/CI: enter ${label} token`,
@@ -47,7 +47,7 @@ export function htmlExportCmd(
     name: string,
     fn: (uri: vscode.Uri) => Promise<vscode.Uri>,
 ): vscode.Disposable {
-    return vscode.commands.registerCommand(`saropaLogCapture.${name}`,
+    return vscode.commands.registerCommand(`saropaCapture.${name}`,
         async (item: { uri: vscode.Uri }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
@@ -62,7 +62,7 @@ export function fileExportCmd(
     name: string,
     fn: (uri: vscode.Uri) => Promise<vscode.Uri>,
 ): vscode.Disposable {
-    return vscode.commands.registerCommand(`saropaLogCapture.${name}`,
+    return vscode.commands.registerCommand(`saropaCapture.${name}`,
         async (item: { uri: vscode.Uri }) => {
             // bug_013: Palette invocation has no target log — guide the user to the context menu.
             if (!item?.uri) {
@@ -95,7 +95,7 @@ export async function importCollectionFromSlc(
         }
         await store.setActiveCollectionId(created.id);
         historyProvider.refresh();
-        await vscode.commands.executeCommand('saropaLogCapture.openCollection');
+        await vscode.commands.executeCommand('saropaCapture.openCollection');
         vscode.window.showInformationMessage(t('msg.collectionImported', inv.name));
     } catch (e) {
         await store.deleteCollection(created.id).catch(() => {});

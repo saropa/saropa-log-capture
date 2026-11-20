@@ -48,7 +48,7 @@ summary) are directly portable and don't require a live connection.
 
 ### User flow
 
-1. User has configured `saropaLogCapture.integrations.http.requestLogPath` per the
+1. User has configured `saropaCapture.integrations.http.requestLogPath` per the
    existing `http-network.ts` provider, and their app's HTTP client logs
    method/url/status/duration/headers/body as structured JSON lines.
 2. In the viewer, a captured HTTP entry (already correlated via the `.requests.json`
@@ -57,7 +57,7 @@ summary) are directly portable and don't require a live connection.
    `Authorization`/`Cookie`/`Set-Cookie`/API-key-shaped headers by default (reuse the
    fix from `bug_048` — one shared redaction path).
 3. Entries exceeding a configurable duration threshold
-   (`saropaLogCapture.integrations.http.slowRequestThresholdMs`, default e.g. 2000ms,
+   (`saropaCapture.integrations.http.slowRequestThresholdMs`, default e.g. 2000ms,
    mirroring inspector_kit's 2s default) get a "slow" badge, consistent with existing
    badge patterns elsewhere in the viewer.
 4. A summary banner in the relevant panel (Signals or a dedicated HTTP view, if one

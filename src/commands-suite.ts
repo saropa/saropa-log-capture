@@ -14,7 +14,7 @@
  * `activate()` exports `getDailySummary(date)` on the public API (see
  * `api.ts` / `api-daily-summary.ts`, shape `SaropaDailySummary` in `api-types.ts`).
  * A sibling calls
- * `vscode.extensions.getExtension('saropa.saropa-log-capture')?.exports.getDailySummary('YYYY-MM-DD')`
+ * `vscode.extensions.getExtension('saropa.saropa-capture')?.exports.getDailySummary('YYYY-MM-DD')`
  * to fold one day's sessions / errors / signals into a consolidated Suite report. The
  * `SaropaDailySummary.trouble[].command` deep-links back through `openSignal` above, so
  * the two halves share one protocol — treat the exported shape (and `apiVersion`) with
@@ -26,12 +26,12 @@ import type { CommandDeps } from './commands-deps';
 import { normalizeDriftSqlFingerprintSql } from './modules/db/drift-sql-fingerprint-normalize';
 import { ensureWebviewReadyOrWarn } from './commands-webview-ready';
 
-/** Arg for `saropaLogCapture.openSignal` — the diagnostic id, `${kind}:${fingerprint}`. */
+/** Arg for `saropaCapture.openSignal` — the diagnostic id, `${kind}:${fingerprint}`. */
 interface OpenSignalArg {
   readonly id?: string;
 }
 
-/** Arg for `saropaLogCapture.openSqlHistoryForFingerprint` — pass either form. */
+/** Arg for `saropaCapture.openSqlHistoryForFingerprint` — pass either form. */
 interface OpenSqlHistoryArg {
   readonly sql?: string;
   readonly fingerprint?: string;
@@ -84,11 +84,11 @@ async function openSqlHistoryForFingerprint(
 export function suiteIntegrationCommands(deps: CommandDeps): vscode.Disposable[] {
   return [
     vscode.commands.registerCommand(
-      'saropaLogCapture.openSignal',
+      'saropaCapture.openSignal',
       (arg?: OpenSignalArg) => openSignal(deps, arg),
     ),
     vscode.commands.registerCommand(
-      'saropaLogCapture.openSqlHistoryForFingerprint',
+      'saropaCapture.openSqlHistoryForFingerprint',
       (arg?: OpenSqlHistoryArg) => openSqlHistoryForFingerprint(deps, arg),
     ),
   ];

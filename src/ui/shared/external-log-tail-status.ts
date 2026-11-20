@@ -18,11 +18,11 @@ export function updateExternalLogTailStatus(count: number): void {
     }
     if (!item) {
         item = vscode.window.createStatusBarItem(
-            'saropaLogCapture.externalLogTail',
+            'saropaCapture.externalLogTail',
             vscode.StatusBarAlignment.Right,
             49,
         );
-        item.name = 'Saropa Log Capture: External Logs';
+        item.name = 'Saropa Capture: External Logs';
     }
     item.text = `$(file) ${t('statusBar.tailingLogs', count)}`;
     item.tooltip = t('statusBar.tailingLogsTooltip');

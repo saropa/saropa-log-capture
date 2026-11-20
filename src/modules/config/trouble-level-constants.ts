@@ -1,7 +1,7 @@
 /**
  * Single source of truth for Trouble Mode severity levels.
  *
- * These arrays must stay in sync with the `saropaLogCapture.troubleMode.levels`
+ * These arrays must stay in sync with the `saropaCapture.troubleMode.levels`
  * enum and default in `package.json`. The webview's `TROUBLE_LEVELS` object
  * (viewer-trouble-mode.ts) is initialised from `troubleDefaultLevels` at
  * template-build time, and `setTroubleLevels()` replaces it at runtime when

@@ -99,7 +99,7 @@ export function resolveEffectiveSessionId(
     const bufferingMs = now - (state.firstBufferTime.get(sessionId) ?? now);
     if (bufferingMs > 30_000 && !state.bufferTimeoutWarnedFor.has(sessionId)) {
         state.bufferTimeoutWarnedFor.add(sessionId);
-        state.outputChannel.appendLine(`Saropa Log Capture: output has been buffered for sessionId=${sessionId} for over 30s with no log session — enable diagnosticCapture or check capture is enabled.`);
+        state.outputChannel.appendLine(`Saropa Capture: output has been buffered for sessionId=${sessionId} for over 30s with no log session — enable diagnosticCapture or check capture is enabled.`);
     }
     if (state.config.diagnosticCapture && !state.bufferingLoggedFor.has(sessionId)) {
         state.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);

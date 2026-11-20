@@ -46,16 +46,16 @@ export interface SessionDisplayOptions {
     /** Controller blocks the user has collapsed in the session list, keyed by "ctrl:<uriString>". */
     readonly collapsedControllers?: Readonly<Record<string, boolean>>;
     /** Panel-wide default for the per-day Reports bucket. Seeded from
-     *  `saropaLogCapture.reportsBucketDefault` at activation. */
+     *  `saropaCapture.reportsBucketDefault` at activation. */
     readonly reportsBucketState?: ReportsBucketState;
     /** Per-day Reports bucket expansion override, keyed by YYYY-MM-DD. Wins over
      *  `reportsBucketState` for that day. Persists so a day the user expanded
      *  stays expanded across reloads. */
     readonly expandedReportBuckets?: Readonly<Record<string, boolean>>;
     /** Sticky newer-log banner above the day list. Seeded from
-     *  `saropaLogCapture.newerLogBanner`. Default true. */
+     *  `saropaCapture.newerLogBanner`. Default true. */
     readonly newerLogBannerEnabled?: boolean;
-    /** Per-row blue unread dot. Seeded from `saropaLogCapture.newerLogDot`.
+    /** Per-row blue unread dot. Seeded from `saropaCapture.newerLogDot`.
      *  Default true. */
     readonly newerLogDotEnabled?: boolean;
     /** Collapse severity count pills on non-latest, non-active rows to a single

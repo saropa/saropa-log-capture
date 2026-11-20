@@ -43,7 +43,7 @@ async function buildMetaPaths(context: vscode.ExtensionContext): Promise<MetaPat
   return out;
 }
 
-/** Build changelog URL from extension id (e.g. saropa.saropa-log-capture). */
+/** Build changelog URL from extension id (e.g. saropa.saropa-capture). */
 export function buildChangelogUrl(extensionId: string): string {
   return buildChangelogUrlFromBase(extensionId);
 }

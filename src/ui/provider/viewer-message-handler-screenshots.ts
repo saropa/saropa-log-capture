@@ -41,14 +41,14 @@ export function dispatchScreenshotMessage(msg: Record<string, unknown>, ctx: Vie
             // listener re-broadcasts screenshotSettings, which re-syncs every open menu/checkbox.
             const key = msg.key;
             if (typeof key === 'string' && SCREENSHOT_TRIGGER_KEYS.includes(key)) {
-                const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+                const cfg = vscode.workspace.getConfiguration('saropaCapture');
                 void cfg.update(`integrations.screenshots.${key}`, msg.value === true, vscode.ConfigurationTarget.Workspace);
             }
             return true;
         }
         case "captureScreenshotNow":
             // Menu "Capture now" — routes through the command so toasts/outcomes stay identical.
-            void vscode.commands.executeCommand('saropaLogCapture.captureScreenshot');
+            void vscode.commands.executeCommand('saropaCapture.captureScreenshot');
             return true;
         case "openScreenshotGallery":
             if (ctx.currentFileUri) { void showScreenshotGallery(ctx.currentFileUri); }

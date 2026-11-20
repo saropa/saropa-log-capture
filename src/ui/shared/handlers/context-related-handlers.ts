@@ -39,7 +39,7 @@ async function postRelatedContext(args: RelatedContextArgs): Promise<void> {
     try {
         const store = new SessionMetadataStore();
         const meta = await store.loadMetadata(logUri);
-        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const cfg = vscode.workspace.getConfiguration('saropaCapture');
         const windowMs = cfg.get<number>('contextWindowSeconds', 5) * 1000;
         const centerTime = (options?.timestamp && options.timestamp > 0)
             ? options.timestamp

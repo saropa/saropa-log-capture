@@ -23,7 +23,7 @@ import {
 } from './investigation-model';
 
 /** workspaceState key under which the investigation array is stored. */
-const STORE_KEY = 'saropaLogCapture.investigations';
+const STORE_KEY = 'saropaCapture.investigations';
 
 /** Memento-backed CRUD store. One instance per extension activation. */
 export class InvestigationStore implements vscode.Disposable {

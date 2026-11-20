@@ -198,7 +198,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
         else if (tab === 'recurring') { setSectionExpanded('across-logs', true); renderSectionAccordion('across-logs'); var el = document.getElementById('signal-section-across-logs'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
     };
 
-    /* Deep-link target for saropaLogCapture.openSignal: after the recurring section is
+    /* Deep-link target for saropaCapture.openSignal: after the recurring section is
        expanded, scroll to the row carrying this fingerprint and flash it. Deferred a frame
        so the freshly-rendered rows exist before we query. Compares the attribute directly
        (no querySelector) so SQL fingerprints with quotes/spaces need no CSS escaping. */

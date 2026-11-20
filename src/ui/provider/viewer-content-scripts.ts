@@ -138,7 +138,7 @@ export interface ViewerScriptsOptions {
     readonly signalSlowOpThresholdMs?: number;
     /** When true, divider rows show the "─── N hidden · show ───" pill (`accessibility.showCollapseDividerLabels`). */
     readonly accessibilityShowCollapseDividerLabels?: boolean;
-    /** Default per-line column visibility baked into the viewer (saropaLogCapture.viewerColumn*). */
+    /** Default per-line column visibility baked into the viewer (saropaCapture.viewerColumn*). */
     readonly viewerColumns?: ViewerColumnDefaults;
 }
 

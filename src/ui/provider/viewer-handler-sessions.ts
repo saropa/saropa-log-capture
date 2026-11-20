@@ -36,48 +36,48 @@ export async function handleSessionAction(
     switch (action) {
         case 'open':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.openSession', item);
+                await vscode.commands.executeCommand('saropaCapture.openSession', item);
             }
             break;
         case 'replay':
             if (items.length > 0 && ctx.openSessionForReplay) {
                 await ctx.openSessionForReplay(items[0].uri);
             } else if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.openSession', items[0]);
+                await vscode.commands.executeCommand('saropaCapture.openSession', items[0]);
             }
             break;
         case 'trash':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.trashSession', item);
+                await vscode.commands.executeCommand('saropaCapture.trashSession', item);
             }
             break;
         case 'restore':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.restoreSession', item);
+                await vscode.commands.executeCommand('saropaCapture.restoreSession', item);
             }
             break;
         case 'emptyTrash':
-            await vscode.commands.executeCommand('saropaLogCapture.emptyTrash');
+            await vscode.commands.executeCommand('saropaCapture.emptyTrash');
             break;
         case 'deletePermanently':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.deleteSession', item);
+                await vscode.commands.executeCommand('saropaCapture.deleteSession', item);
             }
             break;
         case 'rename':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.renameSession', item);
+                await vscode.commands.executeCommand('saropaCapture.renameSession', item);
             }
             break;
         case 'tag':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.tagSession', item);
+                await vscode.commands.executeCommand('saropaCapture.tagSession', item);
             }
             break;
         case 'note':
             // Idea #7: a session note is single-target — note the first selected item only.
             if (items[0]) {
-                await vscode.commands.executeCommand('saropaLogCapture.addSessionNote', items[0]);
+                await vscode.commands.executeCommand('saropaCapture.addSessionNote', items[0]);
             }
             break;
         // Mark for Comparison (bug_014): takes a single { uri, filename } item — marks the first
@@ -87,37 +87,37 @@ export async function handleSessionAction(
         // calling a nonexistent command and throwing "command not found" at runtime.
         case 'markForComparison':
             if (items[0]) {
-                await vscode.commands.executeCommand('saropaLogCapture.markForComparison', items[0]);
+                await vscode.commands.executeCommand('saropaCapture.markForComparison', items[0]);
             }
             break;
         case 'exportHtml':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.exportHtml', item);
+                await vscode.commands.executeCommand('saropaCapture.exportHtml', item);
             }
             break;
         case 'exportCsv':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.exportCsv', item);
+                await vscode.commands.executeCommand('saropaCapture.exportCsv', item);
             }
             break;
         case 'exportJson':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.exportJson', item);
+                await vscode.commands.executeCommand('saropaCapture.exportJson', item);
             }
             break;
         case 'exportJsonl':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.exportJsonl', item);
+                await vscode.commands.executeCommand('saropaCapture.exportJsonl', item);
             }
             break;
         case 'exportSlc':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.exportSlc', item);
+                await vscode.commands.executeCommand('saropaCapture.exportSlc', item);
             }
             break;
         case 'exportToLoki':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.exportToLoki', item);
+                await vscode.commands.executeCommand('saropaCapture.exportToLoki', item);
             }
             break;
         case 'copyDeepLink': {
@@ -152,7 +152,7 @@ export async function handleSessionAction(
         }
         case 'addToCollection':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.addToCollection', { uri: item.uri });
+                await vscode.commands.executeCommand('saropaCapture.addToCollection', { uri: item.uri });
             }
             break;
         // Session groups: Group, Ungroup, and Open-as-Merged-Group take the full selection in a
@@ -161,22 +161,22 @@ export async function handleSessionAction(
         // viewer loads for Open, defeating the point.
         case 'group':
             if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.groupSelectedSessions', items[0], items);
+                await vscode.commands.executeCommand('saropaCapture.groupSelectedSessions', items[0], items);
             }
             break;
         case 'ungroup':
             if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.ungroupSession', items[0], items);
+                await vscode.commands.executeCommand('saropaCapture.ungroupSession', items[0], items);
             }
             break;
         case 'openGroup':
             if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.openSessionGroup', items[0], items);
+                await vscode.commands.executeCommand('saropaCapture.openSessionGroup', items[0], items);
             }
             break;
         case 'addGroupToCollection':
             if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.addGroupToCollection', items[0], items);
+                await vscode.commands.executeCommand('saropaCapture.addGroupToCollection', items[0], items);
             }
             break;
         // Investigations: add/remove the selected log(s) to a curated, named investigation. Pass the
@@ -184,12 +184,12 @@ export async function handleSessionAction(
         // it only mutates workspaceState, so no session-list refresh is needed below.
         case 'addToInvestigation':
             if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', items[0], items);
+                await vscode.commands.executeCommand('saropaCapture.addToInvestigation', items[0], items);
             }
             break;
         case 'removeFromInvestigation':
             if (items.length > 0) {
-                await vscode.commands.executeCommand('saropaLogCapture.removeFromInvestigation', items[0], items);
+                await vscode.commands.executeCommand('saropaCapture.removeFromInvestigation', items[0], items);
             }
             break;
         // Controller/Peripheral role override. Writes the role to each selected log's sidecar so it

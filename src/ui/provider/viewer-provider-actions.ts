@@ -40,14 +40,14 @@ async function resolveMtime(
 }
 
 /** Workspace state key for "last viewed" timestamps per log URI (Record<uriString, number>). */
-export const LOG_LAST_VIEWED_KEY = 'saropaLogCapture.logLastViewed';
+export const LOG_LAST_VIEWED_KEY = 'saropaCapture.logLastViewed';
 
 /** Workspace state key for the Logs panel's "newer-log dismiss" cursor (single number ms).
  *  A log is unread (drives the newer-log banner and per-row dot) when its mtime is greater
  *  than this cursor. Acknowledged via the `acknowledgeUnreadLogs` webview message; seeded
  *  to activation-time on first install so the user isn't carpet-bombed with "newer" cues
  *  for pre-existing logs. See [plans/history/2026.06/2026.06.02/001_plan-newer-alert-and-reports-grouping.md]. */
-export const LOGS_PANEL_DISMISSED_AT_KEY = 'saropaLogCapture.logsPanelDismissedAt';
+export const LOGS_PANEL_DISMISSED_AT_KEY = 'saropaCapture.logsPanelDismissedAt';
 
 /** Read the Logs-panel dismiss cursor, seeding it to now on first read.
  *  Seeding here (not only in the panel-open path) matters because the proactive

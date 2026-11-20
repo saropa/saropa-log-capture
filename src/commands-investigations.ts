@@ -136,16 +136,16 @@ export function investigationCommands(
 ): vscode.Disposable[] {
     const reg = vscode.commands.registerCommand;
     return [
-        reg('saropaLogCapture.newInvestigation', () => runNewInvestigation(store)),
-        reg('saropaLogCapture.addToInvestigation', (p?: unknown, s?: unknown) =>
+        reg('saropaCapture.newInvestigation', () => runNewInvestigation(store)),
+        reg('saropaCapture.addToInvestigation', (p?: unknown, s?: unknown) =>
             runAddToInvestigation(store, resolveTargetUris(p, s)),
         ),
-        reg('saropaLogCapture.removeFromInvestigation', (p?: unknown, s?: unknown) =>
+        reg('saropaCapture.removeFromInvestigation', (p?: unknown, s?: unknown) =>
             runRemoveFromInvestigation(store, resolveTargetUris(p, s)),
         ),
-        reg('saropaLogCapture.renameInvestigation', () => runRenameInvestigation(store)),
-        reg('saropaLogCapture.editInvestigationNotes', () => runEditInvestigationNotes(store)),
-        reg('saropaLogCapture.deleteInvestigation', () => runDeleteInvestigation(store)),
-        reg('saropaLogCapture.openInvestigation', () => runOpenInvestigation(store, historyProvider)),
+        reg('saropaCapture.renameInvestigation', () => runRenameInvestigation(store)),
+        reg('saropaCapture.editInvestigationNotes', () => runEditInvestigationNotes(store)),
+        reg('saropaCapture.deleteInvestigation', () => runDeleteInvestigation(store)),
+        reg('saropaCapture.openInvestigation', () => runOpenInvestigation(store, historyProvider)),
     ];
 }

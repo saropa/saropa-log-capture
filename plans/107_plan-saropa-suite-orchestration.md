@@ -12,7 +12,7 @@
 system. The layer *above* the per-repo plans — it does not restate their requirements; it records what
 is actually built, what was deliberately not built, and the manual checks that remain.
 
-This plan lives in `saropa-log-capture` by decision, but it governs all four repos. The per-repo plans
+This plan lives in `saropa-capture` by decision, but it governs all four repos. The per-repo plans
 it sits over:
 
 - **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md`

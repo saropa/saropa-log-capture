@@ -1,6 +1,6 @@
 # Examples (manual / QA)
 
-This folder holds **sample inputs** for manual verification. The Saropa Log Capture extension is a **VS Code** TypeScript project — there is no Dart `pubspec` or `analysis_options.yaml` here.
+This folder holds **sample inputs** for manual verification. The Saropa Capture extension is a **VS Code** TypeScript project — there is no Dart `pubspec` or `analysis_options.yaml` here.
 
 ## Noise learning (Plan 025)
 

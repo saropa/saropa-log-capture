@@ -277,7 +277,7 @@ export function getToolbarScript(): string {
     /* ---- Collapse / expand all sections (moved from the editor view-title bar) ----
        One button that swaps icon + title to reflect state. allSectionsCollapsed is an
        approximate global (the user can still toggle individual groups), matching how the
-       old view-title context key 'saropaLogCapture.allCollapsed' worked. */
+       old view-title context key 'saropaCapture.allCollapsed' worked. */
     var collapseBtn = document.getElementById('toolbar-collapse-btn');
     var allSectionsCollapsed = false;
     var COLLAPSE_TITLE = ${JSON.stringify(t('viewer.toolbar.collapseAll.title'))};

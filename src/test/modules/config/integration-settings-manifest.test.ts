@@ -30,7 +30,7 @@ function manifestProps(): Record<string, ConfigProp> {
 
 suite('integration settings manifest', () => {
     const props = manifestProps();
-    const prefix = 'saropaLogCapture.';
+    const prefix = 'saropaCapture.';
 
     suite('externalLogs adapter', () => {
         test('paths is a string[] defaulting to empty', () => {

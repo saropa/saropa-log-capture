@@ -97,7 +97,7 @@ function panelTitle(hypothesis: RootCauseHypothesis): string {
 function createPanel(hypothesis: RootCauseHypothesis, fileUri: vscode.Uri | undefined): vscode.WebviewPanel {
   const localResourceRoots = fileUri ? [screenshotDirUri(fileUri.fsPath)] : [];
   const panel = vscode.window.createWebviewPanel(
-    'saropaLogCapture.signalReport',
+    'saropaCapture.signalReport',
     panelTitle(hypothesis),
     vscode.ViewColumn.Beside,
     { enableScripts: true, localResourceRoots },
@@ -282,7 +282,7 @@ function handleMessage(
     const uri = msg.uriString as string;
     // openSession loads a log URI into the viewer; the old 'openLog' command
     // this called was never registered, so history rows silently did nothing.
-    if (uri) { vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: vscode.Uri.parse(uri) }); }
+    if (uri) { vscode.commands.executeCommand('saropaCapture.openSession', { uri: vscode.Uri.parse(uri) }); }
   }
   if (msg.type === 'openFile') { openFileFromReport(msg); }
   if (msg.type === 'openUrl') {
@@ -353,7 +353,7 @@ function openFileFromReport(msg: Record<string, unknown>): void {
   if (!uriString) { return; }
   const uri = vscode.Uri.parse(uriString);
   if (msg.kind === 'log') {
-    vscode.commands.executeCommand('saropaLogCapture.openSession', { uri });
+    vscode.commands.executeCommand('saropaCapture.openSession', { uri });
   } else {
     vscode.commands.executeCommand('vscode.open', uri);
   }

@@ -3,7 +3,7 @@
  *
  * Split from the pure parser ([changelog.ts](changelog.ts)) because this layer touches the VS Code
  * filesystem and reads user config — the parser stays IO-free so it can be unit tested with
- * `node --test`. The search globs are user-configurable (`saropaLogCapture.changelogPaths`) so
+ * `node --test`. The search globs are user-configurable (`saropaCapture.changelogPaths`) so
  * monorepos and projects that keep their changelog under `docs/` are not stuck with a root-only scan.
  */
 

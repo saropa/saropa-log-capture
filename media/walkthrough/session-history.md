@@ -18,4 +18,4 @@ All your debug logs are saved and organized for easy access.
 
 ## Searching
 
-Use **Saropa Log Capture: Search Log Files** (Ctrl+Shift+P) to search across all saved logs.
+Use **Saropa Capture: Search Log Files** (Ctrl+Shift+P) to search across all saved logs.

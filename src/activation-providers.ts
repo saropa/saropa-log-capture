@@ -31,7 +31,7 @@ export function setupWebviewProviders(
     const viewerProvider = new LogViewerProvider(context.extensionUri, version, context);
     context.subscriptions.push(
         viewerProvider,
-        vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider, {
+        vscode.window.registerWebviewViewProvider('saropaCapture.logViewer', viewerProvider, {
             webviewOptions: { retainContextWhenHidden: true },
         }),
     );
@@ -40,13 +40,13 @@ export function setupWebviewProviders(
     context.subscriptions.push(
         vitalsPanel,
         vscode.window.registerWebviewViewProvider(VitalsPanelProvider.viewType, vitalsPanel),
-        vscode.commands.registerCommand('saropaLogCapture.refreshVitals', () => vitalsPanel.refresh()),
+        vscode.commands.registerCommand('saropaCapture.refreshVitals', () => vitalsPanel.refresh()),
     );
 
     const crashCodeLens = new CrashlyticsCodeLensProvider();
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
 
-    // Background new-issue / regression watcher (off unless saropaLogCapture.firebase.notifyNewIssues).
+    // Background new-issue / regression watcher (off unless saropaCapture.firebase.notifyNewIssues).
     const crashWatcher = new CrashlyticsWatcher(context);
     context.subscriptions.push(crashWatcher);
     crashWatcher.start();
@@ -62,10 +62,10 @@ export function registerNoRestoreSerializers(context: vscode.ExtensionContext): 
         deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
     };
     for (const viewType of [
-        'saropaLogCapture.signals', 'saropaLogCapture.signalTab', 'saropaLogCapture.bugReport',
-        'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison', 'saropaLogCapture.collection',
-        'saropaLogCapture.popOutViewer',
+        'saropaCapture.signals', 'saropaCapture.signalTab', 'saropaCapture.bugReport',
+        'saropaCapture.analysis', 'saropaCapture.timeline',
+        'saropaCapture.comparison', 'saropaCapture.collection',
+        'saropaCapture.popOutViewer',
     ]) {
         context.subscriptions.push(
             vscode.window.registerWebviewPanelSerializer(viewType, noRestore),

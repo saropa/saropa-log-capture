@@ -28,7 +28,7 @@ The feature is fully usable today without the tree rendering:
 ## Why it was deferred
 
 There is **no native sessions `TreeView`** to add parent nodes to. `package.json` `views` declares
-only webview views (`saropaLogCapture.logViewer`, `saropaLogCapture.vitalsPanel`); the visible Logs
+only webview views (`saropaCapture.logViewer`, `saropaCapture.vitalsPanel`); the visible Logs
 panel is the **webview**, and `SessionHistoryProvider` is a data source feeding it, not a rendered
 VS Code tree. So a persistent investigation parent row is a **webview-rendering change**, not a cheap
 `getChildren()` addition — it touches the webview session-list rendering pipeline

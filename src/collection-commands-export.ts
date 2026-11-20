@@ -8,7 +8,7 @@ import { exportCollectionToSlc } from './modules/export/slc-bundle';
 import type { CollectionStore } from './modules/collection/collection-store';
 
 export function registerExportCollectionCommand(collectionStore: CollectionStore): vscode.Disposable {
-    return vscode.commands.registerCommand('saropaLogCapture.exportCollection', async () => {
+    return vscode.commands.registerCommand('saropaCapture.exportCollection', async () => {
         const collection = await collectionStore.getActiveCollection();
         if (!collection) {
             vscode.window.showWarningMessage(t('msg.noActiveCollection'));

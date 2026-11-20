@@ -5,7 +5,7 @@
  * The headline is composed as literal English (not l10n) to match the existing
  * Executive Summary generators it reuses the style of — flow-map-report.ts builds
  * its narrative the same way (local `plural` helper, hardcoded prose). This payload
- * is a cross-tool data contract keyed by `tool: 'saropa-log-capture'` alongside
+ * is a cross-tool data contract keyed by `tool: 'saropa-capture'` alongside
  * stable English command ids; the consuming sibling owns final presentation.
  */
 
@@ -112,7 +112,7 @@ export function buildTrouble(signals: readonly RecurringSignalEntry[]): SaropaDa
         .map((s) => ({
             label: s.label,
             detail: s.detail ?? `${plural(s.totalOccurrences, 'occurrence')} across ${plural(s.sessionCount, 'log')}`,
-            command: 'saropaLogCapture.openSignal',
+            command: 'saropaCapture.openSignal',
             args: { id: `${s.kind}:${s.fingerprint}` },
         }));
 }

@@ -31,7 +31,7 @@ let lastApiDiagnostic: DiagnosticDetails | undefined;
  * issues for up to the TTL. Uses synchronous config reads only, so it adds no I/O on a cache hit.
  */
 function issueCacheKey(config: FirebaseConfig): string {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
     return `${cfg.get<string>('packageName', '')}|${getTimeRange()}|${config?.projectId ?? ''}`;
 }
 
@@ -45,7 +45,7 @@ export function clearApiCache(): void {
 }
 
 function getTimeRange(): string {
-    return vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+    return vscode.workspace.getConfiguration('saropaCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
 }
 
 /** Filter issues by error tokens (title+subtitle substring); no tokens = keep all. Capped to the page. */
@@ -68,7 +68,7 @@ export async function queryTopIssues(config: FirebaseConfig, token: string, erro
     }
     const packageName = await detectPackageName();
     if (!packageName || typeof token !== 'string') {
-        lastApiDiagnostic = { step: 'config', errorType: 'config', checkedAt: Date.now(), message: 'No Android package name found — add google-services.json / AndroidManifest, or set saropaLogCapture.firebase.packageName.' };
+        lastApiDiagnostic = { step: 'config', errorType: 'config', checkedAt: Date.now(), message: 'No Android package name found — add google-services.json / AndroidManifest, or set saropaCapture.firebase.packageName.' };
         return [];
     }
     const { data, diagnostic } = await fetchPlayErrorIssues({ packageName, token, timeRange: getTimeRange(), quotaProject: config?.projectId ?? '' }, issuePageSize);

@@ -61,7 +61,7 @@ const DESTRUCTIVE_PATTERN = buildKeywordPattern(DESTRUCTIVE_KEYWORDS);
  * explaining why the default is safe.
  */
 const ALLOW_TRUE = new Set([
-	// (none yet — add "saropaLogCapture.x.y" with justification)
+	// (none yet — add "saropaCapture.x.y" with justification)
 ]);
 
 const raw = fs.readFileSync(pkgPath, "utf8");
@@ -99,7 +99,7 @@ for (const [key, schema] of Object.entries(settings)) {
 	}
 
 	// Strip the extension prefix for keyword matching
-	const shortKey = key.replace(/^saropaLogCapture\./, "");
+	const shortKey = key.replace(/^saropaCapture\./, "");
 	if (!DESTRUCTIVE_PATTERN.test(shortKey)) {
 		continue;
 	}

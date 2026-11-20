@@ -1,4 +1,4 @@
-# UI Style Guide — Saropa Log Capture
+# UI Style Guide — Saropa Capture
 
 Design patterns and conventions for the log viewer webview UI.
 
@@ -341,7 +341,7 @@ The minimap container has `cursor: pointer` and receives mouse events directly (
 
 ### Scrollbar Visibility
 
-Native browser scrollbars are opaque compositor elements that render above page content. The minimap panel avoids this entirely by being a sibling element. By default the native vertical scrollbar is hidden (minimap is the only scroll indicator). When `saropaLogCapture.showScrollbar` is true, the native vertical scrollbar is shown (10px) and `#log-content-wrapper` sets `--scrollbar-w: 10px` for CSS that depends on gutter width; jump buttons also call **`syncJumpButtonInset()`** after the toggle so measured layout stays correct. Default (scrollbar off):
+Native browser scrollbars are opaque compositor elements that render above page content. The minimap panel avoids this entirely by being a sibling element. By default the native vertical scrollbar is hidden (minimap is the only scroll indicator). When `saropaCapture.showScrollbar` is true, the native vertical scrollbar is shown (10px) and `#log-content-wrapper` sets `--scrollbar-w: 10px` for CSS that depends on gutter width; jump buttons also call **`syncJumpButtonInset()`** after the toggle so measured layout stays correct. Default (scrollbar off):
 
 ```css
 #log-content { scrollbar-width: none; }

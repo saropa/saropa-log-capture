@@ -18,7 +18,7 @@ export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.D
     // first instance's interval on dispose, or leak a second interval nothing tracks. Instance
     // field keeps the timer's lifetime tied 1:1 to the panel that owns it.
     private refreshTimer: ReturnType<typeof setInterval> | undefined;
-    static readonly viewType = 'saropaLogCapture.vitalsPanel';
+    static readonly viewType = 'saropaCapture.vitalsPanel';
 
     resolveWebviewView(webviewView: vscode.WebviewView): void {
         this.view = webviewView;
@@ -50,7 +50,7 @@ export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.D
 
     private startAutoRefresh(): void {
         if (this.refreshTimer) { return; }
-        const interval = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<number>('refreshInterval', 300);
+        const interval = vscode.workspace.getConfiguration('saropaCapture.firebase').get<number>('refreshInterval', 300);
         // Bug 018: also gate each tick on `visible` — a hidden-but-not-yet-disposed panel
         // (e.g. user switched to another sidebar view) doesn't need a background network query,
         // and skipping it avoids racing a dispose that happens between ticks.
@@ -64,7 +64,7 @@ export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.D
     private async handleMessage(msg: Record<string, unknown>): Promise<void> {
         if (msg.type === 'refresh') { await this.refresh(); }
         else if (msg.type === 'openPlayConsole') {
-            const custom = vscode.workspace.getConfiguration('saropaLogCapture.playConsole').get<string>('appUrl', '');
+            const custom = vscode.workspace.getConfiguration('saropaCapture.playConsole').get<string>('appUrl', '');
             const url = custom || 'https://play.google.com/console';
             vscode.env.openExternal(vscode.Uri.parse(url)).then(undefined, () => {});
         }

@@ -6,7 +6,7 @@
 
 Created: 2026-09-20
 Type: Viewer feature / Tooling
-Related: `saropaLogCapture.explainWithAi` (or equivalent "Explain with AI" command), `src/modules/ai/ai-prompt.ts`, `src/modules/ai/ai-context-builder.ts`
+Related: `saropaCapture.explainWithAi` (or equivalent "Explain with AI" command), `src/modules/ai/ai-prompt.ts`, `src/modules/ai/ai-context-builder.ts`
 
 ---
 

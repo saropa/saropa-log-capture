@@ -30,7 +30,7 @@ export interface SessionKindInput {
 /**
  * Default report-name patterns. Covers the user's observed cases without
  * needing per-provider wiring. Users can extend via the
- * `saropaLogCapture.reportsKindPatterns` setting.
+ * `saropaCapture.reportsKindPatterns` setting.
  *
  * Patterns are matched case-insensitively as JavaScript regular expressions
  * against `displayName`. Anchored examples (`^Json Bundle`) protect against

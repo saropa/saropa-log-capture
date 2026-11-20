@@ -191,7 +191,7 @@ export function getCrashlyticsPanelScript(): string {
                 if (action === 'openGcloudInstall') {
                     vscodeApi.postMessage({ type: 'openGcloudInstall' });
                 } else if (action === 'openCrashlyticsSettings') {
-                    vscodeApi.postMessage({ type: 'openSettings', setting: 'saropaLogCapture.firebase' });
+                    vscodeApi.postMessage({ type: 'openSettings', setting: 'saropaCapture.firebase' });
                 } else if (action === 'crashlyticsOpenGoogleServicesJson') {
                     vscodeApi.postMessage({ type: 'crashlyticsOpenGoogleServicesJson' });
                 } else if (action === 'crashlyticsUseWorkspaceConfig') {

@@ -122,8 +122,8 @@ class SampleKeysTests(unittest.TestCase):
     """_sample_keys filters and samples correctly."""
 
     def test_skips_brand_only(self) -> None:
-        english = {"k1": "Saropa Log Capture"}
-        bundle = {"k1": "Saropa Log Capture"}
+        english = {"k1": "Saropa Capture"}
+        bundle = {"k1": "Saropa Capture"}
         result = _sample_keys(english, bundle, 10)
         self.assertEqual(result, [])
 

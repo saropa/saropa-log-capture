@@ -59,7 +59,7 @@ suite('daily-summary trouble items', () => {
 
     test('should deep-link via openSignal with a kind:fingerprint id', () => {
         const [item] = buildTrouble([signal({ kind: 'network', fingerprint: 'deadbeef', severity: 'critical' })]);
-        assert.strictEqual(item.command, 'saropaLogCapture.openSignal');
+        assert.strictEqual(item.command, 'saropaCapture.openSignal');
         assert.deepStrictEqual(item.args, { id: 'network:deadbeef' });
     });
 

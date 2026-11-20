@@ -7,7 +7,7 @@ import { logExtensionWarn } from "../misc/extension-logger";
 import type { InteractionType, UserInteraction } from "./interaction-types";
 
 export interface ExtractedPattern {
-    /** Valid `saropaLogCapture.exclusions` entry. */
+    /** Valid `saropaCapture.exclusions` entry. */
     pattern: string;
     confidence: number;
     matchCount: number;

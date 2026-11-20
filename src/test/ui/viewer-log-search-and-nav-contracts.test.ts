@@ -77,7 +77,7 @@ suite('Viewer log search and nav contracts', () => {
         const pkg = JSON.parse(fs.readFileSync(root, 'utf8')) as {
             contributes: { configuration: { properties: Record<string, { default?: unknown }> } };
         };
-        const key = 'saropaLogCapture.viewerAlwaysShowSearchMatchOptions';
+        const key = 'saropaCapture.viewerAlwaysShowSearchMatchOptions';
         const prop = pkg.contributes.configuration.properties[key];
         assert.ok(prop, `expected ${key} in package.json`);
         assert.strictEqual(prop.default, false, 'default must be false so toggles stay compact until user opts in');
@@ -90,7 +90,7 @@ suite('Viewer log search and nav contracts', () => {
 
         const listeners = readViewerSrc('activation-listeners.ts');
         assert.ok(
-            listeners.includes('saropaLogCapture.viewerAlwaysShowSearchMatchOptions'),
+            listeners.includes('saropaCapture.viewerAlwaysShowSearchMatchOptions'),
             'config listener must react to this key',
         );
 

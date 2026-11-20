@@ -123,7 +123,7 @@ export function getDecoSettingsHtml(): string {
 
 /**
  * Default visibility of the per-line Columns, baked into the webview at build time.
- * Sourced from the `saropaLogCapture.viewerColumn*` user settings so every newly built
+ * Sourced from the `saropaCapture.viewerColumn*` user settings so every newly built
  * viewer opens with the user's chosen column layout; a toggle in the viewer writes the
  * setting back (see the post* calls below + the host bool map). Optional fields fall back
  * to the historical hardcoded defaults so existing callers and tests need no changes.
@@ -144,15 +144,15 @@ export function getDecoSettingsScript(columns?: ViewerColumnDefaults): string {
     return /* javascript */ `
 /** Sub-toggle: show colored severity dot in decoration prefix. */
 var decoShowDot = true;
-/** Sub-toggle: show sequential counter in decoration prefix. Baked from saropaLogCapture.viewerColumnLineNumbers. */
+/** Sub-toggle: show sequential counter in decoration prefix. Baked from saropaCapture.viewerColumnLineNumbers. */
 var decoShowCounter = ${colLineNumbers};
 /** Sub-toggle: show counter on blank lines (file line number); off by default. */
 var decoShowCounterOnBlank = false;
-/** Sub-toggle: show wall-clock timestamp in decoration prefix. Baked from saropaLogCapture.viewerColumnTimestamp. */
+/** Sub-toggle: show wall-clock timestamp in decoration prefix. Baked from saropaCapture.viewerColumnTimestamp. */
 var decoShowTimestamp = ${colTimestamp};
 /** Sub-toggle: show elapsed time (+Nms) between log lines. */
 var showElapsed = false;
-/** Sub-toggle: show session elapsed time (e.g. 5m 15s) from first log line. Baked from saropaLogCapture.viewerColumnSessionElapsed. */
+/** Sub-toggle: show session elapsed time (e.g. 5m 15s) from first log line. Baked from saropaCapture.viewerColumnSessionElapsed. */
 var decoShowSessionElapsed = ${colSessionElapsed};
 /** Line coloring mode: 'none' (default) or 'line' (whole-line tint). */
 var decoLineColorMode = 'none';
@@ -165,7 +165,7 @@ var stripSourceTagPrefix = true;
 /** Show the parsed source tag column (e.g. flutter, HWUI) in the decoration prefix.
  *  Independent of structuredLineParsing — that toggle controls whether the prefix
  *  is stripped from the message text; this toggle controls whether the chip is
- *  rendered in the reserved tag column. Baked from saropaLogCapture.viewerColumnParsedTag. */
+ *  rendered in the reserved tag column. Baked from saropaCapture.viewerColumnParsedTag. */
 var decoShowParsedTag = ${colParsedTag};
 /** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'.
  *  Out-of-the-box default is true (collapsed) — a noisy log (Drift SELECT flood, logcat
@@ -183,7 +183,7 @@ var stackPreviewCount = 3;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
 
-/* Persist a Columns choice to the user's settings (host writes saropaLogCapture.viewerColumn*
+/* Persist a Columns choice to the user's settings (host writes saropaCapture.viewerColumn*
    at Global scope) so newly built viewers default to it. The initial state of each column is
    baked into the var declarations above from those same settings; this is the write path. */
 function postColumnPref(type, value) {

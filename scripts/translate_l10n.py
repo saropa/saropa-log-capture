@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # ##############################################################################
-# Saropa Log Capture — l10n Translation Pipeline (entry point)
+# Saropa Capture — l10n Translation Pipeline (entry point)
 # ##############################################################################
 #
 # .SYNOPSIS

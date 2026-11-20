@@ -6,125 +6,125 @@ Reference for keybinding `command` values and automation. Titles are raw `packag
 
 | Command ID | Title | Category |
 |------------|-------|----------|
-| `saropaLogCapture.addExternalLogPath` | %command.addExternalLogPath.title% |  |
-| `saropaLogCapture.addGroupToCollection` | Saropa Log Capture: Add Group to Collection |  |
-| `saropaLogCapture.addSessionNote` | %command.addSessionNote.title% |  |
-| `saropaLogCapture.addSignalItemToCollection` | %command.addSignalItemToCollection.title% |  |
-| `saropaLogCapture.addToCollection` | %command.addToCollection.title% |  |
-| `saropaLogCapture.addToInvestigation` | Saropa Log Capture: Add to Investigation |  |
-| `saropaLogCapture.applyPreset` | %command.applyPreset.title% |  |
-| `saropaLogCapture.applyTemplate` | %command.applyTemplate.title% |  |
-| `saropaLogCapture.captureScreenshot` | %command.captureScreenshot.title% |  |
-| `saropaLogCapture.checkFilterSuggestions` | %command.checkFilterSuggestions.title% |  |
-| `saropaLogCapture.clear` | %command.clear.title% |  |
-| `saropaLogCapture.clearBuildCiAzurePat` | Saropa: Clear Build/CI Azure PAT |  |
-| `saropaLogCapture.clearBuildCiGithubToken` | Saropa: Clear Build/CI GitHub Token |  |
-| `saropaLogCapture.clearBuildCiGitlabToken` | Saropa: Clear Build/CI GitLab Token |  |
-| `saropaLogCapture.clearDatabaseApiToken` | Saropa Log Capture: Clear Database API Token |  |
-| `saropaLogCapture.clearGitHubToken` | %command.clearGitHubToken.title% |  |
-| `saropaLogCapture.clearGlobalAggregates` | %command.clearGlobalAggregates.title% |  |
-| `saropaLogCapture.clearLearningData` | %command.clearLearningData.title% |  |
-| `saropaLogCapture.clearShareHistory` | %command.clearShareHistory.title% |  |
-| `saropaLogCapture.closeCollection` | %command.closeCollection.title% |  |
-| `saropaLogCapture.collapseAllSections` | %command.collapseAllSections.title% |  |
-| `saropaLogCapture.compareLogToCommit` | %command.compareLogToCommit.title% |  |
-| `saropaLogCapture.compareLogToPreviousCommit` | %command.compareLogToPreviousCommit.title% |  |
-| `saropaLogCapture.compareSessions` | %command.compareSessions.title% |  |
-| `saropaLogCapture.compareThreeSessions` | %command.compareThreeSessions.title% |  |
-| `saropaLogCapture.configureIntegrations` | %command.configureIntegrations.title% |  |
-| `saropaLogCapture.copyAllFilteredLines` | %command.copyAllFilteredLines.title% |  |
-| `saropaLogCapture.copyDeepLink` | %command.copyDeepLink.title% |  |
-| `saropaLogCapture.copyFilePath` | %command.copyFilePath.title% |  |
-| `saropaLogCapture.createCollection` | %command.createCollection.title% |  |
-| `saropaLogCapture.createReportFile` | %command.createReportFile.title% |  |
-| `saropaLogCapture.debugProjectIndexRanking` | Debug Project Index Ranking |  |
-| `saropaLogCapture.delete` | %command.delete.title% |  |
-| `saropaLogCapture.deleteCollection` | %command.deleteCollection.title% |  |
-| `saropaLogCapture.deleteInvestigation` | Saropa Log Capture: Delete Investigation |  |
-| `saropaLogCapture.deleteSession` | %command.deleteSession.title% |  |
-| `saropaLogCapture.diagnoseScreenshots` | %command.diagnoseScreenshots.title% |  |
-| `saropaLogCapture.editInvestigationNotes` | Saropa Log Capture: Edit Investigation Notes |  |
-| `saropaLogCapture.emptyTrash` | %command.emptyTrash.title% |  |
-| `saropaLogCapture.expandAllSections` | %command.expandAllSections.title% |  |
-| `saropaLogCapture.explainRootCauseHypotheses` | %command.explainRootCauseHypotheses.title% |  |
-| `saropaLogCapture.exportCollection` | %command.exportCollection.title% |  |
-| `saropaLogCapture.exportCsv` | %command.exportCsv.title% |  |
-| `saropaLogCapture.exportFlowMap` | %command.exportFlowMap.title% |  |
-| `saropaLogCapture.exportHtml` | %command.exportHtml.title% |  |
-| `saropaLogCapture.exportHtmlInteractive` | %command.exportHtmlInteractive.title% |  |
-| `saropaLogCapture.exportJson` | %command.exportJson.title% |  |
-| `saropaLogCapture.exportJsonl` | %command.exportJsonl.title% |  |
-| `saropaLogCapture.exportSignalsSummary` | %command.exportSignalsSummary.title% |  |
-| `saropaLogCapture.exportSlc` | %command.exportSlc.title% |  |
-| `saropaLogCapture.exportToLoki` | %command.exportToLoki.title% |  |
-| `saropaLogCapture.generateReport` | %command.generateReport.title% |  |
-| `saropaLogCapture.gotoLineInViewer` | %command.gotoLineInViewer.title% |  |
-| `saropaLogCapture.groupSelectedSessions` | Saropa Log Capture: Group Selected Sessions |  |
-| `saropaLogCapture.importSlc` | %command.importSlc.title% |  |
-| `saropaLogCapture.insertMarker` | %command.insertMarker.title% |  |
-| `saropaLogCapture.markForComparison` | %command.markForComparison.title% |  |
-| `saropaLogCapture.maximizePanel` | %command.maximizePanel.title% |  |
-| `saropaLogCapture.newCollectionFromSessions` | %command.newCollectionFromSessions.title% |  |
-| `saropaLogCapture.newInvestigation` | Saropa Log Capture: New Investigation |  |
-| `saropaLogCapture.open` | %command.open.title% |  |
-| `saropaLogCapture.openChangelog` | %command.openChangelog.title% |  |
-| `saropaLogCapture.openCollection` | %command.openCollection.title% |  |
-| `saropaLogCapture.openExternalLogsForSession` | %command.openExternalLogsForSession.title% |  |
-| `saropaLogCapture.openFolder` | %command.openFolder.title% |  |
-| `saropaLogCapture.openInvestigation` | Saropa Log Capture: Open Investigation |  |
-| `saropaLogCapture.openLogFile` | %command.openLogFile.title% |  |
-| `saropaLogCapture.openLogFromUrl` | %command.openLogFromUrl.title% |  |
-| `saropaLogCapture.openQualityReport` | %command.openQualityReport.title% |  |
-| `saropaLogCapture.openSession` | %command.openSession.title% |  |
-| `saropaLogCapture.openSessionGroup` | Saropa Log Capture: Open Session Group (Merged) |  |
-| `saropaLogCapture.openSettings` | %command.openSettings.title% |  |
-| `saropaLogCapture.openSignal` | %command.openSignal.title% |  |
-| `saropaLogCapture.openSignalsInTab` | %command.openSignalsInTab.title% |  |
-| `saropaLogCapture.openSqlHistoryForFingerprint` | %command.openSqlHistoryForFingerprint.title% |  |
-| `saropaLogCapture.openSqlQueryHistory` | %command.openSqlQueryHistory.title% |  |
-| `saropaLogCapture.openTailedFile` | %command.openTailedFile.title% |  |
-| `saropaLogCapture.openWalkthrough` | %command.openWalkthrough.title% |  |
-| `saropaLogCapture.pause` | %command.pause.title% |  |
-| `saropaLogCapture.popOutViewer` | %command.popOutViewer.title% |  |
-| `saropaLogCapture.rebuildProjectIndex` | Rebuild Project Index |  |
-| `saropaLogCapture.rebuildSearchIndex` | Rebuild Log Search Index |  |
-| `saropaLogCapture.refreshHistory` | %command.refreshHistory.title% |  |
-| `saropaLogCapture.refreshRecurringSignals` | %command.refreshRecurringSignals.title% |  |
-| `saropaLogCapture.refreshVitals` | %command.refreshVitals.title% |  |
-| `saropaLogCapture.removeFromCollection` | %command.removeFromCollection.title% |  |
-| `saropaLogCapture.removeFromInvestigation` | Saropa Log Capture: Remove from Investigation |  |
-| `saropaLogCapture.renameInvestigation` | Saropa Log Capture: Rename Investigation |  |
-| `saropaLogCapture.renameSession` | %command.renameSession.title% |  |
-| `saropaLogCapture.replay` | %command.replay.title% |  |
-| `saropaLogCapture.resetAllSettings` | %command.resetAllSettings.title% |  |
-| `saropaLogCapture.restoreSession` | %command.restoreSession.title% |  |
-| `saropaLogCapture.savePreset` | %command.savePreset.title% |  |
-| `saropaLogCapture.saveTemplate` | %command.saveTemplate.title% |  |
-| `saropaLogCapture.searchLogs` | %command.searchLogs.title% |  |
-| `saropaLogCapture.setBuildCiAzurePat` | Saropa: Set Build/CI Azure PAT |  |
-| `saropaLogCapture.setBuildCiGithubToken` | Saropa: Set Build/CI GitHub Token |  |
-| `saropaLogCapture.setBuildCiGitlabToken` | Saropa: Set Build/CI GitLab Token |  |
-| `saropaLogCapture.setDatabaseApiToken` | Saropa Log Capture: Set Database API Token |  |
-| `saropaLogCapture.setLokiApiKey` | %command.setLokiApiKey.title% |  |
-| `saropaLogCapture.shareCollection` | %command.shareCollection.title% |  |
-| `saropaLogCapture.showCodeQualityForFrame` | %command.showCodeQualityForFrame.title% |  |
-| `saropaLogCapture.showFilterSuggestions` | %command.showFilterSuggestions.title% |  |
-| `saropaLogCapture.showLogReferences` | %command.showLogReferences.title% |  |
-| `saropaLogCapture.showRelatedQueries` | %command.showRelatedQueries.title% |  |
-| `saropaLogCapture.showSignals` | %command.showSignals.title% |  |
-| `saropaLogCapture.splitNow` | %command.splitNow.title% |  |
-| `saropaLogCapture.start` | %command.start.title% |  |
-| `saropaLogCapture.stop` | %command.stop.title% |  |
-| `saropaLogCapture.switchCollection` | %command.switchCollection.title% |  |
-| `saropaLogCapture.tagSession` | %command.tagSession.title% |  |
-| `saropaLogCapture.toggleCapture` | %command.toggleCapture.title% |  |
-| `saropaLogCapture.toggleInlineDecorations` | %command.toggleInlineDecorations.title% |  |
-| `saropaLogCapture.toggleSearchOverlay` | %command.toggleSearchOverlay.title% |  |
-| `saropaLogCapture.toggleTrash` | %command.toggleTrash.title% |  |
-| `saropaLogCapture.trashSession` | %command.trashSession.title% |  |
-| `saropaLogCapture.troubleMode.errorsOnly` | %command.troubleModeErrorsOnly.title% |  |
-| `saropaLogCapture.troubleMode.resetLevels` | %command.troubleModeResetLevels.title% |  |
-| `saropaLogCapture.troubleMode.toggle` | %command.troubleModeToggle.title% |  |
-| `saropaLogCapture.ungroupSession` | Saropa Log Capture: Ungroup Session |  |
+| `saropaCapture.addExternalLogPath` | %command.addExternalLogPath.title% |  |
+| `saropaCapture.addGroupToCollection` | Saropa Capture: Add Group to Collection |  |
+| `saropaCapture.addSessionNote` | %command.addSessionNote.title% |  |
+| `saropaCapture.addSignalItemToCollection` | %command.addSignalItemToCollection.title% |  |
+| `saropaCapture.addToCollection` | %command.addToCollection.title% |  |
+| `saropaCapture.addToInvestigation` | Saropa Capture: Add to Investigation |  |
+| `saropaCapture.applyPreset` | %command.applyPreset.title% |  |
+| `saropaCapture.applyTemplate` | %command.applyTemplate.title% |  |
+| `saropaCapture.captureScreenshot` | %command.captureScreenshot.title% |  |
+| `saropaCapture.checkFilterSuggestions` | %command.checkFilterSuggestions.title% |  |
+| `saropaCapture.clear` | %command.clear.title% |  |
+| `saropaCapture.clearBuildCiAzurePat` | Saropa: Clear Build/CI Azure PAT |  |
+| `saropaCapture.clearBuildCiGithubToken` | Saropa: Clear Build/CI GitHub Token |  |
+| `saropaCapture.clearBuildCiGitlabToken` | Saropa: Clear Build/CI GitLab Token |  |
+| `saropaCapture.clearDatabaseApiToken` | Saropa Capture: Clear Database API Token |  |
+| `saropaCapture.clearGitHubToken` | %command.clearGitHubToken.title% |  |
+| `saropaCapture.clearGlobalAggregates` | %command.clearGlobalAggregates.title% |  |
+| `saropaCapture.clearLearningData` | %command.clearLearningData.title% |  |
+| `saropaCapture.clearShareHistory` | %command.clearShareHistory.title% |  |
+| `saropaCapture.closeCollection` | %command.closeCollection.title% |  |
+| `saropaCapture.collapseAllSections` | %command.collapseAllSections.title% |  |
+| `saropaCapture.compareLogToCommit` | %command.compareLogToCommit.title% |  |
+| `saropaCapture.compareLogToPreviousCommit` | %command.compareLogToPreviousCommit.title% |  |
+| `saropaCapture.compareSessions` | %command.compareSessions.title% |  |
+| `saropaCapture.compareThreeSessions` | %command.compareThreeSessions.title% |  |
+| `saropaCapture.configureIntegrations` | %command.configureIntegrations.title% |  |
+| `saropaCapture.copyAllFilteredLines` | %command.copyAllFilteredLines.title% |  |
+| `saropaCapture.copyDeepLink` | %command.copyDeepLink.title% |  |
+| `saropaCapture.copyFilePath` | %command.copyFilePath.title% |  |
+| `saropaCapture.createCollection` | %command.createCollection.title% |  |
+| `saropaCapture.createReportFile` | %command.createReportFile.title% |  |
+| `saropaCapture.debugProjectIndexRanking` | Debug Project Index Ranking |  |
+| `saropaCapture.delete` | %command.delete.title% |  |
+| `saropaCapture.deleteCollection` | %command.deleteCollection.title% |  |
+| `saropaCapture.deleteInvestigation` | Saropa Capture: Delete Investigation |  |
+| `saropaCapture.deleteSession` | %command.deleteSession.title% |  |
+| `saropaCapture.diagnoseScreenshots` | %command.diagnoseScreenshots.title% |  |
+| `saropaCapture.editInvestigationNotes` | Saropa Capture: Edit Investigation Notes |  |
+| `saropaCapture.emptyTrash` | %command.emptyTrash.title% |  |
+| `saropaCapture.expandAllSections` | %command.expandAllSections.title% |  |
+| `saropaCapture.explainRootCauseHypotheses` | %command.explainRootCauseHypotheses.title% |  |
+| `saropaCapture.exportCollection` | %command.exportCollection.title% |  |
+| `saropaCapture.exportCsv` | %command.exportCsv.title% |  |
+| `saropaCapture.exportFlowMap` | %command.exportFlowMap.title% |  |
+| `saropaCapture.exportHtml` | %command.exportHtml.title% |  |
+| `saropaCapture.exportHtmlInteractive` | %command.exportHtmlInteractive.title% |  |
+| `saropaCapture.exportJson` | %command.exportJson.title% |  |
+| `saropaCapture.exportJsonl` | %command.exportJsonl.title% |  |
+| `saropaCapture.exportSignalsSummary` | %command.exportSignalsSummary.title% |  |
+| `saropaCapture.exportSlc` | %command.exportSlc.title% |  |
+| `saropaCapture.exportToLoki` | %command.exportToLoki.title% |  |
+| `saropaCapture.generateReport` | %command.generateReport.title% |  |
+| `saropaCapture.gotoLineInViewer` | %command.gotoLineInViewer.title% |  |
+| `saropaCapture.groupSelectedSessions` | Saropa Capture: Group Selected Sessions |  |
+| `saropaCapture.importSlc` | %command.importSlc.title% |  |
+| `saropaCapture.insertMarker` | %command.insertMarker.title% |  |
+| `saropaCapture.markForComparison` | %command.markForComparison.title% |  |
+| `saropaCapture.maximizePanel` | %command.maximizePanel.title% |  |
+| `saropaCapture.newCollectionFromSessions` | %command.newCollectionFromSessions.title% |  |
+| `saropaCapture.newInvestigation` | Saropa Capture: New Investigation |  |
+| `saropaCapture.open` | %command.open.title% |  |
+| `saropaCapture.openChangelog` | %command.openChangelog.title% |  |
+| `saropaCapture.openCollection` | %command.openCollection.title% |  |
+| `saropaCapture.openExternalLogsForSession` | %command.openExternalLogsForSession.title% |  |
+| `saropaCapture.openFolder` | %command.openFolder.title% |  |
+| `saropaCapture.openInvestigation` | Saropa Capture: Open Investigation |  |
+| `saropaCapture.openLogFile` | %command.openLogFile.title% |  |
+| `saropaCapture.openLogFromUrl` | %command.openLogFromUrl.title% |  |
+| `saropaCapture.openQualityReport` | %command.openQualityReport.title% |  |
+| `saropaCapture.openSession` | %command.openSession.title% |  |
+| `saropaCapture.openSessionGroup` | Saropa Capture: Open Session Group (Merged) |  |
+| `saropaCapture.openSettings` | %command.openSettings.title% |  |
+| `saropaCapture.openSignal` | %command.openSignal.title% |  |
+| `saropaCapture.openSignalsInTab` | %command.openSignalsInTab.title% |  |
+| `saropaCapture.openSqlHistoryForFingerprint` | %command.openSqlHistoryForFingerprint.title% |  |
+| `saropaCapture.openSqlQueryHistory` | %command.openSqlQueryHistory.title% |  |
+| `saropaCapture.openTailedFile` | %command.openTailedFile.title% |  |
+| `saropaCapture.openWalkthrough` | %command.openWalkthrough.title% |  |
+| `saropaCapture.pause` | %command.pause.title% |  |
+| `saropaCapture.popOutViewer` | %command.popOutViewer.title% |  |
+| `saropaCapture.rebuildProjectIndex` | Rebuild Project Index |  |
+| `saropaCapture.rebuildSearchIndex` | Rebuild Log Search Index |  |
+| `saropaCapture.refreshHistory` | %command.refreshHistory.title% |  |
+| `saropaCapture.refreshRecurringSignals` | %command.refreshRecurringSignals.title% |  |
+| `saropaCapture.refreshVitals` | %command.refreshVitals.title% |  |
+| `saropaCapture.removeFromCollection` | %command.removeFromCollection.title% |  |
+| `saropaCapture.removeFromInvestigation` | Saropa Capture: Remove from Investigation |  |
+| `saropaCapture.renameInvestigation` | Saropa Capture: Rename Investigation |  |
+| `saropaCapture.renameSession` | %command.renameSession.title% |  |
+| `saropaCapture.replay` | %command.replay.title% |  |
+| `saropaCapture.resetAllSettings` | %command.resetAllSettings.title% |  |
+| `saropaCapture.restoreSession` | %command.restoreSession.title% |  |
+| `saropaCapture.savePreset` | %command.savePreset.title% |  |
+| `saropaCapture.saveTemplate` | %command.saveTemplate.title% |  |
+| `saropaCapture.searchLogs` | %command.searchLogs.title% |  |
+| `saropaCapture.setBuildCiAzurePat` | Saropa: Set Build/CI Azure PAT |  |
+| `saropaCapture.setBuildCiGithubToken` | Saropa: Set Build/CI GitHub Token |  |
+| `saropaCapture.setBuildCiGitlabToken` | Saropa: Set Build/CI GitLab Token |  |
+| `saropaCapture.setDatabaseApiToken` | Saropa Capture: Set Database API Token |  |
+| `saropaCapture.setLokiApiKey` | %command.setLokiApiKey.title% |  |
+| `saropaCapture.shareCollection` | %command.shareCollection.title% |  |
+| `saropaCapture.showCodeQualityForFrame` | %command.showCodeQualityForFrame.title% |  |
+| `saropaCapture.showFilterSuggestions` | %command.showFilterSuggestions.title% |  |
+| `saropaCapture.showLogReferences` | %command.showLogReferences.title% |  |
+| `saropaCapture.showRelatedQueries` | %command.showRelatedQueries.title% |  |
+| `saropaCapture.showSignals` | %command.showSignals.title% |  |
+| `saropaCapture.splitNow` | %command.splitNow.title% |  |
+| `saropaCapture.start` | %command.start.title% |  |
+| `saropaCapture.stop` | %command.stop.title% |  |
+| `saropaCapture.switchCollection` | %command.switchCollection.title% |  |
+| `saropaCapture.tagSession` | %command.tagSession.title% |  |
+| `saropaCapture.toggleCapture` | %command.toggleCapture.title% |  |
+| `saropaCapture.toggleInlineDecorations` | %command.toggleInlineDecorations.title% |  |
+| `saropaCapture.toggleSearchOverlay` | %command.toggleSearchOverlay.title% |  |
+| `saropaCapture.toggleTrash` | %command.toggleTrash.title% |  |
+| `saropaCapture.trashSession` | %command.trashSession.title% |  |
+| `saropaCapture.troubleMode.errorsOnly` | %command.troubleModeErrorsOnly.title% |  |
+| `saropaCapture.troubleMode.resetLevels` | %command.troubleModeResetLevels.title% |  |
+| `saropaCapture.troubleMode.toggle` | %command.troubleModeToggle.title% |  |
+| `saropaCapture.ungroupSession` | Saropa Capture: Ungroup Session |  |
 
 **Total:** 120 commands.

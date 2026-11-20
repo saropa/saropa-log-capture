@@ -23,7 +23,7 @@ import re
 # BRAND_TOKENS, so is_brand_only()'s token derivation can't catch them on its
 # own. "Saropa Lints" is the case in point: "Saropa" is a token but "Lints" is
 # not, so without this set it would look half-translatable. Pure-token strings
-# ("Crashlytics", "Docker", "Saropa Log Capture") do NOT need listing here.
+# ("Crashlytics", "Docker", "Saropa Capture") do NOT need listing here.
 BRAND_ONLY_STRINGS: frozenset[str] = frozenset({
     "Saropa Lints",
 })
@@ -94,12 +94,12 @@ VERIFIED_IDENTICAL: dict[str, frozenset[str]] = {
 }
 
 # Substrings that must survive translation verbatim. Ordered longest-first
-# so "Saropa Log Capture" is matched before "Saropa" during placeholder
+# so "Saropa Capture" is matched before "Saropa" during placeholder
 # substitution.
 BRAND_TOKENS: tuple[str, ...] = (
-    "Saropa Log Capture",
+    "Saropa Capture",
     "Saropa Lints",
-    "saropaLogCapture",
+    "saropaCapture",
     "Saropa",
     "GitHub Copilot Chat",
     "GitHub",
@@ -256,7 +256,7 @@ def shield_brands(text: str) -> tuple[str, list[tuple[str, str]]]:
     """Replace brand tokens with sentinel placeholders like XBQACVKZ.
 
     Returns (shielded_text, [(sentinel, original), ...]).
-    Longest brands are replaced first so "Saropa Log Capture" is one
+    Longest brands are replaced first so "Saropa Capture" is one
     token, not "Saropa" + "Log Capture".
     """
     replacements: list[tuple[str, str]] = []

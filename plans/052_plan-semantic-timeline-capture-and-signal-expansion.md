@@ -39,8 +39,8 @@ Items below qualify as quick wins because they (a) ship on **existing data** —
 
 ### Tier 3 — Bug report variants (no SDK, no redaction blocker)
 
-- [x] **E3** — GitHub-issue preset: variant of the existing formatter targeting GitHub's template conventions (Summary / Steps / Current Route / Recent Actions / Errors / Network / Device / Screenshots). New command `saropaLogCapture.exportGitHubIssue`.
-- [x] **E4** — Compact handoff bundle: a 3-section markdown subset (~30 lines max) for "I'm stuck, can you look?" Slack messages. Subset of existing formatter, no new data collection. Command `saropaLogCapture.copyHandoffBundle`.
+- [x] **E3** — GitHub-issue preset: variant of the existing formatter targeting GitHub's template conventions (Summary / Steps / Current Route / Recent Actions / Errors / Network / Device / Screenshots). New command `saropaCapture.exportGitHubIssue`.
+- [x] **E4** — Compact handoff bundle: a 3-section markdown subset (~30 lines max) for "I'm stuck, can you look?" Slack messages. Subset of existing formatter, no new data collection. Command `saropaCapture.copyHandoffBundle`.
 
 ### Recommended ship order
 
@@ -180,7 +180,7 @@ SaropaCaptureRouteObserver();
 - Default N = 50/sec, configurable.
 
 #### B7. Verification
-- Sample Flutter app in the SDK repo. F5 in saropa-log-capture against that app. Viewer shows route ribbon, action badges, expandable payload. Visible bug = visible regression.
+- Sample Flutter app in the SDK repo. F5 in saropa-capture against that app. Viewer shows route ribbon, action badges, expandable payload. Visible bug = visible regression.
 
 ---
 
@@ -199,9 +199,9 @@ The extension already classifies lines via [src/ui/viewer/viewer-data-helpers.ts
 - `calcItemHeight()` and filter logic per `.claude/rules/global.md` "Webview Viewer Filters" — flag classification flows through `addToData → item.eventType → calcItemHeight`.
 
 #### C3. Settings
-- `saropaLogCapture.timeline.enabled` (default `true`) — master kill switch.
-- `saropaLogCapture.timeline.routeRibbon` (default `true`).
-- `saropaLogCapture.timeline.maxEventDataKb` (default `4`).
+- `saropaCapture.timeline.enabled` (default `true`) — master kill switch.
+- `saropaCapture.timeline.routeRibbon` (default `true`).
+- `saropaCapture.timeline.maxEventDataKb` (default `4`).
 
 #### C4. Verification
 - Unit test: log file with 20 mixed prefixed lines + 80 regular lines parses to correct mixed type distribution.
@@ -273,12 +273,12 @@ The existing formatter at [src/modules/bug-report/bug-report-formatter.ts:26-59]
 
 #### E3. GitHub-issue preset
 - Existing formatter targets a single rich template. Add a `mode: 'github-issue'` parameter that produces a tighter variant: Summary / Steps / Current Route / Recent Actions / Errors / Network Calls / Device Info / Screenshots — sectioned to match GitHub issue template conventions.
-- Triggered via new command: `saropaLogCapture.exportGitHubIssue`.
+- Triggered via new command: `saropaCapture.exportGitHubIssue`.
 
 #### E4. Compact handoff bundle
 - A 3-section markdown subset: "What happened" / "Where" / "What to look at next".
 - ~30 lines max. For "I'm stuck, can you look at this?" Slack/Discord messages.
-- Command: `saropaLogCapture.copyHandoffBundle`.
+- Command: `saropaCapture.copyHandoffBundle`.
 
 #### E5. Verification
 - Generate report from a fixture session with 12 events + 1 error → assert Crash Context section appears, lists correct 3 actions, correct previous route.
@@ -441,7 +441,7 @@ Optional. Ship after Workstreams E and I.
 #### H1. Webhook destination via VS Code secret storage
 - Settings reference a webhook *name*; the URL is stored in `context.secrets`.
 - Never store webhook URLs in `settings.json` (sync surface; leak risk).
-- Command: `saropaLogCapture.configureWebhook` to add/remove named webhooks.
+- Command: `saropaCapture.configureWebhook` to add/remove named webhooks.
 
 #### H2. Slack Block Kit payload
 - Bug report → posted as Block Kit blocks (header, divider, error fingerprint, three action buttons "Copy markdown", "Open in editor", "Mark resolved").
@@ -463,7 +463,7 @@ Optional. Ship after Workstreams E and I.
 Must land before any sharing destination ships. Privacy work is a hard prerequisite, not a polish item.
 
 #### I1. Rule definition
-- Settings: `saropaLogCapture.redaction.rules`: array of rules.
+- Settings: `saropaCapture.redaction.rules`: array of rules.
 - Each rule: `{match: 'header'|'json-field'|'regex', pattern: string, replacement: string}`.
 - Default rules ship in package.json: `Authorization`, `Cookie`, `Set-Cookie`, `X-API-Key`, `X-Auth-Token`, JSON fields `password`, `token`, `secret`, `apiKey`, `ssn`, `creditCard`.
 

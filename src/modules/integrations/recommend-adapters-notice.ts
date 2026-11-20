@@ -20,7 +20,7 @@ import {
 import { INTEGRATION_ADAPTERS, showIntegrationsPicker } from './integrations-ui';
 import { hasAndroidApp } from '../misc/workspace-app-detection';
 
-const SECTION = 'saropaLogCapture';
+const SECTION = 'saropaCapture';
 const ADAPTERS_KEY = 'integrations.adapters';
 /** Workspace-state prefix; the suffix is the sorted suggested-id set so a new suggestion re-prompts. */
 const dismissedKeyPrefix = 'slc.adapterRecommendDismissed.';

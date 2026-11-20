@@ -1,4 +1,4 @@
-# VS Code Output panel vs Saropa Log Capture integrations
+# VS Code Output panel vs Saropa Capture integrations
 
 **Status:** Deferred / reference analysis  
 **Context:** The VS Code (and Cursor) **Output** view lists many channels (Git, language servers, Prettier, extension-specific logs, etc.). This document records whether those streams can be captured into the Saropa log viewer at user discretion, grounded in **this repository** and the **public VS Code extension API** (`@types/vscode` as depended on by the project).
@@ -6,14 +6,14 @@
 ## Summary
 
 - **Capturing every arbitrary Output dropdown channel automatically** (the same data the built-in Output view shows for Git, Python Language Server, third-party extensions, etc.) is **not** available through the documented extension API: you only receive `OutputChannel` instances for channels **this extension creates**; there is no supported way to enumerate all channels or subscribe to other extensions’ output buffers.
-- **This codebase** already implements a discretionary integration model (`saropaLogCapture.integrations.adapters`) with many built-in providers; **none** of them integrate with foreign VS Code Output channels. The closest parallels are **Integrated Terminal** capture (different surface than Output) and **external file log** tailing (user-configured paths).
+- **This codebase** already implements a discretionary integration model (`saropaCapture.integrations.adapters`) with many built-in providers; **none** of them integrate with foreign VS Code Output channels. The closest parallels are **Integrated Terminal** capture (different surface than Output) and **external file log** tailing (user-configured paths).
 - **Possible future work** must be honest about the gap: e.g. new adapters for **known on-disk logs**, cooperation via **`registerIntegrationProvider`**, or manual export/import—not “mirror the whole Output dropdown.”
 
 ## What existing integrations do (this repo)
 
 Built-in providers are registered in `src/activation-integrations.ts` (packages / lockfile, build/CI, git, environment, test results, code quality, coverage, crash dumps, Windows events, Docker, performance, terminal, Linux logs, external logs, security, database, HTTP, browser DevTools, Drift Advisor).
 
-User **opt-in** is via `saropaLogCapture.integrations.adapters` (`integrationsAdapters` on the resolved config object). The viewer and Quick Pick UI list adapters in `src/modules/integrations/integrations-ui.ts` (`INTEGRATION_ADAPTERS`).
+User **opt-in** is via `saropaCapture.integrations.adapters` (`integrationsAdapters` on the resolved config object). The viewer and Quick Pick UI list adapters in `src/modules/integrations/integrations-ui.ts` (`INTEGRATION_ADAPTERS`).
 
 Session start (`src/modules/session/session-lifecycle-init.ts`) only starts:
 

@@ -232,7 +232,7 @@ export function generateContextHeader(
     appendLaunchConfig(lines, ctx.configuration, config.redactEnvVars);
 
     lines.push(`VS Code:        ${ctx.vscodeVersion}`);
-    lines.push(`Extension:      saropa-log-capture v${ctx.extensionVersion}`);
+    lines.push(`Extension:      saropa-capture v${ctx.extensionVersion}`);
     lines.push(`OS:             ${ctx.os}`);
     appendDevEnvironment(lines, ctx.devEnvironment);
     if (extraLines?.length) {

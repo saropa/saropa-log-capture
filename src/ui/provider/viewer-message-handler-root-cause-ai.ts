@@ -23,7 +23,7 @@ export function runExplainRootCauseHypotheses(msg: Record<string, unknown>, ctx:
   const text = msgStr(msg, "text").trim();
   const lineIdx = safeLineIndex(msg.lineIndex, 0);
   if (!uri || !text) { return; }
-  const aiCfg = vscode.workspace.getConfiguration("saropaLogCapture.ai");
+  const aiCfg = vscode.workspace.getConfiguration("saropaCapture.ai");
   if (!aiCfg.get<boolean>("enabled", false)) {
     const enableLabel = t("action.enable");
     vscode.window.showInformationMessage(t("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {

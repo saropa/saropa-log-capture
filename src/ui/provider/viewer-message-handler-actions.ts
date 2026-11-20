@@ -52,7 +52,7 @@ function clipTextFromMsg(m: Record<string, unknown>): string {
 function applyAddAutoHidePattern(msg: Record<string, unknown>): void {
   const pattern = msgStr(msg, "pattern").trim();
   if (!pattern) { return; }
-  const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+  const cfg = vscode.workspace.getConfiguration("saropaCapture");
   const current = cfg.get<string[]>("autoHidePatterns") ?? [];
   if (!current.some(p => p.toLowerCase() === pattern.toLowerCase())) {
     cfg.update("autoHidePatterns", [...current, pattern], vscode.ConfigurationTarget.Workspace).then(undefined, () => {});
@@ -62,7 +62,7 @@ function applyAddAutoHidePattern(msg: Record<string, unknown>): void {
 function applyRemoveAutoHidePattern(msg: Record<string, unknown>): void {
   const pattern = msgStr(msg, "pattern").trim();
   if (!pattern) { return; }
-  const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+  const cfg = vscode.workspace.getConfiguration("saropaCapture");
   const current = cfg.get<string[]>("autoHidePatterns") ?? [];
   const lower = pattern.toLowerCase();
   const updated = current.filter(p => p.toLowerCase() !== lower);
@@ -90,7 +90,7 @@ function runExplainWithAi(msg: Record<string, unknown>, ctx: ViewerMessageContex
   const text = msgStr(msg, "text").trim();
   const lineIdx = safeLineIndex(msg.lineIndex, 0);
   if (!uri || !text) { return; }
-  const aiCfg = vscode.workspace.getConfiguration("saropaLogCapture.ai");
+  const aiCfg = vscode.workspace.getConfiguration("saropaCapture.ai");
   if (!aiCfg.get<boolean>("enabled", false)) {
     const enableLabel = t("action.enable");
     vscode.window.showInformationMessage(t("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {
@@ -236,7 +236,7 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
     case "copyWithSource": runCopyWithSource(msg); return true;
     case "copyErrorWarningJson": runCopyErrorWarningJson(msg, ctx); return true;
     case "presetApplied":
-      if (msg.name) { ctx.context.workspaceState.update("saropaLogCapture.lastUsedPresetName", msgStr(msg, "name")).then(undefined, () => {}); }
+      if (msg.name) { ctx.context.workspaceState.update("saropaCapture.lastUsedPresetName", msgStr(msg, "name")).then(undefined, () => {}); }
       return true;
     case "copySourcePath":
       helpers.copySourcePath(msgStr(msg, "path"), msgStr(msg, "mode", "relative"));
@@ -252,7 +252,7 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
     case "removeAutoHidePattern": applyRemoveAutoHidePattern(msg); return true;
     case "openSettings": vscode.commands.executeCommand("workbench.action.openSettings", msgStr(msg, "setting")).then(undefined, () => {}); return true;
     case "openKeybindings":
-      vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", msgStr(msg, "search", "Saropa Log Capture")).then(undefined, () => {});
+      vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", msgStr(msg, "search", "Saropa Capture")).then(undefined, () => {});
       return true;
     case "startRecordViewerKey": {
       const actionId = msgStr(msg, "actionId");
@@ -288,7 +288,7 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       return true;
     case "createReportFile": runCreateReportFile(msg, ctx); return true;
     case "exportFlowMap":
-      vscode.commands.executeCommand("saropaLogCapture.exportFlowMap").then(undefined, () => {});
+      vscode.commands.executeCommand("saropaCapture.exportFlowMap").then(undefined, () => {});
       return true;
     case "explainWithAi": runExplainWithAi(msg, ctx); return true;
     case "findStaticSourcesForSqlFingerprint":

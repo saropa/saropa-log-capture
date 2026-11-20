@@ -1,7 +1,7 @@
 import { getSearchPopoversScript } from './viewer-search-popovers';
 import { getSearchRevealScript } from './viewer-search-reveal';
 /**
- * In-log search — webview script (injected string) for the Saropa Log Capture viewer.
+ * In-log search — webview script (injected string) for the Saropa Capture viewer.
  *
  * **Where it runs:** Bundled into the log viewer webview with other `get*Script()` modules.
  * **UI:** The DOM lives in the session nav (`getSessionNavSearchHtml`); there is no `#search-bar`

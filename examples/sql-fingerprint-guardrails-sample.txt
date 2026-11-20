@@ -3,7 +3,7 @@
 # Paste into a log session with Flutter-style prefixes so lines get source tag `database`.
 # Expect: same *shape* below shares one normalized fingerprint; args differ only in `with args`.
 # DB_05: Filters panel section **Top SQL Patterns**; tune chip min count / max chips with
-#   `saropaLogCapture.viewerSqlPatternChipMinCount` and `saropaLogCapture.viewerSqlPatternMaxChips`.
+#   `saropaCapture.viewerSqlPatternChipMinCount` and `saropaCapture.viewerSqlPatternMaxChips`.
 #
 # --- Same fingerprint (literals / spacing / keyword case) ---
 I/flutter ( 1234): Drift: Sent SELECT * FROM "items" WHERE "id" = ? LIMIT 1; with args [1]

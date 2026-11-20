@@ -25,6 +25,29 @@ cspell:disable
 
 ---
 
+## [9.8.0]
+
+Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings keep working. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.0/CHANGELOG.md)
+
+### Changed
+
+- Renamed the product from "Saropa Log Capture" to "Saropa Capture" across the manifest, command titles, viewer screens and tabs, output channel, exports, walkthrough, localization files, scripts, and docs
+- Extension ID is now `saropa.saropa-capture`; settings and command IDs now use the `saropaCapture.` prefix. Prior releases remain listed as "Saropa Log Capture" in the changelog history
+
+### Added
+
+- Settings migration: on first activation, any explicitly set `saropaLogCapture.*` value (user, workspace, and workspace-folder scope) is copied to the matching `saropaCapture.*` key unless that key is already set. Old entries are left in place; a one-time notice reports how many were copied
+- Old command IDs (`saropaLogCapture.*`) stay registered as aliases of the new commands, so existing keybindings, tasks, and other extensions that call them keep working
+- Warning when the previous "Saropa Log Capture" extension is still installed alongside this one
+
+### Notes
+
+- Because the extension ID changed, VS Code treats this as a new extension: install it from the marketplace and uninstall the old one. Per-extension stored state (last-used preset, panel sizes, dismissed banners) starts fresh; log files on disk are untouched
+- Links of the form `vscode://saropa.saropa-log-capture/...` only open if the old extension is still installed; new links use `vscode://saropa.saropa-capture/...`
+- The GitHub repository URL is unchanged until the repository itself is renamed
+
+---
+
 ## [9.7.0]
 
 Closed four security scanner findings — two dependency vulnerabilities and two defensive regex fixes. No user-facing behavior change. [log](https://github.com/saropa/saropa-log-capture/blob/v9.7.0/CHANGELOG.md)
@@ -473,54 +496,6 @@ The Flow map gets a major upgrade with session replays, custom breadcrumb mappin
 - Flow map: every unhandled exception in a log is now detected and drawn (previously only the first); each crash edge anchors to the screen active at its own moment
 - Flow map: returning to a screen that appears twice in the open-navigation stack no longer closes every surface between the two visits
 - Flow map: a mid-log hot restart ("App Startup") now resets the walk to the launch node and is counted in Session info, so repeated Home entries after restarts no longer read as user taps
-
----
-
-## [9.3.3]
-
-Automatic screenshots now capture your Flutter app the exact moment an error strikes, and signal reports received a massive visual upgrade with new arc gauges, badges, and cleaner layouts. [log](https://github.com/saropa/saropa-log-capture/blob/v9.3.3/CHANGELOG.md)
-
-### Added
-
-- Debug screenshot capture (plan 114): during a Flutter debug session, the app's screen is captured automatically when an error is detected (warnings and screen navigation are optional triggers) plus a manual "Capture Screenshot" command — no app-side code needed (uses the Flutter VM Service)
-- Screenshots are stored beside the log (`<log>.screenshots/` + `<log>.screenshots.json` metadata) with per-log cap, cooldown, and error-fingerprint dedup
-- Log viewer shows a camera badge on the line that triggered each capture; clicking it opens a thumbnail preview, click-through opens the full-size image
-- Viewer footer camera icon opens a capture options menu — screenshots master toggle, per-trigger checkboxes (errors/warnings/navigation), Capture now, Open gallery, and the active cooldown/per-log limits; a live counter next to it opens a gallery of all captures with datetime, trigger, and the log lines explaining why each was taken (click to jump into the log)
-- Signal reports gain a Screenshots section showing the captures nearest the signal's anchor line
-- Signal reports show a before/after screenshot comparison when a capture exists from before the error (screen-navigation shots are the intended source): the earlier frame, the at-error frame, and a third panel highlighting changed pixels in magenta
-- Screenshot capture is more resilient: the VM Service address is also read from the Debug Console banner when the debug adapter's announcement event is missing, stale addresses are dropped when a debug session ends, and an unavailable `_flutter.screenshot` API is named plainly in the output channel
-- Framework noise (logcat feed, `E/Gralloc4`-style startup noise, benign device `E/` tags) never triggers a screenshot; Flutter app errors and critical device crashes (`AndroidRuntime` fatal exceptions, out-of-memory kills) still do — launch bursts cost nothing and captures always show a screen worth looking at
-- After 3 consecutive capture failures automatic screenshots pause for that debug run (one output-channel notice; the manual command still tries, and a new run resets it) — a broken capture endpoint no longer costs a socket timeout per error
-- Screenshot anchors are text-verified: the gallery excerpt and the viewer's camera badge locate the triggering line by its stored text when the recorded line number disagrees with the file (session headers and file splits shift the count), so captures land on the right line instead of a nearby one
-- The output channel states which discovery path supplied the VM Service address (debug-adapter event or console banner), making "why no screenshots" a one-line diagnosis
-- Screenshots now actually capture on modern Flutter: current SDKs removed the `_flutter.screenshot` VM API the feature first relied on, so on Android the extension falls back to `adb exec-out screencap` (real device pixels, any Flutter version) after one VM probe — verified live against a connected device
-- Unified timeline shows screenshot events (camera marker with trigger + line); clicking opens the image
-- New Integrations row "Debug Screenshots" (on by default) bound to `integrations.screenshots.enabled`, plus per-trigger settings (`onError`, `onWarning`, `onNavigation`, `cooldownMs`, `maxPerLog`)
-
-### Changed
-
-- Signal report stat cards now show severity-colored top borders (red for errors, amber for warnings, blue for info signals)
-- Signal report health score replaced with a visual arc gauge — color graduates by tier (green ≥80, amber 50–79, red <50)
-- Signal report header upgraded to a hero block with type badge, larger title, and confidence badge on one line
-- Signal report evidence blocks highlight the target line with a red left-border accent; surrounding lines fade to draw the eye
-- Signal report overview rows now have subtle separators, bolder labels, and consistent vertical rhythm
-- Signal panel entries (both "This log" and "Across your logs") now show colored type badges (ERR, WARN, PERF, SQL, NET, MEM, etc.) for at-a-glance category scanning
-- Health gauge handles non-finite scores gracefully (renders 0 instead of NaN)
-
-### Internal
-
-**l10n pipeline**
-
-- l10n audit now prints per-locale untranslated string detail (key, reason, English value) below the gap count, so the operator sees exactly which strings need work without opening the JSON report; interactive mode always shows this (capped at 10 per locale), non-interactive suppresses it unless `--verbose` is passed (which removes the cap)
-
-**Design tokens**
-
-- Migrated hardcoded `border-radius` values to design token variables (`--radius-sm`, `--radius`, `--radius-pill`) across 45+ style files for consistent corner rounding
-- Migrated hardcoded `font-size` values to design token type scale (`--text-caption`, `--text-body`, `--text-h2`) across 48+ style files for consistent typography
-- Session comparison, collection, bug report, and keyboard shortcuts panels now load the design token layer — they can consume spacing, radius, type, and color tokens like the signal report already does
-- Migrated hardcoded `padding`, `margin`, and `gap` values to spacing tokens (`--space-1` through `--space-7`) across 59 style files — single-value, two-value, and three-value declarations that map to the 4 px scale
-- Replaced ~750 raw `--vscode-*` CSS variable references with semantic design tokens across 68 style files: surfaces (`--surface-1/2/3`, `--inset`), text (`--text`, `--muted`, `--link`), borders (`--border`), and status accents (`--accent-critical/warning/info`); collapsed redundant fallback chains where the raw variable already resolves through its token
-- Fixed 6 test failures caused by the design token migration: updated CSS assertions to match semantic tokens instead of raw `--vscode-*` variables (including the ghost-pixel opaque background guard), fixed signal kind badge exhaustiveness check for hyphenated keys (`slow-op`), and registered dynamically created screenshot element IDs in the wiring test
 
 ---
 

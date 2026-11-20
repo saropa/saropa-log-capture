@@ -100,7 +100,7 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
     const lines = Buffer.from(bytes).toString('utf-8').split(/\r?\n/);
     // Read fresh per call (not cached) so a settings change is picked up by the Refresh button
     // without reloading the panel — same fresh-read rule the rest of the config surface follows.
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const custom = compileCustomPatterns(
         cfg.get('flowMap.customBreadcrumbs'),
         cfg.get('flowMap.customIssues'),
@@ -138,7 +138,7 @@ async function generateReport(logUri: vscode.Uri, revealLine: (line: number) => 
 /** Register the export-flow-map command. */
 export function flowMapCommands(deps: FlowMapCommandDeps): vscode.Disposable[] {
     return [
-        vscode.commands.registerCommand('saropaLogCapture.exportFlowMap', () => runExport(deps)),
+        vscode.commands.registerCommand('saropaCapture.exportFlowMap', () => runExport(deps)),
     ];
 }
 

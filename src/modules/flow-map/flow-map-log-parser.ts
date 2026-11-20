@@ -157,7 +157,7 @@ interface ScanState {
     slowCount: number;
     repeatCount: number;
     lastClock?: string;
-    /** Compiled `saropaLogCapture.flowMap.custom*` settings (plan 117, Phase D); undefined = none configured. */
+    /** Compiled `saropaCapture.flowMap.custom*` settings (plan 117, Phase D); undefined = none configured. */
     readonly custom?: CustomPatterns;
 }
 
@@ -253,7 +253,7 @@ function normalizeRoot(root: string | undefined): string | undefined {
 /**
  * Parse a full session log (already split into lines) into the ParsedLog model.
  *
- * @param custom Compiled `saropaLogCapture.flowMap.customBreadcrumbs`/`customIssues` settings
+ * @param custom Compiled `saropaCapture.flowMap.customBreadcrumbs`/`customIssues` settings
  * (plan 117, Phase D). Passed in already-compiled so this module — and its tests — stay free of
  * `vscode.workspace.getConfiguration`; the command layer compiles fresh per report.
  */

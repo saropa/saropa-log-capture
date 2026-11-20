@@ -18,9 +18,9 @@ import {
 const MAX_BUILD_FILE_BYTES = 512 * 1024; // 512 KB
 
 const SECRET_KEYS = {
-    github: 'saropaLogCapture.buildCi.githubToken',
-    azure: 'saropaLogCapture.buildCi.azurePat',
-    gitlab: 'saropaLogCapture.buildCi.gitlabToken',
+    github: 'saropaCapture.buildCi.githubToken',
+    azure: 'saropaCapture.buildCi.azurePat',
+    gitlab: 'saropaCapture.buildCi.gitlabToken',
 } as const;
 
 export interface BuildInfo {

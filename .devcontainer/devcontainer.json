@@ -1,5 +1,5 @@
 {
-	"name": "Saropa Log Capture",
+	"name": "Saropa Capture",
 	"image": "mcr.microsoft.com/devcontainers/typescript-node:22-bookworm",
 	"remoteUser": "node",
 	"postCreateCommand": "npm ci",

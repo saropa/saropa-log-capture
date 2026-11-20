@@ -7,13 +7,13 @@ import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
 import { findSidecarUris } from './modules/context/context-loader';
 
-const CONFIG_SECTION = 'saropaLogCapture';
+const CONFIG_SECTION = 'saropaCapture';
 const EXTERNAL_LOGS_PATHS_KEY = 'integrations.externalLogs.paths';
 
 export function externalLogsCommands(deps: CommandDeps): vscode.Disposable[] {
     const { viewerProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.addExternalLogPath', async () => {
+        vscode.commands.registerCommand('saropaCapture.addExternalLogPath', async () => {
             const path = await vscode.window.showInputBox({
                 prompt: 'Path to external log file (relative to workspace or absolute)',
                 placeHolder: 'e.g. logs/app.log or logs/nginx/error.log',
@@ -31,7 +31,7 @@ export function externalLogsCommands(deps: CommandDeps): vscode.Disposable[] {
                 'Added external log path. Enable Application / file logs in Configure integrations so it is tailed during debug sessions.',
             );
         }),
-        vscode.commands.registerCommand('saropaLogCapture.openExternalLogsForSession', async () => {
+        vscode.commands.registerCommand('saropaCapture.openExternalLogsForSession', async () => {
             const logUri = viewerProvider.getCurrentFileUri();
             if (!logUri) {
                 void vscode.window.showWarningMessage('No log file is currently open in the viewer.');

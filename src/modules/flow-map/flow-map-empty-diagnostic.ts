@@ -1,7 +1,7 @@
 /**
  * Empty-state breadcrumb diagnostic (plan 117 follow-up). When a log has no recognized navigation
  * breadcrumbs, `flowDiagramHtml` renders a dead-end note pointing at the phase-D escape hatch
- * (`saropaLogCapture.flowMap.customBreadcrumbs`) but gives no hint what to put in it. This module
+ * (`saropaCapture.flowMap.customBreadcrumbs`) but gives no hint what to put in it. This module
  * scans the log's OWN lines for repeated `Prefix: value` shapes that look like navigation and turns
  * them into ready-to-use custom-rule suggestions — onboarding instead of a dead end.
  *

@@ -41,7 +41,7 @@ export async function downloadAndLoadUrl(
     try {
         const bytes = await fetchBounded(url);
         const target = await stageDownload(url, bytes, context);
-        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+        await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
         await load(target);
         void vscode.window.showInformationMessage(t('msg.urlLog.loaded', fileNameFromUrl(url)));
     } catch (err) {

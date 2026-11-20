@@ -60,7 +60,7 @@ export function exportSignalsSummaryCmd(
     viewerProvider: CommandDeps['viewerProvider'],
     collectionStore: CommandDeps['collectionStore'],
 ): vscode.Disposable {
-    return vscode.commands.registerCommand('saropaLogCapture.exportSignalsSummary', async () => {
+    return vscode.commands.registerCommand('saropaCapture.exportSignalsSummary', async () => {
         const scopeItem = await vscode.window.showQuickPick(
             [
                 { label: t('signalsExport.scope.currentSession'), value: 'currentSession' as ScopeChoice },

@@ -1,7 +1,7 @@
 /**
  * Configurable viewer keybindings: defaults, config read, and keyToAction map
  * for the log viewer panel (power shortcuts). User overrides via
- * saropaLogCapture.viewerKeybindings (actionId -> key descriptor).
+ * saropaCapture.viewerKeybindings (actionId -> key descriptor).
  */
 
 import * as vscode from 'vscode';
@@ -205,7 +205,7 @@ function mergeUserKeybindings(userConfig: Record<string, string> | undefined): R
 
 /** Merged actionId -> key from current config. */
 function getMergedActionToKey(): Record<ViewerKeybindingActionId, string> {
-  const config = vscode.workspace.getConfiguration('saropaLogCapture');
+  const config = vscode.workspace.getConfiguration('saropaCapture');
   const user = config.get<Record<string, string>>('viewerKeybindings');
   return mergeUserKeybindings(user);
 }
@@ -268,7 +268,7 @@ export function getViewerActionToKeyFromConfig(): Record<string, string> {
 
 /** Persist a single viewer keybinding override. */
 export async function setViewerKeybinding(actionId: string, keyDescriptor: string): Promise<void> {
-  const config = vscode.workspace.getConfiguration('saropaLogCapture');
+  const config = vscode.workspace.getConfiguration('saropaCapture');
   const current = config.get<Record<string, string>>('viewerKeybindings') ?? {};
   const key = normalizeKeyDescriptor(keyDescriptor);
   const next = { ...current, [actionId]: key };
@@ -277,7 +277,7 @@ export async function setViewerKeybinding(actionId: string, keyDescriptor: strin
 
 /** Reset one binding to default, or all if actionId is omitted. */
 export async function resetViewerKeybinding(actionId?: string): Promise<void> {
-  const config = vscode.workspace.getConfiguration('saropaLogCapture');
+  const config = vscode.workspace.getConfiguration('saropaCapture');
   let next: Record<string, string> | undefined;
   if (actionId) {
     const current = config.get<Record<string, string>>('viewerKeybindings') ?? {};

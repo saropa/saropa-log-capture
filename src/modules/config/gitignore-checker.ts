@@ -60,7 +60,7 @@ export async function checkGitignore(
     if (action === t('action.addToGitignore')) {
         try {
             const suffix = content.endsWith('\n') ? '' : '\n';
-            const entry = `${suffix}\n# Saropa Log Capture\n${logDirectory}/\n`;
+            const entry = `${suffix}\n# Saropa Capture\n${logDirectory}/\n`;
             const updated = content + entry;
             await vscode.workspace.fs.writeFile(
                 gitignoreUri,
@@ -114,7 +114,7 @@ export async function checkGitignoreSaropa(
     if (action === t('action.addToGitignore')) {
         try {
             const suffix = content.endsWith('\n') ? '' : '\n';
-            const entry = `${suffix}\n# Saropa Log Capture (index & cache)\n.saropa/\n`;
+            const entry = `${suffix}\n# Saropa Capture (index & cache)\n.saropa/\n`;
             await vscode.workspace.fs.writeFile(gitignoreUri, Buffer.from(content + entry, 'utf-8'));
         } catch (err) {
             vscode.window.showErrorMessage(t('msg.failedUpdateGitignore', String(err)));

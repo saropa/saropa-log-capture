@@ -148,7 +148,7 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.options.section.capture': 'Capture',
     'viewer.options.captureEnabled.title': 'Enable or disable automatic log capture during debug sessions (F5). When off, no log files are created.',
     'viewer.options.captureEnabled': 'Enable log capture',
-    'viewer.options.diagnosticCapture.title': 'Trace every Debug Console line the extension receives to the Saropa Log Capture output channel, with what happened to it (captured, or dropped and why). Turn on to diagnose lines that appear in the Debug Console but are missing from the log.',
+    'viewer.options.diagnosticCapture.title': 'Trace every Debug Console line the extension receives to the Saropa Capture output channel, with what happened to it (captured, or dropped and why). Turn on to diagnose lines that appear in the Debug Console but are missing from the log.',
     'viewer.options.diagnosticCapture': 'Diagnose missing lines (log capture pipeline)',
     'viewer.options.section.display': 'Display',
     'viewer.options.fontSize': 'Font size:',
@@ -182,7 +182,7 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.options.counter': 'Line numbers',
     'viewer.options.minimapSql.title': 'Adds pink and orange background shading on the right-hand scroll map (not a second scrollbar). Pink = SQL lines in that part of the log; orange = slow SQL. Severity and search stay as short ticks on top.',
     'viewer.options.minimapSql': 'SQL activity on scroll map (pink / orange shading)',
-    'viewer.options.minimapWidth.title': 'Width of the right-hand scroll map (same as Settings › Saropa Log Capture › minimap width).',
+    'viewer.options.minimapWidth.title': 'Width of the right-hand scroll map (same as Settings › Saropa Capture › minimap width).',
     'viewer.options.minimapWidth': 'Scroll map width',
     'viewer.options.minimapWidth.label': 'Scroll map width',
     'viewer.options.minimapWidth.xsmall': 'Extra narrow (28px)',
@@ -219,7 +219,7 @@ export const stringsViewerC: Record<string, string> = {
     'viewer.options.section.actions': 'Actions',
     'viewer.options.resetOptions.title': 'Reset display, layout, and audio options in this viewer to their default values',
     'viewer.options.resetOptions': 'Reset to default',
-    'viewer.options.resetSettings.title': 'Reset all Saropa Log Capture extension settings to their original defaults',
+    'viewer.options.resetSettings.title': 'Reset all Saropa Capture extension settings to their original defaults',
     'viewer.options.resetSettings': 'Reset extension settings',
 
     // ── Replay bar — host HTML (viewer-replay.ts). Speed values (0.1x…) stay literal. ─

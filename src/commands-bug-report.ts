@@ -22,12 +22,12 @@ export interface BugReportCommandDeps {
 /** Register bug report commands. */
 export function bugReportCommands(deps: BugReportCommandDeps): vscode.Disposable[] {
     return [
-        vscode.commands.registerCommand('saropaLogCapture.generateReport', () => {
+        vscode.commands.registerCommand('saropaCapture.generateReport', () => {
             vscode.window.showInformationMessage(
                 t('msg.rightClickForBugReport'),
             );
         }),
-        vscode.commands.registerCommand('saropaLogCapture.createReportFile', () => {
+        vscode.commands.registerCommand('saropaCapture.createReportFile', () => {
             const fileUri = deps.getFileUri();
             if (!fileUri) {
                 vscode.window.showInformationMessage(t('msg.noActiveSession'));

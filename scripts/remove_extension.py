@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # ##############################################################################
-# Saropa Log Capture — Extension Removal Script
+# Saropa Capture — Extension Removal Script
 # ##############################################################################
 #
 # .SYNOPSIS
-#   Completely remove Saropa Log Capture from VS Code.
+#   Completely remove Saropa Capture from VS Code.
 #
 # .DESCRIPTION
 #   Removes all traces of the extension from the local VS Code installation:
@@ -36,7 +36,7 @@ from modules.publish.constants import C, PROJECT_ROOT
 from modules.publish.display import dim, fail, heading, info, ok, warn, ask_yn
 from modules.publish.utils import read_package_version, run
 
-EXTENSION_ID = "saropa.saropa-log-capture"
+EXTENSION_ID = "saropa.saropa-capture"
 EXTENSION_PREFIX = "saropa"
 
 # cspell:ignore tasklist IMAGENAME vscdb
@@ -48,7 +48,7 @@ EXTENSION_PREFIX = "saropa"
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Saropa Log Capture — Extension Removal Script",
+        description="Saropa Capture — Extension Removal Script",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -232,12 +232,12 @@ def _find_project_workspaces(ws_dir: str) -> list[str]:
 
 
 def _workspace_matches_project(wj_path: str) -> bool:
-    """Check if a workspace.json references the saropa-log-capture project."""
+    """Check if a workspace.json references the saropa-capture project."""
     try:
         with open(wj_path, encoding="utf-8") as f:
             data = json.load(f)
         folder = data.get("folder", "")
-        return "saropa-log-capture" in folder.lower()
+        return "saropa-capture" in folder.lower()
     except (OSError, json.JSONDecodeError):
         return False
 
@@ -288,7 +288,7 @@ def _print_banner(version: str, no_logo: bool) -> None:
     print()
     if not no_logo:
         print(f"  {C.CYAN}{'=' * 50}{C.RESET}")
-        print(f"  {C.BOLD}Remove Extension — Saropa Log Capture{C.RESET}"
+        print(f"  {C.BOLD}Remove Extension — Saropa Capture{C.RESET}"
               f"  {dim(f'v{version}')}")
         print(f"  {C.CYAN}{'=' * 50}{C.RESET}")
     else:
@@ -299,7 +299,7 @@ def _print_banner(version: str, no_logo: bool) -> None:
 
 
 def main() -> int:
-    """Remove all traces of Saropa Log Capture from VS Code.
+    """Remove all traces of Saropa Capture from VS Code.
 
     Each step asks for confirmation before any destructive action.
     VS Code is never killed — user is warned to close it first.

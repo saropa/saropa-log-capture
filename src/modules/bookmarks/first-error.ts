@@ -55,7 +55,7 @@ export interface FirstErrorOptions {
   readonly strict: boolean;
   /** If true, also find first warning and return it when no error. */
   readonly includeWarning: boolean;
-  /** When true, DAP `stderr` category maps to error before text (legacy). Same as `saropaLogCapture.stderrTreatAsError`. */
+  /** When true, DAP `stderr` category maps to error before text (legacy). Same as `saropaCapture.stderrTreatAsError`. */
   readonly stderrTreatAsError: boolean;
   /** Skip lines before this 0-based index (e.g. first app launch line). */
   readonly skipBeforeLine?: number;

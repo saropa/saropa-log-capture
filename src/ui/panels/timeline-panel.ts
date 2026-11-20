@@ -53,7 +53,7 @@ export function disposeTimelinePanel(): void { panel?.dispose(); panel = undefin
 
 function ensurePanel(): void {
     if (panel) { panel.reveal(); return; }
-    panel = vscode.window.createWebviewPanel('saropaLogCapture.timeline', t('panel.timeline.title'), vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] });
+    panel = vscode.window.createWebviewPanel('saropaCapture.timeline', t('panel.timeline.title'), vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] });
     panel.webview.onDidReceiveMessage(handleMessage);
     panel.onDidDispose(() => { panel = undefined; currentResult = undefined; });
 }
@@ -119,7 +119,7 @@ function buildErrorHtml(message: string): string {
 }
 
 function getCorrelationConfig(): DetectorConfig & { enabled: boolean } {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const enabled = cfg.get<boolean>('correlation.enabled', true);
     return {
         enabled,

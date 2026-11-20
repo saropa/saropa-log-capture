@@ -9,616 +9,616 @@
   "contributes": {
     "commands": [
       {
-        "command": "saropaLogCapture.openWalkthrough",
+        "command": "saropaCapture.openWalkthrough",
         "title": "%command.openWalkthrough.title%"
       },
       {
-        "command": "saropaLogCapture.openSettings",
+        "command": "saropaCapture.openSettings",
         "title": "%command.openSettings.title%"
       },
       {
-        "command": "saropaLogCapture.openChangelog",
+        "command": "saropaCapture.openChangelog",
         "title": "%command.openChangelog.title%"
       },
       {
-        "command": "saropaLogCapture.captureScreenshot",
+        "command": "saropaCapture.captureScreenshot",
         "icon": "$(device-camera)",
         "title": "%command.captureScreenshot.title%"
       },
       {
-        "command": "saropaLogCapture.diagnoseScreenshots",
+        "command": "saropaCapture.diagnoseScreenshots",
         "icon": "$(stethoscope)",
         "title": "%command.diagnoseScreenshots.title%"
       },
       {
-        "command": "saropaLogCapture.start",
+        "command": "saropaCapture.start",
         "icon": "$(play)",
         "title": "%command.start.title%"
       },
       {
-        "command": "saropaLogCapture.stop",
+        "command": "saropaCapture.stop",
         "icon": "$(debug-stop)",
         "title": "%command.stop.title%"
       },
       {
-        "command": "saropaLogCapture.pause",
+        "command": "saropaCapture.pause",
         "icon": "$(debug-pause)",
         "title": "%command.pause.title%"
       },
       {
-        "command": "saropaLogCapture.toggleCapture",
+        "command": "saropaCapture.toggleCapture",
         "icon": "$(circle-filled)",
         "title": "%command.toggleCapture.title%"
       },
       {
-        "command": "saropaLogCapture.open",
+        "command": "saropaCapture.open",
         "icon": "$(go-to-file)",
         "title": "%command.open.title%"
       },
       {
-        "command": "saropaLogCapture.openFolder",
+        "command": "saropaCapture.openFolder",
         "icon": "$(folder-opened)",
         "title": "%command.openFolder.title%"
       },
       {
-        "command": "saropaLogCapture.addExternalLogPath",
+        "command": "saropaCapture.addExternalLogPath",
         "title": "%command.addExternalLogPath.title%"
       },
       {
-        "command": "saropaLogCapture.openExternalLogsForSession",
+        "command": "saropaCapture.openExternalLogsForSession",
         "icon": "$(output)",
         "title": "%command.openExternalLogsForSession.title%"
       },
       {
-        "command": "saropaLogCapture.clear",
+        "command": "saropaCapture.clear",
         "icon": "$(clear-all)",
         "title": "%command.clear.title%"
       },
       {
-        "command": "saropaLogCapture.delete",
+        "command": "saropaCapture.delete",
         "icon": "$(trash)",
         "title": "%command.delete.title%"
       },
       {
-        "command": "saropaLogCapture.insertMarker",
+        "command": "saropaCapture.insertMarker",
         "icon": "$(horizontal-rule)",
         "title": "%command.insertMarker.title%"
       },
       {
-        "command": "saropaLogCapture.refreshHistory",
+        "command": "saropaCapture.refreshHistory",
         "icon": "$(refresh)",
         "title": "%command.refreshHistory.title%"
       },
       {
-        "command": "saropaLogCapture.refreshVitals",
+        "command": "saropaCapture.refreshVitals",
         "title": "%command.refreshVitals.title%"
       },
       {
-        "command": "saropaLogCapture.refreshRecurringSignals",
+        "command": "saropaCapture.refreshRecurringSignals",
         "title": "%command.refreshRecurringSignals.title%"
       },
       {
-        "command": "saropaLogCapture.openSession",
+        "command": "saropaCapture.openSession",
         "icon": "$(go-to-file)",
         "title": "%command.openSession.title%"
       },
       {
-        "command": "saropaLogCapture.openLogFile",
+        "command": "saropaCapture.openLogFile",
         "icon": "$(folder-opened)",
         "title": "%command.openLogFile.title%"
       },
       {
-        "command": "saropaLogCapture.openLogFromUrl",
+        "command": "saropaCapture.openLogFromUrl",
         "icon": "$(cloud-download)",
         "title": "%command.openLogFromUrl.title%"
       },
       {
-        "command": "saropaLogCapture.replay",
+        "command": "saropaCapture.replay",
         "icon": "$(debug-restart)",
         "title": "%command.replay.title%"
       },
       {
-        "command": "saropaLogCapture.deleteSession",
+        "command": "saropaCapture.deleteSession",
         "icon": "$(trash)",
         "title": "%command.deleteSession.title%"
       },
       {
-        "command": "saropaLogCapture.exportHtml",
+        "command": "saropaCapture.exportHtml",
         "icon": "$(file-code)",
         "title": "%command.exportHtml.title%"
       },
       {
-        "command": "saropaLogCapture.exportHtmlInteractive",
+        "command": "saropaCapture.exportHtmlInteractive",
         "icon": "$(browser)",
         "title": "%command.exportHtmlInteractive.title%"
       },
       {
-        "command": "saropaLogCapture.renameSession",
+        "command": "saropaCapture.renameSession",
         "icon": "$(edit)",
         "title": "%command.renameSession.title%"
       },
       {
-        "command": "saropaLogCapture.tagSession",
+        "command": "saropaCapture.tagSession",
         "icon": "$(tag)",
         "title": "%command.tagSession.title%"
       },
       {
-        "command": "saropaLogCapture.addSessionNote",
+        "command": "saropaCapture.addSessionNote",
         "icon": "$(note)",
         "title": "%command.addSessionNote.title%"
       },
       {
-        "command": "saropaLogCapture.splitNow",
+        "command": "saropaCapture.splitNow",
         "icon": "$(split-horizontal)",
         "title": "%command.splitNow.title%"
       },
       {
-        "command": "saropaLogCapture.searchLogs",
+        "command": "saropaCapture.searchLogs",
         "icon": "$(search)",
         "title": "%command.searchLogs.title%"
       },
       {
-        "command": "saropaLogCapture.showLogReferences",
+        "command": "saropaCapture.showLogReferences",
         "icon": "$(references)",
         "title": "%command.showLogReferences.title%"
       },
       {
-        "command": "saropaLogCapture.openTailedFile",
+        "command": "saropaCapture.openTailedFile",
         "icon": "$(output)",
         "title": "%command.openTailedFile.title%"
       },
       {
-        "command": "saropaLogCapture.copyDeepLink",
+        "command": "saropaCapture.copyDeepLink",
         "icon": "$(link)",
         "title": "%command.copyDeepLink.title%"
       },
       {
-        "command": "saropaLogCapture.copyFilePath",
+        "command": "saropaCapture.copyFilePath",
         "icon": "$(copy)",
         "title": "%command.copyFilePath.title%"
       },
       {
-        "command": "saropaLogCapture.applyPreset",
+        "command": "saropaCapture.applyPreset",
         "icon": "$(filter)",
         "title": "%command.applyPreset.title%"
       },
       {
-        "command": "saropaLogCapture.savePreset",
+        "command": "saropaCapture.savePreset",
         "icon": "$(save)",
         "title": "%command.savePreset.title%"
       },
       {
-        "command": "saropaLogCapture.toggleInlineDecorations",
+        "command": "saropaCapture.toggleInlineDecorations",
         "icon": "$(symbol-event)",
         "title": "%command.toggleInlineDecorations.title%"
       },
       {
-        "command": "saropaLogCapture.copyAllFilteredLines",
+        "command": "saropaCapture.copyAllFilteredLines",
         "icon": "$(copy)",
         "title": "%command.copyAllFilteredLines.title%"
       },
       {
-        "command": "saropaLogCapture.popOutViewer",
+        "command": "saropaCapture.popOutViewer",
         "icon": "$(link-external)",
         "title": "%command.popOutViewer.title%"
       },
       {
-        "command": "saropaLogCapture.collapseAllSections",
+        "command": "saropaCapture.collapseAllSections",
         "icon": "$(collapse-all)",
         "title": "%command.collapseAllSections.title%"
       },
       {
-        "command": "saropaLogCapture.expandAllSections",
+        "command": "saropaCapture.expandAllSections",
         "icon": "$(expand-all)",
         "title": "%command.expandAllSections.title%"
       },
       {
-        "command": "saropaLogCapture.maximizePanel",
+        "command": "saropaCapture.maximizePanel",
         "icon": "$(screen-full)",
         "title": "%command.maximizePanel.title%"
       },
       {
-        "command": "saropaLogCapture.toggleSearchOverlay",
+        "command": "saropaCapture.toggleSearchOverlay",
         "icon": "$(search)",
         "title": "%command.toggleSearchOverlay.title%"
       },
       {
-        "command": "saropaLogCapture.troubleMode.toggle",
+        "command": "saropaCapture.troubleMode.toggle",
         "icon": "$(warning)",
         "title": "%command.troubleModeToggle.title%"
       },
       {
-        "command": "saropaLogCapture.troubleMode.errorsOnly",
+        "command": "saropaCapture.troubleMode.errorsOnly",
         "title": "%command.troubleModeErrorsOnly.title%"
       },
       {
-        "command": "saropaLogCapture.troubleMode.resetLevels",
+        "command": "saropaCapture.troubleMode.resetLevels",
         "title": "%command.troubleModeResetLevels.title%"
       },
       {
-        "command": "saropaLogCapture.gotoLineInViewer",
+        "command": "saropaCapture.gotoLineInViewer",
         "icon": "$(go-to-file)",
         "title": "%command.gotoLineInViewer.title%"
       },
       {
-        "command": "saropaLogCapture.showSignals",
+        "command": "saropaCapture.showSignals",
         "icon": "$(pulse)",
         "title": "%command.showSignals.title%"
       },
       {
-        "command": "saropaLogCapture.openSignalsInTab",
+        "command": "saropaCapture.openSignalsInTab",
         "icon": "$(link-external)",
         "title": "%command.openSignalsInTab.title%"
       },
       {
-        "command": "saropaLogCapture.generateReport",
+        "command": "saropaCapture.generateReport",
         "icon": "$(report)",
         "title": "%command.generateReport.title%"
       },
       {
-        "command": "saropaLogCapture.createReportFile",
+        "command": "saropaCapture.createReportFile",
         "icon": "$(new-file)",
         "title": "%command.createReportFile.title%"
       },
       {
-        "command": "saropaLogCapture.exportFlowMap",
+        "command": "saropaCapture.exportFlowMap",
         "icon": "$(type-hierarchy)",
         "title": "%command.exportFlowMap.title%"
       },
       {
-        "command": "saropaLogCapture.explainRootCauseHypotheses",
+        "command": "saropaCapture.explainRootCauseHypotheses",
         "icon": "$(sparkle)",
         "title": "%command.explainRootCauseHypotheses.title%"
       },
       {
-        "command": "saropaLogCapture.openSqlQueryHistory",
+        "command": "saropaCapture.openSqlQueryHistory",
         "icon": "$(database)",
         "title": "%command.openSqlQueryHistory.title%"
       },
       {
-        "command": "saropaLogCapture.openSignal",
+        "command": "saropaCapture.openSignal",
         "icon": "$(pulse)",
         "title": "%command.openSignal.title%"
       },
       {
-        "command": "saropaLogCapture.openSqlHistoryForFingerprint",
+        "command": "saropaCapture.openSqlHistoryForFingerprint",
         "icon": "$(database)",
         "title": "%command.openSqlHistoryForFingerprint.title%"
       },
       {
-        "command": "saropaLogCapture.showRelatedQueries",
+        "command": "saropaCapture.showRelatedQueries",
         "icon": "$(database)",
         "title": "%command.showRelatedQueries.title%"
       },
       {
-        "command": "saropaLogCapture.showCodeQualityForFrame",
+        "command": "saropaCapture.showCodeQualityForFrame",
         "enablement": "extension:saropa.saropa-lints",
         "icon": "$(symbol-misc)",
         "title": "%command.showCodeQualityForFrame.title%"
       },
       {
-        "command": "saropaLogCapture.openQualityReport",
+        "command": "saropaCapture.openQualityReport",
         "enablement": "extension:saropa.saropa-lints",
         "icon": "$(file-code)",
         "title": "%command.openQualityReport.title%"
       },
       {
-        "command": "saropaLogCapture.compareSessions",
+        "command": "saropaCapture.compareSessions",
         "icon": "$(diff)",
         "title": "%command.compareSessions.title%"
       },
       {
-        "command": "saropaLogCapture.compareThreeSessions",
+        "command": "saropaCapture.compareThreeSessions",
         "icon": "$(diff-multiple)",
         "title": "%command.compareThreeSessions.title%"
       },
       {
-        "command": "saropaLogCapture.markForComparison",
+        "command": "saropaCapture.markForComparison",
         "icon": "$(bookmark)",
         "title": "%command.markForComparison.title%"
       },
       {
-        "command": "saropaLogCapture.compareLogToPreviousCommit",
+        "command": "saropaCapture.compareLogToPreviousCommit",
         "icon": "$(git-commit)",
         "title": "%command.compareLogToPreviousCommit.title%"
       },
       {
-        "command": "saropaLogCapture.compareLogToCommit",
+        "command": "saropaCapture.compareLogToCommit",
         "icon": "$(git-commit)",
         "title": "%command.compareLogToCommit.title%"
       },
       {
-        "command": "saropaLogCapture.applyTemplate",
+        "command": "saropaCapture.applyTemplate",
         "icon": "$(package)",
         "title": "%command.applyTemplate.title%"
       },
       {
-        "command": "saropaLogCapture.saveTemplate",
+        "command": "saropaCapture.saveTemplate",
         "icon": "$(save-as)",
         "title": "%command.saveTemplate.title%"
       },
       {
-        "command": "saropaLogCapture.exportCsv",
+        "command": "saropaCapture.exportCsv",
         "icon": "$(file)",
         "title": "%command.exportCsv.title%"
       },
       {
-        "command": "saropaLogCapture.exportJson",
+        "command": "saropaCapture.exportJson",
         "icon": "$(json)",
         "title": "%command.exportJson.title%"
       },
       {
-        "command": "saropaLogCapture.exportJsonl",
+        "command": "saropaCapture.exportJsonl",
         "icon": "$(list-flat)",
         "title": "%command.exportJsonl.title%"
       },
       {
-        "command": "saropaLogCapture.exportSlc",
+        "command": "saropaCapture.exportSlc",
         "icon": "$(package)",
         "title": "%command.exportSlc.title%"
       },
       {
-        "command": "saropaLogCapture.exportSignalsSummary",
+        "command": "saropaCapture.exportSignalsSummary",
         "icon": "$(graph)",
         "title": "%command.exportSignalsSummary.title%"
       },
       {
-        "command": "saropaLogCapture.exportToLoki",
+        "command": "saropaCapture.exportToLoki",
         "icon": "$(cloud-upload)",
         "title": "%command.exportToLoki.title%",
-        "enablement": "config.saropaLogCapture.loki.enabled && config.saropaLogCapture.loki.pushUrl != ''"
+        "enablement": "config.saropaCapture.loki.enabled && config.saropaCapture.loki.pushUrl != ''"
       },
       {
-        "command": "saropaLogCapture.setLokiApiKey",
+        "command": "saropaCapture.setLokiApiKey",
         "icon": "$(key)",
         "title": "%command.setLokiApiKey.title%"
       },
       {
-        "command": "saropaLogCapture.setDatabaseApiToken",
+        "command": "saropaCapture.setDatabaseApiToken",
         "icon": "$(key)",
-        "title": "Saropa Log Capture: Set Database API Token"
+        "title": "Saropa Capture: Set Database API Token"
       },
       {
-        "command": "saropaLogCapture.clearDatabaseApiToken",
+        "command": "saropaCapture.clearDatabaseApiToken",
         "icon": "$(trash)",
-        "title": "Saropa Log Capture: Clear Database API Token"
+        "title": "Saropa Capture: Clear Database API Token"
       },
       {
-        "command": "saropaLogCapture.setBuildCiGithubToken",
+        "command": "saropaCapture.setBuildCiGithubToken",
         "icon": "$(key)",
         "title": "Saropa: Set Build/CI GitHub Token"
       },
       {
-        "command": "saropaLogCapture.clearBuildCiGithubToken",
+        "command": "saropaCapture.clearBuildCiGithubToken",
         "icon": "$(clear-all)",
         "title": "Saropa: Clear Build/CI GitHub Token"
       },
       {
-        "command": "saropaLogCapture.setBuildCiAzurePat",
+        "command": "saropaCapture.setBuildCiAzurePat",
         "icon": "$(key)",
         "title": "Saropa: Set Build/CI Azure PAT"
       },
       {
-        "command": "saropaLogCapture.clearBuildCiAzurePat",
+        "command": "saropaCapture.clearBuildCiAzurePat",
         "icon": "$(clear-all)",
         "title": "Saropa: Clear Build/CI Azure PAT"
       },
       {
-        "command": "saropaLogCapture.setBuildCiGitlabToken",
+        "command": "saropaCapture.setBuildCiGitlabToken",
         "icon": "$(key)",
         "title": "Saropa: Set Build/CI GitLab Token"
       },
       {
-        "command": "saropaLogCapture.clearBuildCiGitlabToken",
+        "command": "saropaCapture.clearBuildCiGitlabToken",
         "icon": "$(clear-all)",
         "title": "Saropa: Clear Build/CI GitLab Token"
       },
       {
-        "command": "saropaLogCapture.importSlc",
+        "command": "saropaCapture.importSlc",
         "icon": "$(file-directory)",
         "title": "%command.importSlc.title%"
       },
       {
-        "command": "saropaLogCapture.trashSession",
+        "command": "saropaCapture.trashSession",
         "icon": "$(trash)",
         "title": "%command.trashSession.title%"
       },
       {
-        "command": "saropaLogCapture.restoreSession",
+        "command": "saropaCapture.restoreSession",
         "icon": "$(discard)",
         "title": "%command.restoreSession.title%"
       },
       {
-        "command": "saropaLogCapture.emptyTrash",
+        "command": "saropaCapture.emptyTrash",
         "icon": "$(clear-all)",
         "title": "%command.emptyTrash.title%"
       },
       {
-        "command": "saropaLogCapture.toggleTrash",
+        "command": "saropaCapture.toggleTrash",
         "icon": "$(eye)",
         "title": "%command.toggleTrash.title%"
       },
       {
-        "command": "saropaLogCapture.resetAllSettings",
+        "command": "saropaCapture.resetAllSettings",
         "icon": "$(clear-all)",
         "title": "%command.resetAllSettings.title%"
       },
       {
-        "command": "saropaLogCapture.configureIntegrations",
+        "command": "saropaCapture.configureIntegrations",
         "icon": "$(extensions)",
         "title": "%command.configureIntegrations.title%"
       },
       {
-        "command": "saropaLogCapture.rebuildProjectIndex",
+        "command": "saropaCapture.rebuildProjectIndex",
         "icon": "$(refresh)",
         "title": "Rebuild Project Index"
       },
       {
-        "command": "saropaLogCapture.rebuildSearchIndex",
+        "command": "saropaCapture.rebuildSearchIndex",
         "icon": "$(refresh)",
         "title": "Rebuild Log Search Index"
       },
       {
-        "command": "saropaLogCapture.debugProjectIndexRanking",
+        "command": "saropaCapture.debugProjectIndexRanking",
         "icon": "$(list-ordered)",
         "title": "Debug Project Index Ranking"
       },
       {
-        "command": "saropaLogCapture.createCollection",
+        "command": "saropaCapture.createCollection",
         "icon": "$(new-folder)",
         "title": "%command.createCollection.title%"
       },
       {
-        "command": "saropaLogCapture.openCollection",
+        "command": "saropaCapture.openCollection",
         "icon": "$(folder-opened)",
         "title": "%command.openCollection.title%"
       },
       {
-        "command": "saropaLogCapture.closeCollection",
+        "command": "saropaCapture.closeCollection",
         "icon": "$(close)",
         "title": "%command.closeCollection.title%"
       },
       {
-        "command": "saropaLogCapture.switchCollection",
+        "command": "saropaCapture.switchCollection",
         "icon": "$(list-selection)",
         "title": "%command.switchCollection.title%"
       },
       {
-        "command": "saropaLogCapture.addToCollection",
+        "command": "saropaCapture.addToCollection",
         "icon": "$(pin)",
         "title": "%command.addToCollection.title%"
       },
       {
-        "command": "saropaLogCapture.groupSelectedSessions",
+        "command": "saropaCapture.groupSelectedSessions",
         "icon": "$(layers-active)",
-        "title": "Saropa Log Capture: Group Selected Sessions"
+        "title": "Saropa Capture: Group Selected Sessions"
       },
       {
-        "command": "saropaLogCapture.ungroupSession",
+        "command": "saropaCapture.ungroupSession",
         "icon": "$(layers-dot)",
-        "title": "Saropa Log Capture: Ungroup Session"
+        "title": "Saropa Capture: Ungroup Session"
       },
       {
-        "command": "saropaLogCapture.openSessionGroup",
+        "command": "saropaCapture.openSessionGroup",
         "icon": "$(files)",
-        "title": "Saropa Log Capture: Open Session Group (Merged)"
+        "title": "Saropa Capture: Open Session Group (Merged)"
       },
       {
-        "command": "saropaLogCapture.addGroupToCollection",
+        "command": "saropaCapture.addGroupToCollection",
         "icon": "$(pin)",
-        "title": "Saropa Log Capture: Add Group to Collection"
+        "title": "Saropa Capture: Add Group to Collection"
       },
       {
-        "command": "saropaLogCapture.newInvestigation",
+        "command": "saropaCapture.newInvestigation",
         "icon": "$(add)",
-        "title": "Saropa Log Capture: New Investigation"
+        "title": "Saropa Capture: New Investigation"
       },
       {
-        "command": "saropaLogCapture.addToInvestigation",
+        "command": "saropaCapture.addToInvestigation",
         "icon": "$(folder-library)",
-        "title": "Saropa Log Capture: Add to Investigation"
+        "title": "Saropa Capture: Add to Investigation"
       },
       {
-        "command": "saropaLogCapture.removeFromInvestigation",
+        "command": "saropaCapture.removeFromInvestigation",
         "icon": "$(remove)",
-        "title": "Saropa Log Capture: Remove from Investigation"
+        "title": "Saropa Capture: Remove from Investigation"
       },
       {
-        "command": "saropaLogCapture.renameInvestigation",
+        "command": "saropaCapture.renameInvestigation",
         "icon": "$(edit)",
-        "title": "Saropa Log Capture: Rename Investigation"
+        "title": "Saropa Capture: Rename Investigation"
       },
       {
-        "command": "saropaLogCapture.editInvestigationNotes",
+        "command": "saropaCapture.editInvestigationNotes",
         "icon": "$(note)",
-        "title": "Saropa Log Capture: Edit Investigation Notes"
+        "title": "Saropa Capture: Edit Investigation Notes"
       },
       {
-        "command": "saropaLogCapture.deleteInvestigation",
+        "command": "saropaCapture.deleteInvestigation",
         "icon": "$(trash)",
-        "title": "Saropa Log Capture: Delete Investigation"
+        "title": "Saropa Capture: Delete Investigation"
       },
       {
-        "command": "saropaLogCapture.openInvestigation",
+        "command": "saropaCapture.openInvestigation",
         "icon": "$(folder-opened)",
-        "title": "Saropa Log Capture: Open Investigation"
+        "title": "Saropa Capture: Open Investigation"
       },
       {
-        "command": "saropaLogCapture.addSignalItemToCollection",
+        "command": "saropaCapture.addSignalItemToCollection",
         "icon": "$(add)",
         "title": "%command.addSignalItemToCollection.title%"
       },
       {
-        "command": "saropaLogCapture.removeFromCollection",
+        "command": "saropaCapture.removeFromCollection",
         "icon": "$(pinned)",
         "title": "%command.removeFromCollection.title%"
       },
       {
-        "command": "saropaLogCapture.exportCollection",
+        "command": "saropaCapture.exportCollection",
         "icon": "$(package)",
         "title": "%command.exportCollection.title%"
       },
       {
-        "command": "saropaLogCapture.shareCollection",
+        "command": "saropaCapture.shareCollection",
         "icon": "$(link-external)",
         "title": "%command.shareCollection.title%"
       },
       {
-        "command": "saropaLogCapture.clearShareHistory",
+        "command": "saropaCapture.clearShareHistory",
         "icon": "$(trash)",
         "title": "%command.clearShareHistory.title%"
       },
       {
-        "command": "saropaLogCapture.clearGitHubToken",
+        "command": "saropaCapture.clearGitHubToken",
         "icon": "$(key)",
         "title": "%command.clearGitHubToken.title%"
       },
       {
-        "command": "saropaLogCapture.deleteCollection",
+        "command": "saropaCapture.deleteCollection",
         "icon": "$(trash)",
         "title": "%command.deleteCollection.title%"
       },
       {
-        "command": "saropaLogCapture.newCollectionFromSessions",
+        "command": "saropaCapture.newCollectionFromSessions",
         "icon": "$(folder-opened)",
         "title": "%command.newCollectionFromSessions.title%"
       },
       {
-        "command": "saropaLogCapture.showFilterSuggestions",
+        "command": "saropaCapture.showFilterSuggestions",
         "icon": "$(filter)",
         "title": "%command.showFilterSuggestions.title%"
       },
       {
-        "command": "saropaLogCapture.clearLearningData",
+        "command": "saropaCapture.clearLearningData",
         "icon": "$(trash)",
         "title": "%command.clearLearningData.title%"
       },
       {
-        "command": "saropaLogCapture.clearGlobalAggregates",
+        "command": "saropaCapture.clearGlobalAggregates",
         "icon": "$(globe)",
         "title": "%command.clearGlobalAggregates.title%"
       },
       {
-        "command": "saropaLogCapture.checkFilterSuggestions",
+        "command": "saropaCapture.checkFilterSuggestions",
         "icon": "$(bell)",
         "title": "%command.checkFilterSuggestions.title%"
       }
     ],
     "configuration": {
       "properties": {
-        "saropaLogCapture.aiActivity.enabled": {
+        "saropaCapture.aiActivity.enabled": {
           "default": true,
           "description": "%config.aiActivity.enabled.description%",
           "type": "boolean",
           "title": "%config.aiActivity.enabled.title%"
         },
-        "saropaLogCapture.aiActivity.autoDetect": {
+        "saropaCapture.aiActivity.autoDetect": {
           "default": true,
           "description": "%config.aiActivity.autoDetect.description%",
           "type": "boolean",
           "title": "%config.aiActivity.autoDetect.title%"
         },
-        "saropaLogCapture.aiActivity.lookbackMinutes": {
+        "saropaCapture.aiActivity.lookbackMinutes": {
           "default": 30,
           "description": "%config.aiActivity.lookbackMinutes.description%",
           "maximum": 120,
@@ -626,25 +626,25 @@
           "type": "number",
           "title": "%config.aiActivity.lookbackMinutes.title%"
         },
-        "saropaLogCapture.aiActivity.showPrompts": {
+        "saropaCapture.aiActivity.showPrompts": {
           "default": true,
           "description": "%config.aiActivity.showPrompts.description%",
           "type": "boolean",
           "title": "%config.aiActivity.showPrompts.title%"
         },
-        "saropaLogCapture.aiActivity.showReadOperations": {
+        "saropaCapture.aiActivity.showReadOperations": {
           "default": false,
           "description": "%config.aiActivity.showReadOperations.description%",
           "type": "boolean",
           "title": "%config.aiActivity.showReadOperations.title%"
         },
-        "saropaLogCapture.aiActivity.showSystemWarnings": {
+        "saropaCapture.aiActivity.showSystemWarnings": {
           "default": true,
           "description": "%config.aiActivity.showSystemWarnings.description%",
           "type": "boolean",
           "title": "%config.aiActivity.showSystemWarnings.title%"
         },
-        "saropaLogCapture.afterCaptureAction": {
+        "saropaCapture.afterCaptureAction": {
           "default": "ask",
           "description": "%config.afterCaptureAction.description%",
           "type": "string",
@@ -660,7 +660,7 @@
           ],
           "title": "%config.afterCaptureAction.title%"
         },
-        "saropaLogCapture.autoTagRules": {
+        "saropaCapture.autoTagRules": {
           "default": [],
           "description": "%config.autoTagRules.description%",
           "items": {
@@ -683,37 +683,37 @@
           "type": "array",
           "title": "%config.autoTagRules.title%"
         },
-        "saropaLogCapture.breakOnCritical": {
+        "saropaCapture.breakOnCritical": {
           "default": false,
           "description": "%config.breakOnCritical.description%",
           "type": "boolean",
           "title": "%config.breakOnCritical.title%"
         },
-        "saropaLogCapture.smartBookmarks.suggestFirstError": {
+        "saropaCapture.smartBookmarks.suggestFirstError": {
           "default": true,
           "description": "%config.smartBookmarks.suggestFirstError.description%",
           "type": "boolean",
           "title": "%config.smartBookmarks.suggestFirstError.title%"
         },
-        "saropaLogCapture.smartBookmarks.suggestFirstWarning": {
+        "saropaCapture.smartBookmarks.suggestFirstWarning": {
           "default": false,
           "description": "%config.smartBookmarks.suggestFirstWarning.description%",
           "type": "boolean",
           "title": "%config.smartBookmarks.suggestFirstWarning.title%"
         },
-        "saropaLogCapture.learning.enabled": {
+        "saropaCapture.learning.enabled": {
           "default": true,
           "description": "%config.learning.enabled.description%",
           "type": "boolean",
           "title": "%config.learning.enabled.title%"
         },
-        "saropaLogCapture.learning.trackScrollBehavior": {
+        "saropaCapture.learning.trackScrollBehavior": {
           "default": false,
           "description": "%config.learning.trackScrollBehavior.description%",
           "type": "boolean",
           "title": "%config.learning.trackScrollBehavior.title%"
         },
-        "saropaLogCapture.learning.suggestionFrequency": {
+        "saropaCapture.learning.suggestionFrequency": {
           "default": "weekly",
           "description": "%config.learning.suggestionFrequency.description%",
           "enum": [
@@ -724,7 +724,7 @@
           "type": "string",
           "title": "%config.learning.suggestionFrequency.title%"
         },
-        "saropaLogCapture.learning.minConfidence": {
+        "saropaCapture.learning.minConfidence": {
           "default": 0.8,
           "description": "%config.learning.minConfidence.description%",
           "maximum": 1,
@@ -732,7 +732,7 @@
           "type": "number",
           "title": "%config.learning.minConfidence.title%"
         },
-        "saropaLogCapture.learning.maxStoredLineLength": {
+        "saropaCapture.learning.maxStoredLineLength": {
           "default": 2000,
           "description": "%config.learning.maxStoredLineLength.description%",
           "maximum": 10000,
@@ -740,13 +740,13 @@
           "type": "number",
           "title": "%config.learning.maxStoredLineLength.title%"
         },
-        "saropaLogCapture.learning.globalAggregates": {
+        "saropaCapture.learning.globalAggregates": {
           "default": false,
           "description": "%config.learning.globalAggregates.description%",
           "type": "boolean",
           "title": "%config.learning.globalAggregates.title%"
         },
-        "saropaLogCapture.viewerKeybindings": {
+        "saropaCapture.viewerKeybindings": {
           "default": {},
           "description": "%config.viewerKeybindings.description%",
           "additionalProperties": {
@@ -755,13 +755,13 @@
           "type": "object",
           "title": "%config.viewerKeybindings.title%"
         },
-        "saropaLogCapture.correlation.enabled": {
+        "saropaCapture.correlation.enabled": {
           "default": true,
           "description": "%config.correlation.enabled.description%",
           "type": "boolean",
           "title": "%config.correlation.enabled.title%"
         },
-        "saropaLogCapture.correlation.windowMs": {
+        "saropaCapture.correlation.windowMs": {
           "default": 2000,
           "description": "%config.correlation.windowMs.description%",
           "maximum": 10000,
@@ -769,7 +769,7 @@
           "type": "number",
           "title": "%config.correlation.windowMs.title%"
         },
-        "saropaLogCapture.correlation.minConfidence": {
+        "saropaCapture.correlation.minConfidence": {
           "default": "medium",
           "description": "%config.correlation.minConfidence.description%",
           "enum": [
@@ -780,7 +780,7 @@
           "type": "string",
           "title": "%config.correlation.minConfidence.title%"
         },
-        "saropaLogCapture.correlation.types": {
+        "saropaCapture.correlation.types": {
           "default": [
             "error-http",
             "error-memory",
@@ -802,7 +802,7 @@
           "type": "array",
           "title": "%config.correlation.types.title%"
         },
-        "saropaLogCapture.correlation.maxEvents": {
+        "saropaCapture.correlation.maxEvents": {
           "default": 10000,
           "description": "%config.correlation.maxEvents.description%",
           "maximum": 50000,
@@ -810,13 +810,13 @@
           "type": "number",
           "title": "%config.correlation.maxEvents.title%"
         },
-        "saropaLogCapture.captureAll": {
+        "saropaCapture.captureAll": {
           "default": true,
           "description": "%config.captureAll.description%",
           "type": "boolean",
           "title": "%config.captureAll.title%"
         },
-        "saropaLogCapture.categories": {
+        "saropaCapture.categories": {
           "default": [
             "console",
             "stderr",
@@ -829,7 +829,7 @@
           "type": "array",
           "title": "%config.categories.title%"
         },
-        "saropaLogCapture.contextViewLines": {
+        "saropaCapture.contextViewLines": {
           "default": 10,
           "description": "%config.contextViewLines.description%",
           "maximum": 100,
@@ -837,7 +837,7 @@
           "type": "number",
           "title": "%config.contextViewLines.title%"
         },
-        "saropaLogCapture.copyContextLines": {
+        "saropaCapture.copyContextLines": {
           "default": 3,
           "description": "%config.copyContextLines.description%",
           "maximum": 20,
@@ -845,7 +845,7 @@
           "type": "number",
           "title": "%config.copyContextLines.title%"
         },
-        "saropaLogCapture.repeatCollapseGlobalMinCount": {
+        "saropaCapture.repeatCollapseGlobalMinCount": {
           "default": 2,
           "markdownDescription": "%config.repeatCollapseGlobalMinCount.markdownDescription%",
           "maximum": 50,
@@ -853,7 +853,7 @@
           "type": "number",
           "title": "%config.repeatCollapseGlobalMinCount.title%"
         },
-        "saropaLogCapture.repeatCollapseReadMinCount": {
+        "saropaCapture.repeatCollapseReadMinCount": {
           "default": 2,
           "markdownDescription": "%config.repeatCollapseReadMinCount.markdownDescription%",
           "maximum": 50,
@@ -861,7 +861,7 @@
           "type": "number",
           "title": "%config.repeatCollapseReadMinCount.title%"
         },
-        "saropaLogCapture.repeatCollapseTransactionMinCount": {
+        "saropaCapture.repeatCollapseTransactionMinCount": {
           "default": 3,
           "markdownDescription": "%config.repeatCollapseTransactionMinCount.markdownDescription%",
           "maximum": 50,
@@ -869,7 +869,7 @@
           "type": "number",
           "title": "%config.repeatCollapseTransactionMinCount.title%"
         },
-        "saropaLogCapture.repeatCollapseDmlMinCount": {
+        "saropaCapture.repeatCollapseDmlMinCount": {
           "default": 4,
           "markdownDescription": "%config.repeatCollapseDmlMinCount.markdownDescription%",
           "maximum": 50,
@@ -877,37 +877,37 @@
           "type": "number",
           "title": "%config.repeatCollapseDmlMinCount.title%"
         },
-        "saropaLogCapture.minimapShowInfoMarkers": {
+        "saropaCapture.minimapShowInfoMarkers": {
           "default": false,
           "markdownDescription": "%config.minimapShowInfoMarkers.markdownDescription%",
           "type": "boolean",
           "title": "%config.minimapShowInfoMarkers.title%"
         },
-        "saropaLogCapture.minimapShowSqlDensity": {
+        "saropaCapture.minimapShowSqlDensity": {
           "default": true,
           "markdownDescription": "%config.minimapShowSqlDensity.markdownDescription%",
           "type": "boolean",
           "title": "%config.minimapShowSqlDensity.title%"
         },
-        "saropaLogCapture.minimapProportionalLines": {
+        "saropaCapture.minimapProportionalLines": {
           "default": true,
           "markdownDescription": "%config.minimapProportionalLines.markdownDescription%",
           "type": "boolean",
           "title": "%config.minimapProportionalLines.title%"
         },
-        "saropaLogCapture.minimapViewportOutsideArrow": {
+        "saropaCapture.minimapViewportOutsideArrow": {
           "default": false,
           "markdownDescription": "%config.minimapViewportOutsideArrow.markdownDescription%",
           "type": "boolean",
           "title": "%config.minimapViewportOutsideArrow.title%"
         },
-        "saropaLogCapture.minimapViewportRedOutline": {
+        "saropaCapture.minimapViewportRedOutline": {
           "default": false,
           "markdownDescription": "%config.minimapViewportRedOutline.markdownDescription%",
           "type": "boolean",
           "title": "%config.minimapViewportRedOutline.title%"
         },
-        "saropaLogCapture.minimapWidth": {
+        "saropaCapture.minimapWidth": {
           "default": "medium",
           "description": "%config.minimapWidth.description%",
           "enum": [
@@ -920,37 +920,37 @@
           "type": "string",
           "title": "%config.minimapWidth.title%"
         },
-        "saropaLogCapture.showScrollbar": {
+        "saropaCapture.showScrollbar": {
           "default": false,
           "description": "%config.showScrollbar.description%",
           "title": "%config.showScrollbar.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.viewerColumnLineNumbers": {
+        "saropaCapture.viewerColumnLineNumbers": {
           "default": true,
           "description": "%config.viewerColumnLineNumbers.description%",
           "title": "%config.viewerColumnLineNumbers.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.viewerColumnTimestamp": {
+        "saropaCapture.viewerColumnTimestamp": {
           "default": true,
           "description": "%config.viewerColumnTimestamp.description%",
           "title": "%config.viewerColumnTimestamp.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.viewerColumnSessionElapsed": {
+        "saropaCapture.viewerColumnSessionElapsed": {
           "default": false,
           "description": "%config.viewerColumnSessionElapsed.description%",
           "title": "%config.viewerColumnSessionElapsed.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.viewerColumnParsedTag": {
+        "saropaCapture.viewerColumnParsedTag": {
           "default": true,
           "description": "%config.viewerColumnParsedTag.description%",
           "title": "%config.viewerColumnParsedTag.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.logFontSize": {
+        "saropaCapture.logFontSize": {
           "default": 13,
           "description": "%config.logFontSize.description%",
           "title": "%config.logFontSize.title%",
@@ -958,7 +958,7 @@
           "minimum": 4,
           "maximum": 42
         },
-        "saropaLogCapture.logLineHeight": {
+        "saropaCapture.logLineHeight": {
           "default": 1.1,
           "description": "%config.logLineHeight.description%",
           "title": "%config.logLineHeight.title%",
@@ -966,7 +966,7 @@
           "minimum": 0.5,
           "maximum": 4
         },
-        "saropaLogCapture.troubleMode.chartInterval": {
+        "saropaCapture.troubleMode.chartInterval": {
           "default": 5,
           "description": "%config.troubleModeChartInterval.description%",
           "title": "%config.troubleModeChartInterval.title%",
@@ -974,13 +974,13 @@
           "minimum": 1,
           "maximum": 60
         },
-        "saropaLogCapture.troubleMode.openOnLoad": {
+        "saropaCapture.troubleMode.openOnLoad": {
           "default": false,
           "description": "%config.troubleModeOpenOnLoad.description%",
           "title": "%config.troubleModeOpenOnLoad.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.troubleMode.levels": {
+        "saropaCapture.troubleMode.levels": {
           "default": ["error", "warning", "performance"],
           "description": "%config.troubleModeLevels.description%",
           "title": "%config.troubleModeLevels.title%",
@@ -992,25 +992,25 @@
           "minItems": 1,
           "uniqueItems": true
         },
-        "saropaLogCapture.logViewerVisualSpacing": {
+        "saropaCapture.logViewerVisualSpacing": {
           "default": false,
           "description": "%config.logViewerVisualSpacing.description%",
           "title": "%config.logViewerVisualSpacing.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.accessibility.showCollapseDividerLabels": {
+        "saropaCapture.accessibility.showCollapseDividerLabels": {
           "default": true,
           "markdownDescription": "%config.accessibility.showCollapseDividerLabels.description%",
           "title": "%config.accessibility.showCollapseDividerLabels.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.viewerAlwaysShowSearchMatchOptions": {
+        "saropaCapture.viewerAlwaysShowSearchMatchOptions": {
           "default": false,
           "description": "%config.viewerAlwaysShowSearchMatchOptions.description%",
           "title": "%config.viewerAlwaysShowSearchMatchOptions.title%",
           "type": "boolean"
         },
-        "saropaLogCapture.docsScanDirs": {
+        "saropaCapture.docsScanDirs": {
           "default": [
             "bugs",
             "docs"
@@ -1022,7 +1022,7 @@
           "type": "array",
           "title": "%config.docsScanDirs.title%"
         },
-        "saropaLogCapture.changelogPaths": {
+        "saropaCapture.changelogPaths": {
           "default": [
             "CHANGELOG*",
             "docs/CHANGELOG*"
@@ -1034,13 +1034,13 @@
           "type": "array",
           "title": "%config.changelogPaths.title%"
         },
-        "saropaLogCapture.projectIndex.enabled": {
+        "saropaCapture.projectIndex.enabled": {
           "default": true,
           "description": "Enable project-wide indexing of documentation and knowledge files for faster analysis searches.",
           "type": "boolean",
           "title": "%config.projectIndex.enabled.title%"
         },
-        "saropaLogCapture.projectIndex.sources": {
+        "saropaCapture.projectIndex.sources": {
           "default": [
             {
               "path": "docs",
@@ -1272,19 +1272,19 @@
           "type": "array",
           "title": "%config.projectIndex.sources.title%"
         },
-        "saropaLogCapture.projectIndex.includeRootFiles": {
+        "saropaCapture.projectIndex.includeRootFiles": {
           "default": true,
           "description": "Index matching files at workspace root (README.md, CHANGELOG.md, etc.).",
           "type": "boolean",
           "title": "%config.projectIndex.includeRootFiles.title%"
         },
-        "saropaLogCapture.projectIndex.includeReports": {
+        "saropaCapture.projectIndex.includeReports": {
           "default": true,
           "description": "Index completed (non-active, non-trashed) log files from the reports directory.",
           "type": "boolean",
           "title": "%config.projectIndex.includeReports.title%"
         },
-        "saropaLogCapture.projectIndex.maxFilesPerSource": {
+        "saropaCapture.projectIndex.maxFilesPerSource": {
           "default": 100,
           "description": "Maximum number of files to index per source directory.",
           "maximum": 1000,
@@ -1292,7 +1292,7 @@
           "type": "number",
           "title": "%config.projectIndex.maxFilesPerSource.title%"
         },
-        "saropaLogCapture.projectIndex.refreshInterval": {
+        "saropaCapture.projectIndex.refreshInterval": {
           "default": 0,
           "description": "Seconds between automatic index refreshes. 0 = only on demand.",
           "maximum": 3600,
@@ -1300,13 +1300,13 @@
           "type": "number",
           "title": "%config.projectIndex.refreshInterval.title%"
         },
-        "saropaLogCapture.searchIndex.enabled": {
+        "saropaCapture.searchIndex.enabled": {
           "default": true,
           "description": "Maintain an incremental trigram index so cross-session log search skips files that cannot contain the query. The index only narrows the files scanned; results are identical to a full scan. When off, every search reads all log files sequentially.",
           "type": "boolean",
           "title": "Search Index: Enabled"
         },
-        "saropaLogCapture.searchIndex.maxSizeMB": {
+        "saropaCapture.searchIndex.maxSizeMB": {
           "default": 50,
           "description": "Soft size cap (megabytes) for the cross-session search index. When exceeded, the oldest sessions are dropped from the index and fall back to a direct scan.",
           "maximum": 500,
@@ -1314,19 +1314,19 @@
           "type": "number",
           "title": "Search Index: Max Size (MB)"
         },
-        "saropaLogCapture.enabled": {
+        "saropaCapture.enabled": {
           "default": true,
           "description": "%config.enabled.description%",
           "type": "boolean",
           "title": "%config.enabled.title%"
         },
-        "saropaLogCapture.ai.enabled": {
+        "saropaCapture.ai.enabled": {
           "default": false,
           "description": "%config.ai.enabled.description%",
           "type": "boolean",
           "title": "%config.ai.enabled.title%"
         },
-        "saropaLogCapture.ai.contextLines": {
+        "saropaCapture.ai.contextLines": {
           "default": 10,
           "description": "Number of surrounding log lines to include when using Explain with AI",
           "maximum": 50,
@@ -1334,25 +1334,25 @@
           "type": "number",
           "title": "%config.ai.contextLines.title%"
         },
-        "saropaLogCapture.ai.includeIntegrationData": {
+        "saropaCapture.ai.includeIntegrationData": {
           "default": true,
           "description": "Include performance, HTTP, and terminal context in AI error explanation",
           "type": "boolean",
           "title": "%config.ai.includeIntegrationData.title%"
         },
-        "saropaLogCapture.ai.cacheExplanations": {
+        "saropaCapture.ai.cacheExplanations": {
           "default": true,
           "description": "Cache AI explanations to avoid repeated API calls for the same error",
           "type": "boolean",
           "title": "%config.ai.cacheExplanations.title%"
         },
-        "saropaLogCapture.ai.modelPreference": {
+        "saropaCapture.ai.modelPreference": {
           "default": "",
           "description": "Preferred LM vendor for Explain with AI (e.g. copilot, claude). Empty = first available.",
           "type": "string",
           "title": "%config.ai.modelPreference.title%"
         },
-        "saropaLogCapture.exclusions": {
+        "saropaCapture.exclusions": {
           "default": [],
           "description": "%config.exclusions.description%",
           "items": {
@@ -1361,7 +1361,7 @@
           "type": "array",
           "title": "%config.exclusions.title%"
         },
-        "saropaLogCapture.spamPatterns": {
+        "saropaCapture.spamPatterns": {
           "default": [],
           "description": "%config.spamPatterns.description%",
           "items": {
@@ -1370,7 +1370,7 @@
           "type": "array",
           "title": "%config.spamPatterns.title%"
         },
-        "saropaLogCapture.autoHidePatterns": {
+        "saropaCapture.autoHidePatterns": {
           "default": [],
           "description": "%config.autoHidePatterns.description%",
           "items": {
@@ -1379,7 +1379,7 @@
           "type": "array",
           "title": "%config.autoHidePatterns.title%"
         },
-        "saropaLogCapture.fileTypes": {
+        "saropaCapture.fileTypes": {
           "default": [
             ".csv",
             ".html",
@@ -1396,7 +1396,7 @@
           "type": "array",
           "title": "%config.fileTypes.title%"
         },
-        "saropaLogCapture.tailPatterns": {
+        "saropaCapture.tailPatterns": {
           "default": [
             "**/*.log"
           ],
@@ -1407,7 +1407,7 @@
           "type": "array",
           "title": "%config.tailPatterns.title%"
         },
-        "saropaLogCapture.filterContextLines": {
+        "saropaCapture.filterContextLines": {
           "default": 3,
           "description": "%config.filterContextLines.description%",
           "maximum": 50,
@@ -1415,7 +1415,7 @@
           "type": "number",
           "title": "%config.filterContextLines.title%"
         },
-        "saropaLogCapture.filterPresets": {
+        "saropaCapture.filterPresets": {
           "default": [],
           "description": "%config.filterPresets.description%",
           "items": {
@@ -1459,31 +1459,31 @@
           "type": "array",
           "title": "%config.filterPresets.title%"
         },
-        "saropaLogCapture.firebase.appId": {
+        "saropaCapture.firebase.appId": {
           "default": "",
           "description": "%config.firebase.appId.description%",
           "type": "string",
           "title": "%config.firebase.appId.title%"
         },
-        "saropaLogCapture.firebase.packageName": {
+        "saropaCapture.firebase.packageName": {
           "default": "",
           "description": "%config.firebase.packageName.description%",
           "type": "string",
           "title": "%config.firebase.packageName.title%"
         },
-        "saropaLogCapture.firebase.projectId": {
+        "saropaCapture.firebase.projectId": {
           "default": "",
           "description": "%config.firebase.projectId.description%",
           "type": "string",
           "title": "%config.firebase.projectId.title%"
         },
-        "saropaLogCapture.firebase.serviceAccountKeyPath": {
+        "saropaCapture.firebase.serviceAccountKeyPath": {
           "default": "",
           "description": "%config.firebase.serviceAccountKeyPath.description%",
           "type": "string",
           "title": "%config.firebase.serviceAccountKeyPath.title%"
         },
-        "saropaLogCapture.firebase.timeRange": {
+        "saropaCapture.firebase.timeRange": {
           "default": "LAST_7_DAYS",
           "description": "%config.firebase.timeRange.description%",
           "enum": [
@@ -1501,7 +1501,7 @@
           "type": "string",
           "title": "%config.firebase.timeRange.title%"
         },
-        "saropaLogCapture.firebase.refreshInterval": {
+        "saropaCapture.firebase.refreshInterval": {
           "default": 300,
           "description": "%config.firebase.refreshInterval.description%",
           "maximum": 3600,
@@ -1509,19 +1509,19 @@
           "type": "number",
           "title": "%config.firebase.refreshInterval.title%"
         },
-        "saropaLogCapture.firebase.notifyNewIssues": {
+        "saropaCapture.firebase.notifyNewIssues": {
           "default": false,
           "description": "%config.firebase.notifyNewIssues.description%",
           "type": "boolean",
           "title": "%config.firebase.notifyNewIssues.title%"
         },
-        "saropaLogCapture.firebase.versionFilter": {
+        "saropaCapture.firebase.versionFilter": {
           "default": "",
           "description": "%config.firebase.versionFilter.description%",
           "type": "string",
           "title": "%config.firebase.versionFilter.title%"
         },
-        "saropaLogCapture.flowMap.customBreadcrumbs": {
+        "saropaCapture.flowMap.customBreadcrumbs": {
           "default": [],
           "description": "%config.flowMap.customBreadcrumbs.description%",
           "items": {
@@ -1566,7 +1566,7 @@
           "type": "array",
           "title": "%config.flowMap.customBreadcrumbs.title%"
         },
-        "saropaLogCapture.flowMap.customIssues": {
+        "saropaCapture.flowMap.customIssues": {
           "default": [],
           "description": "%config.flowMap.customIssues.description%",
           "items": {
@@ -1603,19 +1603,19 @@
           "type": "array",
           "title": "%config.flowMap.customIssues.title%"
         },
-        "saropaLogCapture.playConsole.enabled": {
+        "saropaCapture.playConsole.enabled": {
           "default": false,
           "description": "%config.playConsole.enabled.description%",
           "type": "boolean",
           "title": "%config.playConsole.enabled.title%"
         },
-        "saropaLogCapture.playConsole.appUrl": {
+        "saropaCapture.playConsole.appUrl": {
           "default": "",
           "description": "%config.playConsole.appUrl.description%",
           "type": "string",
           "title": "%config.playConsole.appUrl.title%"
         },
-        "saropaLogCapture.format": {
+        "saropaCapture.format": {
           "default": "plaintext",
           "description": "%config.format.description%",
           "enum": [
@@ -1625,7 +1625,7 @@
           "type": "string",
           "title": "%config.format.title%"
         },
-        "saropaLogCapture.iconBarPosition": {
+        "saropaCapture.iconBarPosition": {
           "default": "left",
           "description": "%config.iconBarPosition.description%",
           "enum": [
@@ -1635,13 +1635,13 @@
           "type": "string",
           "title": "%config.iconBarPosition.title%"
         },
-        "saropaLogCapture.gitignoreCheck": {
+        "saropaCapture.gitignoreCheck": {
           "default": true,
           "description": "%config.gitignoreCheck.description%",
           "type": "boolean",
           "title": "%config.gitignoreCheck.title%"
         },
-        "saropaLogCapture.highlightRules": {
+        "saropaCapture.highlightRules": {
           "default": [
             {
               "color": "var(--vscode-errorForeground)",
@@ -1706,43 +1706,43 @@
           "type": "array",
           "title": "%config.highlightRules.title%"
         },
-        "saropaLogCapture.includeElapsedTime": {
+        "saropaCapture.includeElapsedTime": {
           "default": false,
           "description": "%config.includeElapsedTime.description%",
           "type": "boolean",
           "title": "%config.includeElapsedTime.title%"
         },
-        "saropaLogCapture.includeSourceLocation": {
+        "saropaCapture.includeSourceLocation": {
           "default": false,
           "description": "%config.includeSourceLocation.description%",
           "type": "boolean",
           "title": "%config.includeSourceLocation.title%"
         },
-        "saropaLogCapture.includeSubfolders": {
+        "saropaCapture.includeSubfolders": {
           "default": true,
           "description": "%config.includeSubfolders.description%",
           "type": "boolean",
           "title": "%config.includeSubfolders.title%"
         },
-        "saropaLogCapture.reloadOnExternalChange": {
+        "saropaCapture.reloadOnExternalChange": {
           "default": true,
           "description": "%config.reloadOnExternalChange.description%",
           "type": "boolean",
           "title": "%config.reloadOnExternalChange.title%"
         },
-        "saropaLogCapture.reloadPromptOnExternalChange": {
+        "saropaCapture.reloadPromptOnExternalChange": {
           "default": false,
           "description": "%config.reloadPromptOnExternalChange.description%",
           "type": "boolean",
           "title": "%config.reloadPromptOnExternalChange.title%"
         },
-        "saropaLogCapture.includeTimestamp": {
+        "saropaCapture.includeTimestamp": {
           "default": true,
           "description": "%config.includeTimestamp.description%",
           "type": "boolean",
           "title": "%config.includeTimestamp.title%"
         },
-        "saropaLogCapture.levelDetection": {
+        "saropaCapture.levelDetection": {
           "default": "strict",
           "enum": [
             "loose",
@@ -1752,19 +1752,19 @@
           "type": "string",
           "title": "%config.levelDetection.title%"
         },
-        "saropaLogCapture.stderrTreatAsError": {
+        "saropaCapture.stderrTreatAsError": {
           "default": false,
           "markdownDescription": "%config.stderrTreatAsError.markdownDescription%",
           "type": "boolean",
           "title": "%config.stderrTreatAsError.title%"
         },
-        "saropaLogCapture.showErrorSnackbars": {
+        "saropaCapture.showErrorSnackbars": {
           "default": false,
           "markdownDescription": "%config.showErrorSnackbars.markdownDescription%",
           "type": "boolean",
           "title": "%config.showErrorSnackbars.title%"
         },
-        "saropaLogCapture.severityKeywords": {
+        "saropaCapture.severityKeywords": {
           "type": "object",
           "default": {
             "error": [
@@ -1860,19 +1860,19 @@
           "markdownDescription": "%config.severityKeywords.markdownDescription%",
           "title": "%config.severityKeywords.title%"
         },
-        "saropaLogCapture.logDirectory": {
+        "saropaCapture.logDirectory": {
           "default": "reports",
           "description": "%config.logDirectory.description%",
           "type": "string",
           "title": "%config.logDirectory.title%"
         },
-        "saropaLogCapture.reportFolder": {
+        "saropaCapture.reportFolder": {
           "default": "bugs",
           "description": "%config.reportFolder.description%",
           "type": "string",
           "title": "%config.reportFolder.title%"
         },
-        "saropaLogCapture.lintReportImpactLevel": {
+        "saropaCapture.lintReportImpactLevel": {
           "default": "recommended",
           "description": "%config.lintReportImpactLevel.description%",
           "enum": [
@@ -1888,81 +1888,81 @@
           "type": "string",
           "title": "%config.lintReportImpactLevel.title%"
         },
-        "saropaLogCapture.maxLines": {
+        "saropaCapture.maxLines": {
           "default": 100000,
           "description": "%config.maxLines.description%",
           "minimum": 1000,
           "type": "number",
           "title": "%config.maxLines.title%"
         },
-        "saropaLogCapture.viewerMaxLines": {
+        "saropaCapture.viewerMaxLines": {
           "default": 0,
           "description": "%config.viewerMaxLines.description%",
           "minimum": 0,
           "type": "number",
           "title": "%config.viewerMaxLines.title%"
         },
-        "saropaLogCapture.viewerPreserveAsciiBoxArt": {
+        "saropaCapture.viewerPreserveAsciiBoxArt": {
           "default": true,
           "description": "%config.viewerPreserveAsciiBoxArt.description%",
           "type": "boolean",
           "title": "%config.viewerPreserveAsciiBoxArt.title%"
         },
-        "saropaLogCapture.viewerGroupAsciiArt": {
+        "saropaCapture.viewerGroupAsciiArt": {
           "default": true,
           "description": "%config.viewerGroupAsciiArt.description%",
           "type": "boolean",
           "title": "%config.viewerGroupAsciiArt.title%"
         },
-        "saropaLogCapture.viewerDetectAsciiArt": {
+        "saropaCapture.viewerDetectAsciiArt": {
           "default": false,
           "description": "%config.viewerDetectAsciiArt.description%",
           "type": "boolean",
           "title": "%config.viewerDetectAsciiArt.title%"
         },
-        "saropaLogCapture.signalAutoTrack": {
+        "saropaCapture.signalAutoTrack": {
           "default": true,
           "description": "%config.signalAutoTrack.description%",
           "type": "boolean",
           "title": "%config.signalAutoTrack.title%"
         },
-        "saropaLogCapture.viewerDbSignalsEnabled": {
+        "saropaCapture.viewerDbSignalsEnabled": {
           "default": true,
           "description": "%config.viewerDbSignalsEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbSignalsEnabled.title%"
         },
-        "saropaLogCapture.staticSqlFromFingerprint.enabled": {
+        "saropaCapture.staticSqlFromFingerprint.enabled": {
           "default": true,
           "description": "%config.staticSqlFromFingerprint.enabled.description%",
           "type": "boolean",
           "title": "%config.staticSqlFromFingerprint.enabled.title%"
         },
-        "saropaLogCapture.viewerDbDetectorNPlusOneEnabled": {
+        "saropaCapture.viewerDbDetectorNPlusOneEnabled": {
           "default": true,
           "description": "%config.viewerDbDetectorNPlusOneEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbDetectorNPlusOneEnabled.title%"
         },
-        "saropaLogCapture.viewerDbDetectorSlowBurstEnabled": {
+        "saropaCapture.viewerDbDetectorSlowBurstEnabled": {
           "default": true,
           "description": "%config.viewerDbDetectorSlowBurstEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbDetectorSlowBurstEnabled.title%"
         },
-        "saropaLogCapture.viewerDbDetectorBaselineHintsEnabled": {
+        "saropaCapture.viewerDbDetectorBaselineHintsEnabled": {
           "default": true,
           "description": "%config.viewerDbDetectorBaselineHintsEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbDetectorBaselineHintsEnabled.title%"
         },
-        "saropaLogCapture.viewerDbDetectorTimestampBurstEnabled": {
+        "saropaCapture.viewerDbDetectorTimestampBurstEnabled": {
           "default": true,
           "description": "%config.viewerDbDetectorTimestampBurstEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbDetectorTimestampBurstEnabled.title%"
         },
-        "saropaLogCapture.viewerSlowBurstSlowQueryMs": {
+        "saropaCapture.viewerSlowBurstSlowQueryMs": {
           "default": 50,
           "minimum": 1,
           "maximum": 120000,
@@ -1970,7 +1970,7 @@
           "type": "number",
           "title": "%config.viewerSlowBurstSlowQueryMs.title%"
         },
-        "saropaLogCapture.viewerSlowBurstMinCount": {
+        "saropaCapture.viewerSlowBurstMinCount": {
           "default": 5,
           "minimum": 2,
           "maximum": 100,
@@ -1978,7 +1978,7 @@
           "type": "number",
           "title": "%config.viewerSlowBurstMinCount.title%"
         },
-        "saropaLogCapture.viewerSlowBurstWindowMs": {
+        "saropaCapture.viewerSlowBurstWindowMs": {
           "default": 2000,
           "minimum": 100,
           "maximum": 120000,
@@ -1986,7 +1986,7 @@
           "type": "number",
           "title": "%config.viewerSlowBurstWindowMs.title%"
         },
-        "saropaLogCapture.viewerSlowBurstCooldownMs": {
+        "saropaCapture.viewerSlowBurstCooldownMs": {
           "default": 10000,
           "minimum": 0,
           "maximum": 300000,
@@ -1994,44 +1994,44 @@
           "type": "number",
           "title": "%config.viewerSlowBurstCooldownMs.title%"
         },
-        "saropaLogCapture.maxLogFiles": {
+        "saropaCapture.maxLogFiles": {
           "default": 0,
           "description": "%config.maxLogFiles.description%",
           "minimum": 0,
           "type": "number",
           "title": "%config.maxLogFiles.title%"
         },
-        "saropaLogCapture.organizeFolders": {
+        "saropaCapture.organizeFolders": {
           "default": true,
           "description": "%config.organizeFolders.description%",
           "type": "boolean",
           "title": "%config.organizeFolders.title%"
         },
-        "saropaLogCapture.share.gistPublic": {
+        "saropaCapture.share.gistPublic": {
           "default": false,
           "description": "Create public gists (visible to anyone) vs. secret gists (link-only access) when sharing collections via GitHub Gist.",
           "type": "boolean",
           "title": "%config.share.gistPublic.title%"
         },
-        "saropaLogCapture.share.includeNotes": {
+        "saropaCapture.share.includeNotes": {
           "default": true,
           "description": "Include collection notes in shared gist README.",
           "type": "boolean",
           "title": "%config.share.includeNotes.title%"
         },
-        "saropaLogCapture.share.uploadPutUrl": {
+        "saropaCapture.share.uploadPutUrl": {
           "default": "",
           "description": "Optional PUT URL for sharing (e.g. presigned S3/Azure Blob URL). When set, Share menu shows \"Upload to configured URL\".",
           "type": "string",
           "title": "%config.share.uploadPutUrl.title%"
         },
-        "saropaLogCapture.share.sharedFolderPath": {
+        "saropaCapture.share.sharedFolderPath": {
           "default": "",
           "description": "Optional path for team shared folder (absolute or relative to workspace). When set, Share menu shows \"Save to shared folder\". Teammates can open the .slc from this path.",
           "type": "string",
           "title": "%config.share.sharedFolderPath.title%"
         },
-        "saropaLogCapture.integrations.adapters": {
+        "saropaCapture.integrations.adapters": {
           "default": [
             "packages",
             "git",
@@ -2048,7 +2048,7 @@
           "type": "array",
           "title": "%config.integrations.adapters.title%"
         },
-        "saropaLogCapture.integrations.buildCi.source": {
+        "saropaCapture.integrations.buildCi.source": {
           "default": "file",
           "description": "Build/CI data source: file (last-build.json), github (Actions API), azure (Azure DevOps), or gitlab (GitLab CI).",
           "enum": [
@@ -2060,13 +2060,13 @@
           "type": "string",
           "title": "%config.integrations.buildCi.source.title%"
         },
-        "saropaLogCapture.integrations.buildCi.buildInfoPath": {
+        "saropaCapture.integrations.buildCi.buildInfoPath": {
           "default": ".saropa/last-build.json",
           "description": "Path (relative to workspace) to last-build.json for build/CI integration (when source is file).",
           "type": "string",
           "title": "%config.integrations.buildCi.buildInfoPath.title%"
         },
-        "saropaLogCapture.integrations.buildCi.fileMaxAgeMinutes": {
+        "saropaCapture.integrations.buildCi.fileMaxAgeMinutes": {
           "default": 60,
           "description": "If last-build.json is older than this many minutes, it is ignored.",
           "minimum": 1,
@@ -2074,73 +2074,73 @@
           "type": "number",
           "title": "%config.integrations.buildCi.fileMaxAgeMinutes.title%"
         },
-        "saropaLogCapture.integrations.buildCi.azureOrg": {
+        "saropaCapture.integrations.buildCi.azureOrg": {
           "default": "",
           "description": "Azure DevOps organization name (required when buildCi source is azure).",
           "type": "string",
           "title": "%config.integrations.buildCi.azureOrg.title%"
         },
-        "saropaLogCapture.integrations.buildCi.azureProject": {
+        "saropaCapture.integrations.buildCi.azureProject": {
           "default": "",
           "description": "Azure DevOps project name (required when buildCi source is azure).",
           "type": "string",
           "title": "%config.integrations.buildCi.azureProject.title%"
         },
-        "saropaLogCapture.integrations.buildCi.gitlabProjectId": {
+        "saropaCapture.integrations.buildCi.gitlabProjectId": {
           "default": "",
           "description": "GitLab project ID, numeric or URL-encoded path (required when buildCi source is gitlab).",
           "type": "string",
           "title": "%config.integrations.buildCi.gitlabProjectId.title%"
         },
-        "saropaLogCapture.integrations.buildCi.gitlabBaseUrl": {
+        "saropaCapture.integrations.buildCi.gitlabBaseUrl": {
           "default": "https://gitlab.com",
           "description": "GitLab API base URL for self-hosted instances.",
           "type": "string",
           "title": "%config.integrations.buildCi.gitlabBaseUrl.title%"
         },
-        "saropaLogCapture.integrations.git.describeInHeader": {
+        "saropaCapture.integrations.git.describeInHeader": {
           "default": true,
           "description": "Include git describe (e.g. v1.2.3-5-gabc1234) in context header.",
           "type": "boolean",
           "title": "%config.integrations.git.describeInHeader.title%"
         },
-        "saropaLogCapture.integrations.git.uncommittedInHeader": {
+        "saropaCapture.integrations.git.uncommittedInHeader": {
           "default": true,
           "description": "Include uncommitted files summary in context header.",
           "type": "boolean",
           "title": "%config.integrations.git.uncommittedInHeader.title%"
         },
-        "saropaLogCapture.integrations.git.stashInHeader": {
+        "saropaCapture.integrations.git.stashInHeader": {
           "default": false,
           "description": "Include stash count in context header.",
           "type": "boolean",
           "title": "%config.integrations.git.stashInHeader.title%"
         },
-        "saropaLogCapture.integrations.git.blameOnNavigate": {
+        "saropaCapture.integrations.git.blameOnNavigate": {
           "default": true,
           "description": "When opening source from a log line (e.g. stack frame), show git blame (last commit, author) and optional PR link.",
           "type": "boolean",
           "title": "%config.integrations.git.blameOnNavigate.title%"
         },
-        "saropaLogCapture.integrations.git.includeLineHistoryInMeta": {
+        "saropaCapture.integrations.git.includeLineHistoryInMeta": {
           "default": false,
           "description": "At session end, capture git blame for file:line references in the log (e.g. stack traces) and store in session meta.",
           "type": "boolean",
           "title": "%config.integrations.git.includeLineHistoryInMeta.title%"
         },
-        "saropaLogCapture.integrations.git.commitLinks": {
+        "saropaCapture.integrations.git.commitLinks": {
           "default": true,
           "description": "Resolve commit hashes to web URLs (GitHub, GitLab, Bitbucket) in blame and line history.",
           "type": "boolean",
           "title": "%config.integrations.git.commitLinks.title%"
         },
-        "saropaLogCapture.integrations.environment.includeEnvChecksum": {
+        "saropaCapture.integrations.environment.includeEnvChecksum": {
           "default": false,
           "description": "Include env block checksum in context header (launch config env, redacted).",
           "type": "boolean",
           "title": "%config.integrations.environment.includeEnvChecksum.title%"
         },
-        "saropaLogCapture.integrations.environment.configFiles": {
+        "saropaCapture.integrations.environment.configFiles": {
           "default": [],
           "description": "Paths (relative to workspace) to config files to include content hashes for.",
           "items": {
@@ -2149,13 +2149,13 @@
           "type": "array",
           "title": "%config.integrations.environment.configFiles.title%"
         },
-        "saropaLogCapture.integrations.environment.includeInHeader": {
+        "saropaCapture.integrations.environment.includeInHeader": {
           "default": true,
           "description": "Include config file checksum lines in context header.",
           "type": "boolean",
           "title": "%config.integrations.environment.includeInHeader.title%"
         },
-        "saropaLogCapture.integrations.testResults.source": {
+        "saropaCapture.integrations.testResults.source": {
           "default": "file",
           "description": "Test results source: file (last-test-run.json) or junit (JUnit XML).",
           "enum": [
@@ -2165,19 +2165,19 @@
           "type": "string",
           "title": "%config.integrations.testResults.source.title%"
         },
-        "saropaLogCapture.integrations.testResults.lastRunPath": {
+        "saropaCapture.integrations.testResults.lastRunPath": {
           "default": ".saropa/last-test-run.json",
           "description": "Path to last test run JSON (when source is file).",
           "type": "string",
           "title": "%config.integrations.testResults.lastRunPath.title%"
         },
-        "saropaLogCapture.integrations.testResults.junitPath": {
+        "saropaCapture.integrations.testResults.junitPath": {
           "default": "",
           "description": "Path to JUnit XML (when source is junit).",
           "type": "string",
           "title": "%config.integrations.testResults.junitPath.title%"
         },
-        "saropaLogCapture.integrations.testResults.fileMaxAgeHours": {
+        "saropaCapture.integrations.testResults.fileMaxAgeHours": {
           "default": 24,
           "description": "Ignore test results file older than this (hours).",
           "minimum": 1,
@@ -2185,50 +2185,50 @@
           "type": "number",
           "title": "%config.integrations.testResults.fileMaxAgeHours.title%"
         },
-        "saropaLogCapture.integrations.testResults.includeFailedListInHeader": {
+        "saropaCapture.integrations.testResults.includeFailedListInHeader": {
           "default": false,
           "description": "List failed test names in context header.",
           "type": "boolean",
           "title": "%config.integrations.testResults.includeFailedListInHeader.title%"
         },
-        "saropaLogCapture.integrations.coverage.reportPath": {
+        "saropaCapture.integrations.coverage.reportPath": {
           "default": "coverage/lcov.info",
           "description": "Path to coverage report (lcov.info, cobertura.xml, or coverage-summary.json).",
           "type": "string",
           "title": "%config.integrations.coverage.reportPath.title%"
         },
-        "saropaLogCapture.integrations.coverage.includeInHeader": {
+        "saropaCapture.integrations.coverage.includeInHeader": {
           "default": true,
           "description": "Include coverage line in context header.",
           "type": "boolean",
           "title": "%config.integrations.coverage.includeInHeader.title%"
         },
-        "saropaLogCapture.integrations.codeQuality.lintReportPath": {
+        "saropaCapture.integrations.codeQuality.lintReportPath": {
           "default": "",
           "description": "Path to lint report (ESLint JSON format). Empty to skip lint data.",
           "type": "string",
           "title": "%config.integrations.codeQuality.lintReportPath.title%"
         },
-        "saropaLogCapture.integrations.codeQuality.scanComments": {
+        "saropaCapture.integrations.codeQuality.scanComments": {
           "default": false,
           "description": "Scan referenced source files for comment density and documentation coverage.",
           "type": "boolean",
           "title": "%config.integrations.codeQuality.scanComments.title%"
         },
-        "saropaLogCapture.integrations.codeQuality.coverageStaleMaxHours": {
+        "saropaCapture.integrations.codeQuality.coverageStaleMaxHours": {
           "default": 24,
           "description": "Ignore coverage report older than this many hours (0 = no limit).",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.codeQuality.coverageStaleMaxHours.title%"
         },
-        "saropaLogCapture.integrations.codeQuality.includeInBugReport": {
+        "saropaCapture.integrations.codeQuality.includeInBugReport": {
           "default": false,
           "description": "Include quality summary (low coverage, lint issues) for referenced files in bug reports.",
           "type": "boolean",
           "title": "%config.integrations.codeQuality.includeInBugReport.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.searchPaths": {
+        "saropaCapture.integrations.crashDumps.searchPaths": {
           "default": [],
           "description": "Paths to scan for crash dumps (e.g. ${workspaceFolder}, ${env:TEMP}). Empty = workspace + common OS paths.",
           "items": {
@@ -2237,7 +2237,7 @@
           "type": "array",
           "title": "%config.integrations.crashDumps.searchPaths.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.extensions": {
+        "saropaCapture.integrations.crashDumps.extensions": {
           "default": [
             ".dmp",
             ".mdmp",
@@ -2250,21 +2250,21 @@
           "type": "array",
           "title": "%config.integrations.crashDumps.extensions.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.leadMinutes": {
+        "saropaCapture.integrations.crashDumps.leadMinutes": {
           "default": 1,
           "description": "Minutes before session start to include file mtime.",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.crashDumps.leadMinutes.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.lagMinutes": {
+        "saropaCapture.integrations.crashDumps.lagMinutes": {
           "default": 5,
           "description": "Minutes after session end to include file mtime.",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.crashDumps.lagMinutes.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.maxFiles": {
+        "saropaCapture.integrations.crashDumps.maxFiles": {
           "default": 20,
           "description": "Max crash dump files to list.",
           "minimum": 1,
@@ -2272,37 +2272,37 @@
           "type": "number",
           "title": "%config.integrations.crashDumps.maxFiles.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.includeInHeader": {
+        "saropaCapture.integrations.crashDumps.includeInHeader": {
           "default": true,
           "description": "Add crash dumps summary line to header when any found.",
           "type": "boolean",
           "title": "%config.integrations.crashDumps.includeInHeader.title%"
         },
-        "saropaLogCapture.integrations.crashDumps.copyToSession": {
+        "saropaCapture.integrations.crashDumps.copyToSession": {
           "default": false,
           "description": "Copy discovered crash dump files into the log folder for portability.",
           "type": "boolean",
           "title": "%config.integrations.crashDumps.copyToSession.title%"
         },
-        "saropaLogCapture.integrations.flutterCrashLogs.deleteOriginals": {
+        "saropaCapture.integrations.flutterCrashLogs.deleteOriginals": {
           "default": false,
           "description": "Delete flutter_*.log files from workspace root after importing to reports.",
           "type": "boolean",
           "title": "%config.integrations.flutterCrashLogs.deleteOriginals.title%"
         },
-        "saropaLogCapture.integrations.flutterCrashLogs.leadMinutes": {
+        "saropaCapture.integrations.flutterCrashLogs.leadMinutes": {
           "default": 1,
           "description": "Minutes before session start to include when scanning for Flutter crash logs.",
           "type": "number",
           "title": "%config.integrations.flutterCrashLogs.leadMinutes.title%"
         },
-        "saropaLogCapture.integrations.flutterCrashLogs.lagMinutes": {
+        "saropaCapture.integrations.flutterCrashLogs.lagMinutes": {
           "default": 5,
           "description": "Minutes after session end to include when scanning for Flutter crash logs.",
           "type": "number",
           "title": "%config.integrations.flutterCrashLogs.lagMinutes.title%"
         },
-        "saropaLogCapture.integrations.windowsEvents.logs": {
+        "saropaCapture.integrations.windowsEvents.logs": {
           "default": [
             "Application",
             "System"
@@ -2314,7 +2314,7 @@
           "type": "array",
           "title": "%config.integrations.windowsEvents.logs.title%"
         },
-        "saropaLogCapture.integrations.windowsEvents.levels": {
+        "saropaCapture.integrations.windowsEvents.levels": {
           "default": [
             "Critical",
             "Error",
@@ -2327,21 +2327,21 @@
           "type": "array",
           "title": "%config.integrations.windowsEvents.levels.title%"
         },
-        "saropaLogCapture.integrations.windowsEvents.leadMinutes": {
+        "saropaCapture.integrations.windowsEvents.leadMinutes": {
           "default": 2,
           "description": "Minutes before session start for event query.",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.windowsEvents.leadMinutes.title%"
         },
-        "saropaLogCapture.integrations.windowsEvents.lagMinutes": {
+        "saropaCapture.integrations.windowsEvents.lagMinutes": {
           "default": 5,
           "description": "Minutes after session end for event query.",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.windowsEvents.lagMinutes.title%"
         },
-        "saropaLogCapture.integrations.windowsEvents.maxEvents": {
+        "saropaCapture.integrations.windowsEvents.maxEvents": {
           "default": 200,
           "description": "Max events to collect per session.",
           "minimum": 1,
@@ -2349,7 +2349,7 @@
           "type": "number",
           "title": "%config.integrations.windowsEvents.maxEvents.title%"
         },
-        "saropaLogCapture.integrations.externalLogs.paths": {
+        "saropaCapture.integrations.externalLogs.paths": {
           "default": [],
           "description": "External log files to tail during a debug session, relative to the workspace root or absolute (e.g. logs/app.log, logs/nginx/error.log). Enable the Application / file logs integration in Configure integrations for these to be tailed.",
           "items": {
@@ -2358,19 +2358,19 @@
           "type": "array",
           "title": "%config.integrations.externalLogs.paths.title%"
         },
-        "saropaLogCapture.integrations.externalLogs.writeSidecars": {
+        "saropaCapture.integrations.externalLogs.writeSidecars": {
           "default": true,
           "description": "Write tailed external log content to sidecar files next to the main session log.",
           "type": "boolean",
           "title": "%config.integrations.externalLogs.writeSidecars.title%"
         },
-        "saropaLogCapture.integrations.externalLogs.prefixLines": {
+        "saropaCapture.integrations.externalLogs.prefixLines": {
           "default": true,
           "description": "Prefix each sidecar line with its source label (e.g. [app] ) for clarity in merged views.",
           "type": "boolean",
           "title": "%config.integrations.externalLogs.prefixLines.title%"
         },
-        "saropaLogCapture.integrations.externalLogs.maxLinesPerFile": {
+        "saropaCapture.integrations.externalLogs.maxLinesPerFile": {
           "default": 10000,
           "description": "Cap lines tailed per external file; oldest lines drop when the cap is exceeded.",
           "minimum": 100,
@@ -2378,49 +2378,49 @@
           "type": "number",
           "title": "%config.integrations.externalLogs.maxLinesPerFile.title%"
         },
-        "saropaLogCapture.integrations.externalLogs.createIfMissing": {
+        "saropaCapture.integrations.externalLogs.createIfMissing": {
           "default": false,
           "description": "If a configured external log file does not exist at session start, create an empty file (and parent folders) so it can be tailed as soon as the app writes to it. Ignored for glob paths.",
           "type": "boolean",
           "title": "%config.integrations.externalLogs.createIfMissing.title%"
         },
-        "saropaLogCapture.integrations.externalLogs.followRotation": {
+        "saropaCapture.integrations.externalLogs.followRotation": {
           "default": false,
           "description": "Keep tailing across log rotation: when the tailed file is recreated or truncated (or a newer file matches a glob path like logs/*.log), continue from the new file's start.",
           "type": "boolean",
           "title": "%config.integrations.externalLogs.followRotation.title%"
         },
-        "saropaLogCapture.integrations.security.windowsSecurityLog": {
+        "saropaCapture.integrations.security.windowsSecurityLog": {
           "default": false,
           "description": "Query the Windows Security event log during sessions (Windows only, opt-in).",
           "type": "boolean",
           "title": "%config.integrations.security.windowsSecurityLog.title%"
         },
-        "saropaLogCapture.integrations.security.auditLogPath": {
+        "saropaCapture.integrations.security.auditLogPath": {
           "default": "",
           "description": "Path to an application audit log file (relative to workspace or absolute).",
           "type": "string",
           "title": "%config.integrations.security.auditLogPath.title%"
         },
-        "saropaLogCapture.integrations.security.redactSecurityEvents": {
+        "saropaCapture.integrations.security.redactSecurityEvents": {
           "default": true,
           "description": "Redact sensitive fields (user names, IP addresses) before writing sidecar.",
           "type": "boolean",
           "title": "%config.integrations.security.redactSecurityEvents.title%"
         },
-        "saropaLogCapture.integrations.security.includeSummaryInHeader": {
+        "saropaCapture.integrations.security.includeSummaryInHeader": {
           "default": false,
           "description": "Add a security event summary line to the session header.",
           "type": "boolean",
           "title": "%config.integrations.security.includeSummaryInHeader.title%"
         },
-        "saropaLogCapture.integrations.security.includeInBugReport": {
+        "saropaCapture.integrations.security.includeInBugReport": {
           "default": false,
           "description": "Include security sidecar reference in bug reports.",
           "type": "boolean",
           "title": "%config.integrations.security.includeInBugReport.title%"
         },
-        "saropaLogCapture.integrations.database.mode": {
+        "saropaCapture.integrations.database.mode": {
           "default": "parse",
           "description": "How to collect database queries: 'parse' scans captured output, 'file' reads an external query log.",
           "enum": [
@@ -2431,25 +2431,25 @@
           "type": "string",
           "title": "%config.integrations.database.mode.title%"
         },
-        "saropaLogCapture.integrations.database.queryLogPath": {
+        "saropaCapture.integrations.database.queryLogPath": {
           "default": "",
           "description": "Path to external query log file (file mode only).",
           "type": "string",
           "title": "%config.integrations.database.queryLogPath.title%"
         },
-        "saropaLogCapture.integrations.database.requestIdPattern": {
+        "saropaCapture.integrations.database.requestIdPattern": {
           "default": "",
           "description": "Regex to extract a request ID from a log line (e.g. 'requestId=(\\S+)').",
           "type": "string",
           "title": "%config.integrations.database.requestIdPattern.title%"
         },
-        "saropaLogCapture.integrations.database.queryBlockPattern": {
+        "saropaCapture.integrations.database.queryBlockPattern": {
           "default": "",
           "description": "Regex to detect query blocks in captured output (parse mode). Leave empty for built-in SQL detection.",
           "type": "string",
           "title": "%config.integrations.database.queryBlockPattern.title%"
         },
-        "saropaLogCapture.integrations.database.timeWindowSeconds": {
+        "saropaCapture.integrations.database.timeWindowSeconds": {
           "default": 5,
           "description": "Correlation time window (seconds) when no request ID matches.",
           "minimum": 1,
@@ -2457,7 +2457,7 @@
           "type": "number",
           "title": "%config.integrations.database.timeWindowSeconds.title%"
         },
-        "saropaLogCapture.integrations.database.maxQueriesPerLookup": {
+        "saropaCapture.integrations.database.maxQueriesPerLookup": {
           "default": 20,
           "description": "Max query results returned per lookup.",
           "minimum": 1,
@@ -2465,49 +2465,49 @@
           "type": "number",
           "title": "%config.integrations.database.maxQueriesPerLookup.title%"
         },
-        "saropaLogCapture.integrations.database.redactLiterals": {
+        "saropaCapture.integrations.database.redactLiterals": {
           "default": false,
           "description": "Replace string and numeric literals in captured SQL with ? before writing the queries sidecar, so values (potential PII/secrets) are not shared. Table and column names are kept.",
           "type": "boolean",
           "title": "%config.integrations.database.redactLiterals.title%"
         },
-        "saropaLogCapture.integrations.database.liveTail": {
+        "saropaCapture.integrations.database.liveTail": {
           "default": false,
           "description": "File mode only: tail the query log during the session and stream new queries live into the viewer (interleaved with app output). The end-of-session queries sidecar is written regardless.",
           "type": "boolean",
           "title": "%config.integrations.database.liveTail.title%"
         },
-        "saropaLogCapture.integrations.database.apiUrl": {
+        "saropaCapture.integrations.database.apiUrl": {
           "default": "",
-          "description": "API mode only: HTTPS endpoint that returns queries for a session time range. Saropa Log Capture POSTs {startTime,endTime} (epoch ms) and expects {\"queries\":[...]} back. The bearer token is stored via the 'Set Database API Token' command, never in settings.",
+          "description": "API mode only: HTTPS endpoint that returns queries for a session time range. Saropa Capture POSTs {startTime,endTime} (epoch ms) and expects {\"queries\":[...]} back. The bearer token is stored via the 'Set Database API Token' command, never in settings.",
           "type": "string",
           "title": "%config.integrations.database.apiUrl.title%"
         },
-        "saropaLogCapture.integrations.otel.traceUrlTemplate": {
+        "saropaCapture.integrations.otel.traceUrlTemplate": {
           "default": "",
           "description": "OpenTelemetry: trace backend deep-link template with a {traceId} placeholder, e.g. 'https://jaeger.example.com/trace/{traceId}'. Detected trace IDs are linked to this URL in the .traces.json sidecar.",
           "type": "string",
           "title": "%config.integrations.otel.traceUrlTemplate.title%"
         },
-        "saropaLogCapture.integrations.otel.traceIdPattern": {
+        "saropaCapture.integrations.otel.traceIdPattern": {
           "default": "",
           "description": "OpenTelemetry: optional regex override (capture group 1 = trace id) for non-standard trace-id log formats. Leave empty to use built-in W3C traceparent and trace_id= detection.",
           "type": "string",
           "title": "%config.integrations.otel.traceIdPattern.title%"
         },
-        "saropaLogCapture.integrations.http.requestLogPath": {
+        "saropaCapture.integrations.http.requestLogPath": {
           "default": "",
           "description": "Path to an HTTP request log or HAR file (relative to workspace or absolute) to correlate with debug output.",
           "type": "string",
           "title": "%config.integrations.http.requestLogPath.title%"
         },
-        "saropaLogCapture.integrations.http.requestIdPattern": {
+        "saropaCapture.integrations.http.requestIdPattern": {
           "default": "",
           "description": "Regex to extract a request ID from a log line (e.g. 'requestId=(\\S+)') for correlating requests with debug output.",
           "type": "string",
           "title": "%config.integrations.http.requestIdPattern.title%"
         },
-        "saropaLogCapture.integrations.http.timeWindowSeconds": {
+        "saropaCapture.integrations.http.timeWindowSeconds": {
           "default": 10,
           "description": "Correlation time window (seconds) when no request ID matches.",
           "minimum": 1,
@@ -2515,7 +2515,7 @@
           "type": "number",
           "title": "%config.integrations.http.timeWindowSeconds.title%"
         },
-        "saropaLogCapture.integrations.http.maxRequestsPerSession": {
+        "saropaCapture.integrations.http.maxRequestsPerSession": {
           "default": 500,
           "description": "Max HTTP requests to correlate per session.",
           "minimum": 10,
@@ -2523,7 +2523,7 @@
           "type": "number",
           "title": "%config.integrations.http.maxRequestsPerSession.title%"
         },
-        "saropaLogCapture.integrations.browser.mode": {
+        "saropaCapture.integrations.browser.mode": {
           "default": "file",
           "description": "How to capture browser console events: read an exported file or connect via Chrome DevTools Protocol.",
           "enum": [
@@ -2533,13 +2533,13 @@
           "type": "string",
           "title": "%config.integrations.browser.mode.title%"
         },
-        "saropaLogCapture.integrations.browser.browserLogPath": {
+        "saropaCapture.integrations.browser.browserLogPath": {
           "default": "",
           "description": "Path to browser console log file (file mode only). Supports JSONL or JSON format.",
           "type": "string",
           "title": "%config.integrations.browser.browserLogPath.title%"
         },
-        "saropaLogCapture.integrations.browser.browserLogFormat": {
+        "saropaCapture.integrations.browser.browserLogFormat": {
           "default": "jsonl",
           "description": "Format of the browser log file: JSON Lines (one object per line) or a single JSON array.",
           "enum": [
@@ -2549,7 +2549,7 @@
           "type": "string",
           "title": "%config.integrations.browser.browserLogFormat.title%"
         },
-        "saropaLogCapture.integrations.browser.maxEvents": {
+        "saropaCapture.integrations.browser.maxEvents": {
           "default": 10000,
           "description": "Maximum browser events to capture per session.",
           "minimum": 100,
@@ -2557,25 +2557,25 @@
           "type": "number",
           "title": "%config.integrations.browser.maxEvents.title%"
         },
-        "saropaLogCapture.integrations.browser.cdpUrl": {
+        "saropaCapture.integrations.browser.cdpUrl": {
           "default": "",
           "description": "Chrome DevTools Protocol WebSocket URL (cdp mode only, e.g. ws://localhost:9222). Localhost only for security.",
           "type": "string",
           "title": "%config.integrations.browser.cdpUrl.title%"
         },
-        "saropaLogCapture.integrations.browser.includeNetwork": {
+        "saropaCapture.integrations.browser.includeNetwork": {
           "default": false,
           "description": "Capture network response events in addition to console events (cdp mode).",
           "type": "boolean",
           "title": "%config.integrations.browser.includeNetwork.title%"
         },
-        "saropaLogCapture.integrations.browser.requestIdPattern": {
+        "saropaCapture.integrations.browser.requestIdPattern": {
           "default": "",
           "description": "Regex to extract a request ID from browser console messages for correlation (e.g. 'requestId=(\\S+)').",
           "type": "string",
           "title": "%config.integrations.browser.requestIdPattern.title%"
         },
-        "saropaLogCapture.integrations.docker.runtime": {
+        "saropaCapture.integrations.docker.runtime": {
           "default": "docker",
           "description": "Container runtime CLI: docker or podman.",
           "enum": [
@@ -2585,25 +2585,25 @@
           "type": "string",
           "title": "%config.integrations.docker.runtime.title%"
         },
-        "saropaLogCapture.integrations.docker.containerId": {
+        "saropaCapture.integrations.docker.containerId": {
           "default": "",
           "description": "Override container ID or name (if not inferrable from launch).",
           "type": "string",
           "title": "%config.integrations.docker.containerId.title%"
         },
-        "saropaLogCapture.integrations.docker.containerNamePattern": {
+        "saropaCapture.integrations.docker.containerNamePattern": {
           "default": "",
           "description": "Regex to match container name from docker ps.",
           "type": "string",
           "title": "%config.integrations.docker.containerNamePattern.title%"
         },
-        "saropaLogCapture.integrations.docker.captureLogs": {
+        "saropaCapture.integrations.docker.captureLogs": {
           "default": true,
           "description": "Capture container logs for session time range to sidecar.",
           "type": "boolean",
           "title": "%config.integrations.docker.captureLogs.title%"
         },
-        "saropaLogCapture.integrations.docker.maxLogLines": {
+        "saropaCapture.integrations.docker.maxLogLines": {
           "default": 20000,
           "description": "Cap container log lines in sidecar.",
           "minimum": 100,
@@ -2611,25 +2611,25 @@
           "type": "number",
           "title": "%config.integrations.docker.maxLogLines.title%"
         },
-        "saropaLogCapture.integrations.docker.includeInspect": {
+        "saropaCapture.integrations.docker.includeInspect": {
           "default": false,
           "description": "Write full docker inspect output as a sidecar JSON file.",
           "type": "boolean",
           "title": "%config.integrations.docker.includeInspect.title%"
         },
-        "saropaLogCapture.integrations.performance.snapshotAtStart": {
+        "saropaCapture.integrations.performance.snapshotAtStart": {
           "default": true,
           "description": "Capture CPU and RAM snapshot at session start.",
           "type": "boolean",
           "title": "%config.integrations.performance.snapshotAtStart.title%"
         },
-        "saropaLogCapture.integrations.performance.sampleDuringSession": {
+        "saropaCapture.integrations.performance.sampleDuringSession": {
           "default": false,
           "description": "Periodically sample free memory during the session and write samples to a .perf.json sidecar.",
           "type": "boolean",
           "title": "%config.integrations.performance.sampleDuringSession.title%"
         },
-        "saropaLogCapture.integrations.performance.sampleIntervalSeconds": {
+        "saropaCapture.integrations.performance.sampleIntervalSeconds": {
           "default": 5,
           "description": "Seconds between periodic memory samples.",
           "minimum": 1,
@@ -2637,25 +2637,25 @@
           "type": "number",
           "title": "%config.integrations.performance.sampleIntervalSeconds.title%"
         },
-        "saropaLogCapture.integrations.performance.includeInHeader": {
+        "saropaCapture.integrations.performance.includeInHeader": {
           "default": true,
           "description": "Include system snapshot line in context header.",
           "type": "boolean",
           "title": "%config.integrations.performance.includeInHeader.title%"
         },
-        "saropaLogCapture.integrations.performance.profilerOutputPath": {
+        "saropaCapture.integrations.performance.profilerOutputPath": {
           "default": "",
           "description": "Path to an external profiler output file (e.g. .cpuprofile, .trace). Copied into the log folder at session end.",
           "type": "string",
           "title": "%config.integrations.performance.profilerOutputPath.title%"
         },
-        "saropaLogCapture.integrations.performance.processMetrics": {
+        "saropaCapture.integrations.performance.processMetrics": {
           "default": false,
           "description": "Capture memory usage of the debug target process (requires active debug session).",
           "type": "boolean",
           "title": "%config.integrations.performance.processMetrics.title%"
         },
-        "saropaLogCapture.integrations.terminal.whichTerminals": {
+        "saropaCapture.integrations.terminal.whichTerminals": {
           "default": "active",
           "description": "Which terminals to capture: all open terminals, only the active terminal at session start, or only user-linked terminals.",
           "enum": [
@@ -2666,19 +2666,19 @@
           "type": "string",
           "title": "%config.integrations.terminal.whichTerminals.title%"
         },
-        "saropaLogCapture.integrations.terminal.writeSidecar": {
+        "saropaCapture.integrations.terminal.writeSidecar": {
           "default": true,
           "description": "Write captured terminal output to a .terminal.log sidecar at session end.",
           "type": "boolean",
           "title": "%config.integrations.terminal.writeSidecar.title%"
         },
-        "saropaLogCapture.integrations.terminal.prefixTimestamp": {
+        "saropaCapture.integrations.terminal.prefixTimestamp": {
           "default": true,
           "description": "Prefix each captured terminal line with a timestamp.",
           "type": "boolean",
           "title": "%config.integrations.terminal.prefixTimestamp.title%"
         },
-        "saropaLogCapture.integrations.terminal.maxLines": {
+        "saropaCapture.integrations.terminal.maxLines": {
           "default": 50000,
           "description": "Max terminal output lines to buffer per session.",
           "minimum": 1000,
@@ -2686,19 +2686,19 @@
           "type": "number",
           "title": "%config.integrations.terminal.maxLines.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.enabled": {
+        "saropaCapture.integrations.adbLogcat.enabled": {
           "default": true,
           "description": "Allow the adb logcat feed (Android system log) to run. On by default. When on, logcat still only spawns where it applies — a Flutter/Dart debug session, or an explicit `adbLogcat` entry in integrations.adapters. Turn off to stop it entirely. This is the switch the Options → Integrations checkbox binds to.",
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.enabled.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.device": {
+        "saropaCapture.integrations.adbLogcat.device": {
           "default": "",
           "description": "Device serial for adb (blank = default device). Maps to `adb -s <serial>`.",
           "type": "string",
           "title": "%config.integrations.adbLogcat.device.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.tagFilters": {
+        "saropaCapture.integrations.adbLogcat.tagFilters": {
           "default": [],
           "description": "Logcat tag filter expressions passed to adb logcat (e.g. [\"flutter:V\", \"*:S\"]).",
           "items": {
@@ -2707,7 +2707,7 @@
           "type": "array",
           "title": "%config.integrations.adbLogcat.tagFilters.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.minLevel": {
+        "saropaCapture.integrations.adbLogcat.minLevel": {
           "default": "V",
           "description": "Minimum logcat level to capture.",
           "enum": [
@@ -2722,13 +2722,13 @@
           "type": "string",
           "title": "%config.integrations.adbLogcat.minLevel.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.filterByPid": {
+        "saropaCapture.integrations.adbLogcat.filterByPid": {
           "default": true,
           "description": "Filter logcat output by the debug target PID once known from DAP.",
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.filterByPid.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.maxBufferLines": {
+        "saropaCapture.integrations.adbLogcat.maxBufferLines": {
           "default": 50000,
           "description": "Max logcat lines to buffer for sidecar file.",
           "minimum": 1000,
@@ -2736,49 +2736,49 @@
           "type": "number",
           "title": "%config.integrations.adbLogcat.maxBufferLines.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.writeSidecar": {
+        "saropaCapture.integrations.adbLogcat.writeSidecar": {
           "default": true,
           "description": "Write buffered logcat as a .logcat.log sidecar file at session end.",
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.writeSidecar.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.captureDeviceOther": {
+        "saropaCapture.integrations.adbLogcat.captureDeviceOther": {
           "default": false,
           "description": "Capture non-critical device/system logcat lines (e.g. SettingsState, EGL_emulation). When false, these lines are dropped at capture time to reduce log bloat. Critical device events (AndroidRuntime, ActivityManager) are always captured regardless of this setting.",
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.captureDeviceOther.title%"
         },
-        "saropaLogCapture.integrations.adbLogcat.captureAnr": {
+        "saropaCapture.integrations.adbLogcat.captureAnr": {
           "default": true,
           "description": "Always capture ANR and native-crash evidence, even when level or PID filtering would drop it. ActivityManager/AndroidRuntime dump the \"ANR in <package>\" header and the frozen main-thread stack from the system process (a different PID than your app), so PID scoping hides the richest ANR detail unless this is on. Turn off to keep strict PID/level filtering.",
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.captureAnr.title%"
         },
-        "saropaLogCapture.integrations.screenshots.enabled": {
+        "saropaCapture.integrations.screenshots.enabled": {
           "default": true,
           "description": "Allow debug screenshot capture (Flutter VM Service) to run. On by default. Captures fire on trigger events only (errors by default; warnings/navigation opt-in) plus the manual command. This is the switch the Options → Integrations checkbox and the viewer footer camera icon bind to; turn off to stop all screenshot capture.",
           "type": "boolean",
           "title": "%config.integrations.screenshots.enabled.title%"
         },
-        "saropaLogCapture.integrations.screenshots.onError": {
+        "saropaCapture.integrations.screenshots.onError": {
           "default": true,
           "description": "Capture a screenshot when an error line is detected during a Flutter debug session (deduplicated by error fingerprint, cooldown-limited).",
           "type": "boolean",
           "title": "%config.integrations.screenshots.onError.title%"
         },
-        "saropaLogCapture.integrations.screenshots.onWarning": {
+        "saropaCapture.integrations.screenshots.onWarning": {
           "default": false,
           "description": "Capture a screenshot when a warning line is detected. Off by default — warnings are frequent and each capture stores an image.",
           "type": "boolean",
           "title": "%config.integrations.screenshots.onWarning.title%"
         },
-        "saropaLogCapture.integrations.screenshots.onNavigation": {
+        "saropaCapture.integrations.screenshots.onNavigation": {
           "default": false,
           "description": "Capture a screenshot on each screen navigation (flow-map entry). Off by default. Gives a discrete snapshot of every screen visited.",
           "type": "boolean",
           "title": "%config.integrations.screenshots.onNavigation.title%"
         },
-        "saropaLogCapture.integrations.screenshots.cooldownMs": {
+        "saropaCapture.integrations.screenshots.cooldownMs": {
           "default": 2000,
           "description": "Minimum gap between any two screenshot captures, in milliseconds. Bounds capture rate during error cascades.",
           "minimum": 250,
@@ -2786,7 +2786,7 @@
           "type": "number",
           "title": "%config.integrations.screenshots.cooldownMs.title%"
         },
-        "saropaLogCapture.integrations.screenshots.maxPerLog": {
+        "saropaCapture.integrations.screenshots.maxPerLog": {
           "default": 50,
           "description": "Maximum screenshots stored per log file. Once reached, further captures are skipped and one warning is written to the output channel.",
           "minimum": 1,
@@ -2794,13 +2794,13 @@
           "type": "number",
           "title": "%config.integrations.screenshots.maxPerLog.title%"
         },
-        "saropaLogCapture.integrations.screenshots.skipNearDuplicates": {
+        "saropaCapture.integrations.screenshots.skipNearDuplicates": {
           "default": true,
           "description": "Skip a screenshot whose picture is near-identical to a recent capture. The phone's status bar is excluded from the comparison, so two captures of the same screen that differ only by the clock count as the same picture. Fault (error/warning) and manually-requested captures are never skipped, and an unreadable capture is always kept. Every skip is written to the output channel with its similarity.",
           "type": "boolean",
           "title": "%config.integrations.screenshots.skipNearDuplicates.title%"
         },
-        "saropaLogCapture.integrations.screenshots.duplicateSimilarity": {
+        "saropaCapture.integrations.screenshots.duplicateSimilarity": {
           "default": 0.985,
           "description": "How alike two captures must be to count as the same picture, from 0.5 to 0.999. Only used when Skip Near Duplicates is on. Lower values skip more.",
           "minimum": 0.5,
@@ -2808,13 +2808,13 @@
           "type": "number",
           "title": "%config.integrations.screenshots.duplicateSimilarity.title%"
         },
-        "saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd": {
+        "saropaCapture.integrations.unifiedLog.writeAtSessionEnd": {
           "default": false,
           "description": "After session end, write basename.unified.jsonl next to the main log: one JSON line per row { \"source\", \"text\" } merging main log, .terminal.log, and external sidecars (for sharing or opening one file in the viewer with Sources filter).",
           "type": "boolean",
           "title": "%config.integrations.unifiedLog.writeAtSessionEnd.title%"
         },
-        "saropaLogCapture.integrations.unifiedLog.maxLinesPerSource": {
+        "saropaCapture.integrations.unifiedLog.maxLinesPerSource": {
           "default": 50000,
           "description": "When writing unified JSONL, max lines per source (main log, terminal, each external); longer inputs are truncated from the tail of that source.",
           "minimum": 1000,
@@ -2822,7 +2822,7 @@
           "type": "number",
           "title": "%config.integrations.unifiedLog.maxLinesPerSource.title%"
         },
-        "saropaLogCapture.integrations.linuxLogs.when": {
+        "saropaCapture.integrations.linuxLogs.when": {
           "default": "wsl",
           "description": "When to capture Linux system logs: only when targeting WSL, on any remote Linux, or always.",
           "enum": [
@@ -2833,7 +2833,7 @@
           "type": "string",
           "title": "%config.integrations.linuxLogs.when.title%"
         },
-        "saropaLogCapture.integrations.linuxLogs.sources": {
+        "saropaCapture.integrations.linuxLogs.sources": {
           "default": [
             "dmesg",
             "journalctl"
@@ -2845,21 +2845,21 @@
           "type": "array",
           "title": "%config.integrations.linuxLogs.sources.title%"
         },
-        "saropaLogCapture.integrations.linuxLogs.leadMinutes": {
+        "saropaCapture.integrations.linuxLogs.leadMinutes": {
           "default": 2,
           "description": "Minutes before session start to include in log query.",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.linuxLogs.leadMinutes.title%"
         },
-        "saropaLogCapture.integrations.linuxLogs.lagMinutes": {
+        "saropaCapture.integrations.linuxLogs.lagMinutes": {
           "default": 5,
           "description": "Minutes after session end to include in log query.",
           "minimum": 0,
           "type": "number",
           "title": "%config.integrations.linuxLogs.lagMinutes.title%"
         },
-        "saropaLogCapture.integrations.linuxLogs.maxLines": {
+        "saropaCapture.integrations.linuxLogs.maxLines": {
           "default": 1000,
           "description": "Max lines per log source.",
           "minimum": 100,
@@ -2867,13 +2867,13 @@
           "type": "number",
           "title": "%config.integrations.linuxLogs.maxLines.title%"
         },
-        "saropaLogCapture.integrations.linuxLogs.wslDistro": {
+        "saropaCapture.integrations.linuxLogs.wslDistro": {
           "default": "",
           "description": "WSL distribution name (e.g. Ubuntu-22.04). Empty uses the default distribution.",
           "type": "string",
           "title": "%config.integrations.linuxLogs.wslDistro.title%"
         },
-        "saropaLogCapture.contextWindowSeconds": {
+        "saropaCapture.contextWindowSeconds": {
           "default": 5,
           "minimum": 1,
           "maximum": 60,
@@ -2881,25 +2881,25 @@
           "type": "number",
           "title": "%config.contextWindowSeconds.title%"
         },
-        "saropaLogCapture.loki.enabled": {
+        "saropaCapture.loki.enabled": {
           "default": false,
           "description": "Enable Export to Loki. When true and pushUrl is set, the 'Export to Loki' command pushes the current log file to Grafana Loki.",
           "type": "boolean",
           "title": "%config.loki.enabled.title%"
         },
-        "saropaLogCapture.loki.pushUrl": {
+        "saropaCapture.loki.pushUrl": {
           "default": "",
           "description": "Loki push API URL (e.g. https://logs-prod-XXX.grafana.net/loki/api/v1/push or http://localhost:3100/loki/api/v1/push). Required when Loki export is enabled.",
           "type": "string",
           "title": "%config.loki.pushUrl.title%"
         },
-        "saropaLogCapture.export.redactSensitiveData": {
+        "saropaCapture.export.redactSensitiveData": {
           "default": true,
           "description": "%config.export.redactSensitiveData.description%",
           "type": "boolean",
           "title": "%config.export.redactSensitiveData.title%"
         },
-        "saropaLogCapture.redactEnvVars": {
+        "saropaCapture.redactEnvVars": {
           "default": [],
           "description": "%config.redactEnvVars.description%",
           "items": {
@@ -2908,7 +2908,7 @@
           "type": "array",
           "title": "%config.redactEnvVars.title%"
         },
-        "saropaLogCapture.replay.defaultMode": {
+        "saropaCapture.replay.defaultMode": {
           "default": "timed",
           "description": "Default replay mode: use actual line timing when available (timed) or fixed short delay (fast).",
           "enum": [
@@ -2918,7 +2918,7 @@
           "type": "string",
           "title": "%config.replay.defaultMode.title%"
         },
-        "saropaLogCapture.replay.defaultSpeed": {
+        "saropaCapture.replay.defaultSpeed": {
           "default": 1,
           "description": "Default replay speed factor (e.g. 1 = 1x, 2 = 2x).",
           "maximum": 10,
@@ -2926,7 +2926,7 @@
           "type": "number",
           "title": "%config.replay.defaultSpeed.title%"
         },
-        "saropaLogCapture.replay.minLineDelayMs": {
+        "saropaCapture.replay.minLineDelayMs": {
           "default": 10,
           "description": "Minimum delay between lines during replay (ms). Prevents replay from being too fast.",
           "maximum": 1000,
@@ -2934,7 +2934,7 @@
           "type": "number",
           "title": "%config.replay.minLineDelayMs.title%"
         },
-        "saropaLogCapture.replay.maxDelayMs": {
+        "saropaCapture.replay.maxDelayMs": {
           "default": 30000,
           "description": "Maximum delay between lines during replay (ms). Caps long gaps so replay does not freeze.",
           "maximum": 300000,
@@ -2942,13 +2942,13 @@
           "type": "number",
           "title": "%config.replay.maxDelayMs.title%"
         },
-        "saropaLogCapture.showElapsedTime": {
+        "saropaCapture.showElapsedTime": {
           "default": false,
           "description": "%config.showElapsedTime.description%",
           "type": "boolean",
           "title": "%config.showElapsedTime.title%"
         },
-        "saropaLogCapture.signalSlowOpThresholdMs": {
+        "saropaCapture.signalSlowOpThresholdMs": {
           "default": 500,
           "description": "%config.signalSlowOpThresholdMs.description%",
           "minimum": 100,
@@ -2956,14 +2956,14 @@
           "type": "number",
           "title": "%config.signalSlowOpThresholdMs.title%"
         },
-        "saropaLogCapture.slowGapThreshold": {
+        "saropaCapture.slowGapThreshold": {
           "default": 1000,
           "description": "%config.slowGapThreshold.description%",
           "minimum": 100,
           "type": "number",
           "title": "%config.slowGapThreshold.title%"
         },
-        "saropaLogCapture.splitRules": {
+        "saropaCapture.splitRules": {
           "default": {
             "keywords": [],
             "maxDurationMinutes": 0,
@@ -3009,13 +3009,13 @@
           "type": "object",
           "title": "%config.splitRules.title%"
         },
-        "saropaLogCapture.suppressTransientErrors": {
+        "saropaCapture.suppressTransientErrors": {
           "default": false,
           "description": "%config.suppressTransientErrors.description%",
           "type": "boolean",
           "title": "%config.suppressTransientErrors.title%"
         },
-        "saropaLogCapture.treeRefreshInterval": {
+        "saropaCapture.treeRefreshInterval": {
           "default": 0,
           "description": "%config.treeRefreshInterval.description%",
           "maximum": 300,
@@ -3023,7 +3023,7 @@
           "type": "number",
           "title": "%config.treeRefreshInterval.title%"
         },
-        "saropaLogCapture.sessionListPageSize": {
+        "saropaCapture.sessionListPageSize": {
           "default": 100,
           "description": "Logs per page in Project Logs list. Increase to show more per page; decrease if the list feels slow.",
           "minimum": 10,
@@ -3031,13 +3031,13 @@
           "type": "number",
           "title": "%config.sessionListPageSize.title%"
         },
-        "saropaLogCapture.sessionGroups.enabled": {
+        "saropaCapture.sessionGroups.enabled": {
           "default": true,
           "description": "Automatically group log files captured in the same time window (e.g. Drift Advisor + Logcat + debug session) into a single logical Session in the Logs list. When off, every log file stands alone.",
           "type": "boolean",
           "title": "Session Groups: Enabled"
         },
-        "saropaLogCapture.sessionGroups.beforeSeconds": {
+        "saropaCapture.sessionGroups.beforeSeconds": {
           "default": 10,
           "description": "When a debug session starts, claim pre-existing ungrouped log files whose last-write time is within this many seconds BEFORE the start. Catches sidecars that integration providers write a few seconds ahead of the session. Files already in another group are never re-claimed.",
           "minimum": 0,
@@ -3045,7 +3045,7 @@
           "type": "number",
           "title": "Session Groups: Before Seconds"
         },
-        "saropaLogCapture.sessionGroups.afterSeconds": {
+        "saropaCapture.sessionGroups.afterSeconds": {
           "default": 10,
           "description": "After a debug session ends, keep the group open for this many seconds and claim any late-written files (e.g. sidecars flushed in the provider's onSessionEnd hook). Files already claimed by a later session's before-window are not stolen back.",
           "minimum": 0,
@@ -3053,7 +3053,7 @@
           "type": "number",
           "title": "Session Groups: After Seconds"
         },
-        "saropaLogCapture.reportsKindPatterns": {
+        "saropaCapture.reportsKindPatterns": {
           "default": [
             "^Saropa Lint Report\\b",
             "^Json Bundle\\b",
@@ -3067,7 +3067,7 @@
           "type": "array",
           "title": "Logs Panel: Reports Kind Patterns"
         },
-        "saropaLogCapture.reportsBucketDefault": {
+        "saropaCapture.reportsBucketDefault": {
           "default": "collapsed",
           "description": "Default state for the per-day Reports bucket in the Logs panel. \"collapsed\" shows the bucket folded with a count badge; \"expanded\" auto-expands every report row inline; \"hidden\" removes report rows from the panel entirely (they remain on disk).",
           "enum": [
@@ -3078,7 +3078,7 @@
           "type": "string",
           "title": "Logs Panel: Reports Bucket Default"
         },
-        "saropaLogCapture.controllerNames": {
+        "saropaCapture.controllerNames": {
           "default": [],
           "description": "Display names to treat as Controllers in the Logs panel — the day's tree root that peripheral logs (lint, translate, advisor) nest beneath. Matched case-insensitively. The project's own log is detected automatically by matching the workspace folder name; add entries here only to pin extra controllers or override the automatic choice.",
           "items": {
@@ -3087,37 +3087,37 @@
           "type": "array",
           "title": "Logs Panel: Controller Names"
         },
-        "saropaLogCapture.newerLogBanner": {
+        "saropaCapture.newerLogBanner": {
           "default": true,
           "description": "When on, the Logs panel shows a sticky banner above the day list whenever a newer log has arrived since the panel last had focus. Click Open to jump to it; Dismiss to clear the alert.",
           "type": "boolean",
           "title": "Logs Panel: Newer-Log Banner"
         },
-        "saropaLogCapture.newerLogDot": {
+        "saropaCapture.newerLogDot": {
           "default": true,
           "description": "When on, each Logs panel row carries a small blue dot on its icon while the log is newer than the panel's last focus. The dot persists after the banner is dismissed so the user always has a visible cue per row.",
           "type": "boolean",
           "title": "Logs Panel: Newer-Log Dot"
         },
-        "saropaLogCapture.autoSwitchToLatest": {
+        "saropaCapture.autoSwitchToLatest": {
           "default": true,
           "description": "When on (the default), the viewer automatically switches to the newest log the moment it arrives, so you always follow the most recent run. Turn it off to keep the newer-log banner instead — the viewer then stays on the log you are reading until you click Open.",
           "type": "boolean",
           "title": "Logs Panel: Always Switch to Latest Log"
         },
-        "saropaLogCapture.verboseDap": {
+        "saropaCapture.verboseDap": {
           "default": false,
           "description": "%config.verboseDap.description%",
           "type": "boolean",
           "title": "%config.verboseDap.title%"
         },
-        "saropaLogCapture.diagnosticCapture": {
+        "saropaCapture.diagnosticCapture": {
           "default": false,
           "description": "%config.diagnosticCapture.description%",
           "type": "boolean",
           "title": "%config.diagnosticCapture.title%"
         },
-        "saropaLogCapture.watchPatterns": {
+        "saropaCapture.watchPatterns": {
           "default": [
             {
               "alert": "flash",
@@ -3158,7 +3158,7 @@
           "type": "array",
           "title": "%config.watchPatterns.title%"
         },
-        "saropaLogCapture.errorRateBucketSize": {
+        "saropaCapture.errorRateBucketSize": {
           "default": "auto",
           "description": "%config.errorRateBucketSize.description%",
           "enum": [
@@ -3171,13 +3171,13 @@
           "type": "string",
           "title": "%config.errorRateBucketSize.title%"
         },
-        "saropaLogCapture.errorRateShowWarnings": {
+        "saropaCapture.errorRateShowWarnings": {
           "default": true,
           "description": "%config.errorRateShowWarnings.description%",
           "type": "boolean",
           "title": "%config.errorRateShowWarnings.title%"
         },
-        "saropaLogCapture.errorRateDetectSpikes": {
+        "saropaCapture.errorRateDetectSpikes": {
           "default": true,
           "description": "%config.errorRateDetectSpikes.description%",
           "type": "boolean",
@@ -3188,71 +3188,71 @@
     },
     "keybindings": [
       {
-        "command": "saropaLogCapture.gotoLineInViewer",
+        "command": "saropaCapture.gotoLineInViewer",
         "key": "ctrl+g",
         "mac": "cmd+g",
-        "when": "focusedView == saropaLogCapture.logViewer || activeWebviewPanelId == saropaLogCapture.popOutViewer"
+        "when": "focusedView == saropaCapture.logViewer || activeWebviewPanelId == saropaCapture.popOutViewer"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "saropaLogCapture.openSignal",
+          "command": "saropaCapture.openSignal",
           "when": "false"
         },
         {
-          "command": "saropaLogCapture.openSqlHistoryForFingerprint",
+          "command": "saropaCapture.openSqlHistoryForFingerprint",
           "when": "false"
         },
         {
-          "command": "saropaLogCapture.showLogReferences",
+          "command": "saropaCapture.showLogReferences",
           "when": "false"
         }
       ],
       "explorer/context": [
         {
-          "command": "saropaLogCapture.showLogReferences",
+          "command": "saropaCapture.showLogReferences",
           "group": "4_search",
           "when": "!explorerResourceIsFolder"
         }
       ],
       "view/title": [
         {
-          "command": "saropaLogCapture.toggleSearchOverlay",
+          "command": "saropaCapture.toggleSearchOverlay",
           "group": "navigation@1",
-          "when": "view == saropaLogCapture.logViewer"
+          "when": "view == saropaCapture.logViewer"
         },
         {
-          "command": "saropaLogCapture.copyAllFilteredLines",
+          "command": "saropaCapture.copyAllFilteredLines",
           "group": "navigation@3",
-          "when": "view == saropaLogCapture.logViewer"
+          "when": "view == saropaCapture.logViewer"
         },
         {
-          "command": "saropaLogCapture.maximizePanel",
+          "command": "saropaCapture.maximizePanel",
           "group": "navigation@4",
-          "when": "view == saropaLogCapture.logViewer"
+          "when": "view == saropaCapture.logViewer"
         },
         {
-          "command": "saropaLogCapture.popOutViewer",
+          "command": "saropaCapture.popOutViewer",
           "group": "navigation@5",
-          "when": "view == saropaLogCapture.logViewer"
+          "when": "view == saropaCapture.logViewer"
         }
       ]
     },
     "views": {
-      "saropaLogCapture": [
+      "saropaCapture": [
         {
           "icon": "$(output)",
-          "id": "saropaLogCapture.logViewer",
+          "id": "saropaCapture.logViewer",
           "name": "%view.logViewer.name%",
           "type": "webview"
         },
         {
           "icon": "$(graph-line)",
-          "id": "saropaLogCapture.vitalsPanel",
+          "id": "saropaCapture.vitalsPanel",
           "name": "%view.vitalsPanel.name%",
           "type": "webview",
-          "when": "config.saropaLogCapture.playConsole.enabled"
+          "when": "config.saropaCapture.playConsole.enabled"
         }
       ]
     },
@@ -3260,22 +3260,22 @@
       "panel": [
         {
           "icon": "images/sidebar-icon.svg",
-          "id": "saropaLogCapture",
-          "title": "%viewContainer.saropaLogCapture.title%"
+          "id": "saropaCapture",
+          "title": "%viewContainer.saropaCapture.title%"
         }
       ]
     },
     "walkthroughs": [
       {
         "description": "%walkthrough.getStarted.description%",
-        "id": "saropaLogCapture.getStarted",
+        "id": "saropaCapture.getStarted",
         "steps": [
           {
             "completionEvents": [
-              "onView:saropaLogCapture.logViewer"
+              "onView:saropaCapture.logViewer"
             ],
             "description": "%walkthrough.browseHistory.description%",
-            "id": "saropaLogCapture.browseHistory",
+            "id": "saropaCapture.browseHistory",
             "media": {
               "markdown": "media/walkthrough/session-history.md"
             },
@@ -3283,7 +3283,7 @@
           },
           {
             "description": "%walkthrough.configureSettings.description%",
-            "id": "saropaLogCapture.configureSettings",
+            "id": "saropaCapture.configureSettings",
             "media": {
               "markdown": "media/walkthrough/configure-settings.md"
             },
@@ -3291,10 +3291,10 @@
           },
           {
             "completionEvents": [
-              "onView:saropaLogCapture.logViewer"
+              "onView:saropaCapture.logViewer"
             ],
             "description": "%walkthrough.openViewer.description%",
-            "id": "saropaLogCapture.openViewer",
+            "id": "saropaCapture.openViewer",
             "media": {
               "markdown": "media/walkthrough/open-viewer.md"
             },
@@ -3305,7 +3305,7 @@
               "onCommand:workbench.action.debug.start"
             ],
             "description": "%walkthrough.startDebugging.description%",
-            "id": "saropaLogCapture.startDebugging",
+            "id": "saropaCapture.startDebugging",
             "media": {
               "markdown": "media/walkthrough/start-debugging.md"
             },
@@ -3313,7 +3313,7 @@
           },
           {
             "description": "%walkthrough.useKeyboardShortcuts.description%",
-            "id": "saropaLogCapture.useKeyboardShortcuts",
+            "id": "saropaCapture.useKeyboardShortcuts",
             "media": {
               "markdown": "media/walkthrough/keyboard-shortcuts.md"
             },
@@ -3321,7 +3321,7 @@
           },
           {
             "description": "%walkthrough.aboutSaropa.description%",
-            "id": "saropaLogCapture.aboutSaropa",
+            "id": "saropaCapture.aboutSaropa",
             "media": {
               "markdown": "media/walkthrough/about-saropa.md"
             },
@@ -3392,7 +3392,7 @@
   "license": "MIT",
   "main": "./dist/extension.js",
   "l10n": "./l10n",
-  "name": "saropa-log-capture",
+  "name": "saropa-capture",
   "publisher": "saropa",
   "repository": {
     "type": "git",
@@ -3447,5 +3447,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "9.7.0"
+  "version": "9.8.0"
 }

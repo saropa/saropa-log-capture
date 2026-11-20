@@ -87,12 +87,12 @@ export async function getDailySummary(date: string): Promise<SaropaDailySummary 
     const sessions = countLogicalSessions(metas);
 
     return {
-        tool: 'saropa-log-capture',
+        tool: 'saropa-capture',
         date,
         headline: buildHeadline(sessions, totals, signals[0]),
         counts: { sessions, errors: totals.errors, warnings: totals.warnings, signals: signals.length },
         trouble: buildTrouble(signals),
         // No-arg focus command — the honest "Open in Log Capture" entry point.
-        openCommand: 'saropaLogCapture.logViewer.focus',
+        openCommand: 'saropaCapture.logViewer.focus',
     };
 }

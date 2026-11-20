@@ -55,7 +55,7 @@ function resolveServiceAccountKeyPath(configuredPath: string): string | undefine
 /** Get an access token: service account key file if configured, else gcloud ADC (cached 30 min). */
 export async function getAccessToken(): Promise<string | undefined> {
     if (cachedToken && Date.now() < cachedToken.expires) { return cachedToken.token; }
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
     const serviceAccountPath = cfg.get<string>('serviceAccountKeyPath', '');
     const resolvedPath = resolveServiceAccountKeyPath(serviceAccountPath);
     if (resolvedPath) {
@@ -85,7 +85,7 @@ export async function getAccessToken(): Promise<string | undefined> {
 
 /** Detect Firebase config from workspace google-services.json or extension settings. */
 export async function detectFirebaseConfig(): Promise<FirebaseConfig | undefined> {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
     const projectId = cfg.get<string>('projectId', '');
     const appId = cfg.get<string>('appId', '');
     if (projectId && appId) {
@@ -183,7 +183,7 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
     try {
         const token = await getAccessToken();
         if (!token) {
-            const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+            const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
             const saPath = resolveServiceAccountKeyPath(cfg.get<string>('serviceAccountKeyPath', ''));
             if (saPath) {
                 return safeEmpty('token', 'Service account key failed. Check path and file, or clear the setting to use gcloud.', { gcloud: 'ok', token: 'missing', config: 'pending' });
@@ -269,7 +269,7 @@ export async function getIssueBreakdown(issueId: string): Promise<IssueBreakdown
         const config = await detectFirebaseConfig();
         const packageName = await detectPackageName();
         if (!token || !config || !packageName) { return undefined; }
-        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        const timeRange = vscode.workspace.getConfiguration('saropaCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
         return await fetchIssueBreakdown({ packageName, token, timeRange, quotaProject: config.projectId }, issueId);
     } catch {
         return undefined;
@@ -283,7 +283,7 @@ export async function getProcessStates(issueId: string): Promise<StatEntry[]> {
         const config = await detectFirebaseConfig();
         const packageName = await detectPackageName();
         if (!token || !config || !packageName) { return []; }
-        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        const timeRange = vscode.workspace.getConfiguration('saropaCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
         return await fetchProcessStates({ packageName, token, timeRange, quotaProject: config.projectId }, issueId);
     } catch {
         return [];
@@ -297,7 +297,7 @@ export async function getIssueTrends(): Promise<Record<string, number[]>> {
         const config = await detectFirebaseConfig();
         const packageName = await detectPackageName();
         if (!token || !config || !packageName) { return {}; }
-        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        const timeRange = vscode.workspace.getConfiguration('saropaCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
         return await fetchIssueTrends({ packageName, token, timeRange, quotaProject: config.projectId });
     } catch {
         return {};
@@ -311,7 +311,7 @@ export async function getIssueFilterIndex(): Promise<IssueFilterIndex | undefine
         const config = await detectFirebaseConfig();
         const packageName = await detectPackageName();
         if (!token || !config || !packageName) { return undefined; }
-        const timeRange = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
+        const timeRange = vscode.workspace.getConfiguration('saropaCapture.firebase').get<string>('timeRange', 'LAST_7_DAYS');
         return await fetchIssueFilterIndex({ packageName, token, timeRange, quotaProject: config.projectId });
     } catch {
         return undefined;

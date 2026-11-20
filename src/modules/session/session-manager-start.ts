@@ -52,7 +52,7 @@ export async function startSessionImpl(
     deps: StartSessionDeps,
 ): Promise<StartSessionOutcome> {
     if (!deps.config.enabled) {
-        deps.outputChannel.appendLine(`Session start skipped: saropaLogCapture.enabled is false (type=${session.type})`);
+        deps.outputChannel.appendLine(`Session start skipped: saropaCapture.enabled is false (type=${session.type})`);
         return { kind: 'skipped' };
     }
 

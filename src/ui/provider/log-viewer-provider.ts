@@ -94,7 +94,7 @@ export class LogViewerProvider
   ) {
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('saropaLogCapture.viewerKeybindings')) {
+        if (e.affectsConfiguration('saropaCapture.viewerKeybindings')) {
           const keyToAction = getViewerKeybindingsFromConfig();
           this.postMessage({ type: 'setViewerKeybindings', keyToAction });
         }

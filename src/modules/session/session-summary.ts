@@ -172,12 +172,12 @@ export function showSummaryNotification(summary: SessionSummary): void {
         dontAskLabel,
     ).then((selection) => {
         if (selection === openLabel || selection === alwaysOpenLabel) {
-            // Route through saropaLogCapture.openSession so the finalized log
+            // Route through saropaCapture.openSession so the finalized log
             // loads in the Log Viewer webview, not as plain text in the editor.
             if (summary.logUri) {
-                void vscode.commands.executeCommand('saropaLogCapture.openSession', { uri: summary.logUri });
+                void vscode.commands.executeCommand('saropaCapture.openSession', { uri: summary.logUri });
             } else {
-                void vscode.commands.executeCommand('saropaLogCapture.open');
+                void vscode.commands.executeCommand('saropaCapture.open');
             }
         }
         if (selection === alwaysOpenLabel) {
@@ -196,7 +196,7 @@ export function showSummaryNotification(summary: SessionSummary): void {
 
 /** Write the afterCaptureAction setting to user-level settings.json. */
 function persistAfterCaptureAction(value: 'openLog' | 'nothing'): void {
-    vscode.workspace.getConfiguration('saropaLogCapture')
+    vscode.workspace.getConfiguration('saropaCapture')
         .update('afterCaptureAction', value, vscode.ConfigurationTarget.Global)
         .then(undefined, () => {
             // Non-critical — the toast still worked, the preference just didn't stick.

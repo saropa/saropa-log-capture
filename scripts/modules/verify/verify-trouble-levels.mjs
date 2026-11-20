@@ -18,8 +18,8 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"))
 // flat `properties` and an `allOf`/`oneOf` wrapping array.
 function findSetting(config) {
 	if (!config) { return undefined; }
-	if (config.properties?.["saropaLogCapture.troubleMode.levels"]) {
-		return config.properties["saropaLogCapture.troubleMode.levels"];
+	if (config.properties?.["saropaCapture.troubleMode.levels"]) {
+		return config.properties["saropaCapture.troubleMode.levels"];
 	}
 	for (const key of ["allOf", "oneOf"]) {
 		if (Array.isArray(config[key])) {
@@ -34,7 +34,7 @@ function findSetting(config) {
 
 const setting = findSetting(pkg.contributes?.configuration);
 if (!setting) {
-	console.error("ERROR: saropaLogCapture.troubleMode.levels not found in package.json");
+	console.error("ERROR: saropaCapture.troubleMode.levels not found in package.json");
 	process.exit(1);
 }
 

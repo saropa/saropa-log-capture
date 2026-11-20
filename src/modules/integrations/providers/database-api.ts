@@ -12,10 +12,10 @@ import { t } from '../../../l10n';
 import { fetchWithTimeout } from './build-ci-api';
 
 /** SecretStorage key for the database API bearer token. */
-const apiTokenKey = 'saropaLogCapture.database.apiToken';
+const apiTokenKey = 'saropaCapture.database.apiToken';
 
 /** globalState key recording the endpoint the user has consented to send session data to. */
-const apiConsentKey = 'saropaLogCapture.database.apiConsentUrl';
+const apiConsentKey = 'saropaCapture.database.apiConsentUrl';
 
 /**
  * Ensure the user has consented to API mode sending the session time range to

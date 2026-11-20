@@ -6,7 +6,7 @@ Monitor incoming log lines for specific keywords or patterns and get notified wh
 
 ## Configuration
 
-Watch patterns are stored in VS Code workspace settings under `saropaLogCapture.watchPatterns`. Each entry has a `keyword` and an optional `alert` type.
+Watch patterns are stored in VS Code workspace settings under `saropaCapture.watchPatterns`. Each entry has a `keyword` and an optional `alert` type.
 
 ### Default Patterns
 
@@ -34,7 +34,7 @@ Watch patterns are stored in VS Code workspace settings under `saropaLogCapture.
 ```jsonc
 // .vscode/settings.json
 {
-  "saropaLogCapture.watchPatterns": [
+  "saropaCapture.watchPatterns": [
     { "keyword": "error", "alert": "flash" },
     { "keyword": "exception", "alert": "flash" },
     { "keyword": "warning", "alert": "badge" },

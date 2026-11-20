@@ -2,7 +2,7 @@
  * Column-visibility persistence tests.
  *
  * The four Columns toggles (line numbers, timestamp, session elapsed, tag) are backed by
- * user settings (`saropaLogCapture.viewerColumn*`): their initial state is baked into each
+ * user settings (`saropaCapture.viewerColumn*`): their initial state is baked into each
  * freshly-built viewer from config, and toggling a column writes the setting back at User
  * (Global) scope so newly opened logs default to the chosen layout.
  *

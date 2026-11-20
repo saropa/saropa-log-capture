@@ -1,6 +1,6 @@
 # Configuration
 
-All settings are prefixed with `saropaLogCapture.`
+All settings are prefixed with `saropaCapture.`
 
 ## Capture Settings
 
@@ -81,4 +81,4 @@ Custom patterns only scan lines up to 500 characters — longer lines (SQL/JSON 
 | `tailPatterns`       | `["**/*.log"]`   | Glob patterns for **Open Tailed File** (workspace-relative)                                                                                      |
 | `projectIndex.enabled` | `true`         | Enable project-wide indexing of docs and session metadata (`.saropa/index/`) for faster analysis and doc matching                                 |
 | `verboseDap`         | `false`          | Log all raw DAP protocol messages to the log file                                                                                                |
-| `diagnosticCapture`  | `false`          | Log capture pipeline events (session/buffer/write) to the Saropa Log Capture output channel; use when log files are empty to debug                |
+| `diagnosticCapture`  | `false`          | Log capture pipeline events (session/buffer/write) to the Saropa Capture output channel; use when log files are empty to debug                |

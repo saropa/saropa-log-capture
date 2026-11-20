@@ -22,7 +22,7 @@ export interface ViewerDataScriptOptions {
     readonly staticSqlFromFingerprintEnabled?: boolean;
     readonly slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     readonly dbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
-    /** Baked seed for `saropaLogCapture.accessibility.showCollapseDividerLabels` (default true). */
+    /** Baked seed for `saropaCapture.accessibility.showCollapseDividerLabels` (default true). */
     readonly accessibilityShowCollapseDividerLabels?: boolean;
 }
 

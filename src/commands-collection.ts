@@ -39,7 +39,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
     ];
 
     return [
-        vscode.commands.registerCommand('saropaLogCapture.createCollection', async () => {
+        vscode.commands.registerCommand('saropaCapture.createCollection', async () => {
             const name = await vscode.window.showInputBox({
                 prompt: t('prompt.collectionName'),
                 placeHolder: t('placeholder.collectionName'),
@@ -66,7 +66,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.openCollection', async () => {
+        vscode.commands.registerCommand('saropaCapture.openCollection', async () => {
             const collections = await collectionStore.listCollections();
             if (collections.length === 0) {
                 const create = await vscode.window.showInformationMessage(
@@ -74,7 +74,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
                     t('action.createCollection'),
                 );
                 if (create === t('action.createCollection')) {
-                    await vscode.commands.executeCommand('saropaLogCapture.createCollection');
+                    await vscode.commands.executeCommand('saropaCapture.createCollection');
                 }
                 return;
             }
@@ -100,16 +100,16 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.closeCollection', async () => {
+        vscode.commands.registerCommand('saropaCapture.closeCollection', async () => {
             await collectionStore.setActiveCollectionId(undefined);
             disposeCollectionPanel();
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.switchCollection', async () => {
-            await vscode.commands.executeCommand('saropaLogCapture.openCollection');
+        vscode.commands.registerCommand('saropaCapture.switchCollection', async () => {
+            await vscode.commands.executeCommand('saropaCapture.openCollection');
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.addToCollection', async (item?: { uri: vscode.Uri }) => {
+        vscode.commands.registerCommand('saropaCapture.addToCollection', async (item?: { uri: vscode.Uri }) => {
             let uri = item?.uri;
             if (!uri) {
                 const editor = vscode.window.activeTextEditor;
@@ -161,7 +161,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.removeFromCollection', async (item?: { path: string }) => {
+        vscode.commands.registerCommand('saropaCapture.removeFromCollection', async (item?: { path: string }) => {
             const collection = await collectionStore.getActiveCollection();
             if (!collection) {
                 vscode.window.showWarningMessage(t('msg.noActiveCollection'));
@@ -198,7 +198,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.deleteCollection', async () => {
+        vscode.commands.registerCommand('saropaCapture.deleteCollection', async () => {
             const collection = await collectionStore.getActiveCollection();
             if (!collection) {
                 const collections = await collectionStore.listCollections();
@@ -243,7 +243,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.addSignalItemToCollection', async (payload?: AddSignalItemToCollectionPayload) => {
+        vscode.commands.registerCommand('saropaCapture.addSignalItemToCollection', async (payload?: AddSignalItemToCollectionPayload) => {
             const line = formatSignalItemLine(payload);
             if (!line) {
                 vscode.window.showWarningMessage(t('msg.nothingToAddToCollection'));
@@ -256,7 +256,7 @@ export function registerCollectionCommands(deps: CollectionCommandDeps): vscode.
                     t('action.createCollection'),
                 );
                 if (create === t('action.createCollection')) {
-                    await vscode.commands.executeCommand('saropaLogCapture.createCollection');
+                    await vscode.commands.executeCommand('saropaCapture.createCollection');
                 }
                 return;
             }

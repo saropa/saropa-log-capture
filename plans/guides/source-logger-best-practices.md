@@ -1,14 +1,14 @@
 # Source Logger Best Practices
 
 How to structure your app's debug logging for the best experience with
-Saropa Log Capture.
+Saropa Capture.
 
 ---
 
 ## The pipeline
 
 ```
-Your app  →  dart:developer log()  →  Debug adapter  →  DAP events  →  Saropa Log Capture
+Your app  →  dart:developer log()  →  Debug adapter  →  DAP events  →  Saropa Capture
 ```
 
 Each layer adds its own metadata:
@@ -17,15 +17,15 @@ Each layer adds its own metadata:
 |-------|-------------|
 | **Your app** | Message text, optional stack frames in text, ANSI colors |
 | **Debug adapter** (e.g. Dart DA) | Bracket prefix (`[log]`), splits multi-line output into separate events |
-| **Saropa Log Capture** (file) | `[HH:MM:SS.mmm] [category]` per event |
-| **Saropa Log Capture** (viewer) | Line number, timestamp, severity bar, badges, filters |
+| **Saropa Capture** (file) | `[HH:MM:SS.mmm] [category]` per event |
+| **Saropa Capture** (viewer) | Line number, timestamp, severity bar, badges, filters |
 
 **Key consequence:** every `\n` in your log message becomes a separate line in
 the capture file, each with its own timestamp and category prefix.
 
 ---
 
-## What Saropa Log Capture provides
+## What Saropa Capture provides
 
 The viewer already decorates each line with:
 
@@ -44,7 +44,7 @@ Your app does not need to duplicate any of these in the message text.
 
 ### Use `dart:developer` `log()` parameters
 
-The `log()` function accepts structured metadata that Saropa Log Capture reads:
+The `log()` function accepts structured metadata that Saropa Capture reads:
 
 ```dart
 import 'dart:developer';
@@ -88,7 +88,7 @@ Suggested frame counts by severity:
 ### Use bracket source tags for libraries
 
 If your library logs via `dart:developer`, prefix messages with a short bracket
-tag. Saropa Log Capture parses these as **source tags** and lets users filter
+tag. Saropa Capture parses these as **source tags** and lets users filter
 by them independently.
 
 ```dart
@@ -135,11 +135,11 @@ Do not embed these in message text — the viewer provides them:
 - Platform name (visible in the session header)
 
 If your logger has toggle flags for these, keep them **off** when using
-Saropa Log Capture.
+Saropa Capture.
 
 ### ANSI color codes
 
-Saropa Log Capture preserves ANSI escape sequences in the log file but strips
+Saropa Capture preserves ANSI escape sequences in the log file but strips
 them for display in the viewer. They are harmless but add byte overhead.
 Consider disabling them if log file size is a concern.
 
@@ -147,7 +147,7 @@ Consider disabling them if log file size is a concern.
 
 ## Stack frame format compatibility
 
-Saropa Log Capture auto-detects stack frames and groups them with their parent
+Saropa Capture auto-detects stack frames and groups them with their parent
 log line. The following formats are recognized:
 
 | Format | Example | Detected? |

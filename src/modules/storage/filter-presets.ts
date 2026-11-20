@@ -63,7 +63,7 @@ export const builtInPresets: readonly FilterPreset[] = [
     },
 ];
 
-const SECTION = 'saropaLogCapture';
+const SECTION = 'saropaCapture';
 const PRESETS_KEY = 'filterPresets';
 
 /**

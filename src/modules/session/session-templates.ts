@@ -9,7 +9,7 @@
  * - File split rules
  * - Highlight rules
  *
- * Templates are stored in .vscode/saropaLogCapture/templates/
+ * Templates are stored in .vscode/saropaCapture/templates/
  */
 
 import * as vscode from 'vscode';
@@ -127,7 +127,7 @@ export const builtInTemplates: readonly SessionTemplate[] = [
     },
 ];
 
-const TEMPLATES_DIR = '.vscode/saropaLogCapture/templates';
+const TEMPLATES_DIR = '.vscode/saropaCapture/templates';
 
 /**
  * Get the templates directory URI for the workspace.
@@ -224,7 +224,7 @@ export async function deleteTemplate(name: string): Promise<boolean> {
  * Apply a template to the current workspace settings.
  */
 export async function applyTemplate(template: SessionTemplate): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
 
     if (template.watchPatterns) {
         await cfg.update('watchPatterns', template.watchPatterns, vscode.ConfigurationTarget.Workspace);
@@ -255,7 +255,7 @@ export async function applyTemplate(template: SessionTemplate): Promise<void> {
  * Create a template from the current workspace settings.
  */
 export function createTemplateFromSettings(name: string, description?: string): SessionTemplate {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
 
     return {
         name,

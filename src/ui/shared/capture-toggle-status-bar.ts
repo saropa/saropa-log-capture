@@ -10,12 +10,12 @@ import * as vscode from 'vscode';
 import { t } from '../../l10n';
 
 const trustedCommands = [
-    'saropaLogCapture.toggleCapture',
-    'saropaLogCapture.logViewer.focus',
-    'saropaLogCapture.pause',
-    'saropaLogCapture.stop',
-    'saropaLogCapture.openSettings',
-    'saropaLogCapture.openChangelog',
+    'saropaCapture.toggleCapture',
+    'saropaCapture.logViewer.focus',
+    'saropaCapture.pause',
+    'saropaCapture.stop',
+    'saropaCapture.openSettings',
+    'saropaCapture.openChangelog',
 ];
 
 /** One `[icon label](command:id)` markdown link followed by a blank line. */
@@ -24,7 +24,7 @@ function cmdLink(icon: string, label: string, commandId: string): string {
 }
 
 /**
- * A persistent status bar item for Saropa Log Capture.
+ * A persistent status bar item for Saropa Capture.
  * Shows "SLC" with a filled/outline circle indicating capture state.
  * When sessions are active, shows the count as a badge (e.g. "SLC (2)").
  * The hover tooltip provides a menu of command links.
@@ -42,12 +42,12 @@ export class CaptureToggleStatusBar implements vscode.Disposable {
         /* Priority 52 puts this to the right of the recording status bar (50)
          * and the pause control (51), keeping capture-related items grouped. */
         this.item = vscode.window.createStatusBarItem(
-            'saropaLogCapture.captureToggle',
+            'saropaCapture.captureToggle',
             vscode.StatusBarAlignment.Right,
             52,
         );
-        this.item.name = 'Saropa Log Capture: Toggle';
-        this.item.command = 'saropaLogCapture.toggleCapture';
+        this.item.name = 'Saropa Capture: Toggle';
+        this.item.command = 'saropaCapture.toggleCapture';
         this.updateAppearance();
         this.item.show();
     }
@@ -98,11 +98,11 @@ export class CaptureToggleStatusBar implements vscode.Disposable {
         const label = this.enabled
             ? t('captureToggle.menu.captureOn')
             : t('captureToggle.menu.captureOff');
-        md.appendMarkdown(cmdLink(icon, label, 'saropaLogCapture.toggleCapture'));
+        md.appendMarkdown(cmdLink(icon, label, 'saropaCapture.toggleCapture'));
         md.appendMarkdown(cmdLink(
             '$(open-preview)',
             t('captureToggle.menu.openViewer'),
-            'saropaLogCapture.logViewer.focus',
+            'saropaCapture.logViewer.focus',
         ));
     }
 
@@ -114,11 +114,11 @@ export class CaptureToggleStatusBar implements vscode.Disposable {
         const pauseLabel = this.sessionPaused
             ? t('captureToggle.menu.resume')
             : t('captureToggle.menu.pause');
-        md.appendMarkdown(cmdLink(pauseIcon, pauseLabel, 'saropaLogCapture.pause'));
+        md.appendMarkdown(cmdLink(pauseIcon, pauseLabel, 'saropaCapture.pause'));
         md.appendMarkdown(cmdLink(
             '$(debug-stop)',
             t('captureToggle.menu.stop'),
-            'saropaLogCapture.stop',
+            'saropaCapture.stop',
         ));
     }
 
@@ -126,10 +126,10 @@ export class CaptureToggleStatusBar implements vscode.Disposable {
         md.appendMarkdown(cmdLink(
             '$(gear)',
             t('captureToggle.menu.settings'),
-            'saropaLogCapture.openSettings',
+            'saropaCapture.openSettings',
         ));
         md.appendMarkdown(
-            `[$(notebook) ${t('captureToggle.menu.changelog')}](command:saropaLogCapture.openChangelog)`,
+            `[$(notebook) ${t('captureToggle.menu.changelog')}](command:saropaCapture.openChangelog)`,
         );
     }
 

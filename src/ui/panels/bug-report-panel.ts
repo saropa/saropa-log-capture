@@ -54,7 +54,7 @@ export function disposeBugReportPanel(): void { panel?.dispose(); panel = undefi
 function ensurePanel(): void {
     if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.bugReport', 'Saropa Bug Report',
+        'saropaCapture.bugReport', 'Saropa Bug Report',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);

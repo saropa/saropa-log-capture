@@ -170,7 +170,7 @@ function postFrameResult(file: string, line: number, html: string): void {
 function ensurePanel(): void {
     if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.analysis', 'Saropa Line Analysis',
+        'saropaCapture.analysis', 'Saropa Line Analysis',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);

@@ -182,7 +182,7 @@ export async function buildAIContext(
                 ? lineTimestampMs
                 : getSessionCenterTime(meta.integrations);
             const windowMs = vscode.workspace
-                .getConfiguration('saropaLogCapture')
+                .getConfiguration('saropaCapture')
                 .get<number>('contextWindowSeconds', 5) * 1000;
             const window: ContextWindow = { centerTime, windowMs: windowMs || CONTEXT_WINDOW_MS };
             let contextData = await loadContextData(logUri, window);

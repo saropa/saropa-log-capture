@@ -46,6 +46,7 @@ import { autoLoadInitialLog, showWalkthroughOnFirstInstall } from './extension-a
 import { ErrorSnackbarNotifier } from './modules/features/error-snackbar';
 import { showBugReport } from './ui/panels/bug-report-panel';
 import { maybeNotifyPartialNlsCoverage } from './l10n/nls-coverage-notice';
+import { activateLegacyCompat } from './legacy-compat';
 import { maybeNotifySkipNearDuplicatesDefaultChanged } from './modules/screenshot/screenshot-dedup-default-notice';
 import { selfCheckFlowMapPanelScripts } from './ui/panels/flow-map-panel-scripts-self-check';
 import { maybeNotifySilentSiblings } from './modules/diagnostics/suite-silent-notice';
@@ -211,14 +212,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     applyInitialBroadcasterConfig(broadcaster, initCfg);
 
     /* Restore custom minimap drag-to-resize width from workspace state (overrides preset) */
-    const customMmPx = context.workspaceState.get<number>('saropaLogCapture.minimapCustomPx');
+    const customMmPx = context.workspaceState.get<number>('saropaCapture.minimapCustomPx');
     if (typeof customMmPx === 'number' && customMmPx >= 20 && customMmPx <= 160) {
         broadcaster.postToWebview({ type: 'minimapWidthPx', px: customMmPx });
     }
 
     /* Restore custom Trouble Mode rail drag-to-resize width from workspace state (overrides
        the default clamp(320px, 40%, 560px)); same 320/560 bounds as the drag itself. */
-    const customTrPx = context.workspaceState.get<number>('saropaLogCapture.troubleRailCustomPx');
+    const customTrPx = context.workspaceState.get<number>('saropaCapture.troubleRailCustomPx');
     if (typeof customTrPx === 'number' && customTrPx >= 320 && customTrPx <= 560) {
         broadcaster.postToWebview({ type: 'troubleRailWidthPx', px: customTrPx });
     }
@@ -256,7 +257,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         viewerProvider.scrollToLine(lineIndex + 1);
     };
 
-    /* Live error snackbars (opt-in via saropaLogCapture.showErrorSnackbars). The notifier reads
+    /* Live error snackbars (opt-in via saropaCapture.showErrorSnackbars). The notifier reads
        the setting fresh per line, so no config-change wiring is needed. Buttons reuse the same
        load-then-scroll path as bookmarks (Open Log) and the existing bug-report webview (Error
        Report). Registered as a second line listener so activation-listeners.ts stays untouched. */
@@ -265,7 +266,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
            (even when the feature is off), and getConfig() rebuilds all ~256 settings through their
            normalizers every call — far too heavy for the live firehose. A single get() is fresh
            (honors runtime toggles) without the rebuild. */
-        isEnabled: () => vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('showErrorSnackbars', false),
+        isEnabled: () => vscode.workspace.getConfiguration('saropaCapture').get<boolean>('showErrorSnackbars', false),
         // logFileUri is session.fileUri.fsPath (a filesystem path), NOT a URI string — so it must go
         // through Uri.file, not Uri.parse (Uri.parse would read the Windows drive letter as a scheme).
         openLogAtLine: async (logFileUri, line) => {
@@ -313,7 +314,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         },
     });
     const openSessionForReplay = async (uri: vscode.Uri): Promise<void> => {
-        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+        await vscode.commands.executeCommand('saropaCapture.logViewer.focus');
         await viewerProvider.loadFromFile(uri, { replay: true });
     };
     const onFirstSessionListReady = (items: readonly import('./ui/session/session-history-grouping').TreeItem[]): void => {
@@ -387,6 +388,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     // Tell the user once if their editor's display language has largely-English chrome.
     maybeNotifyPartialNlsCoverage(context);
+    // v9.8.0 rename: migrate old saropaLogCapture.* settings and alias old command IDs.
+    activateLegacyCompat(context);
 
     // Tell the user once if the near-duplicate-screenshot default flip actually changed their
     // capture behavior (never touched the setting, either direction).
@@ -404,7 +407,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     // Bug 019: needs `context` to persist the one-time opt-in notice (no longer a silent settings write).
     scheduleMaybeAutoEnableAiFromLanguageModels(context);
 
-    outputChannel.appendLine('Saropa Log Capture activated.');
+    outputChannel.appendLine('Saropa Capture activated.');
     return {
         api: apiHandle.api,
         disposeApi: apiHandle.dispose,

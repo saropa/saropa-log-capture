@@ -1,5 +1,5 @@
 /**
- * Command registration for the Saropa Log Capture extension.
+ * Command registration for the Saropa Capture extension.
  * Groups: session lifecycle (start/stop, marker, pause), session actions (open, trash, export),
  * history browse/edit, export, comparison, signals, bug report, trash, collection, tools.
  * (Timeline and correlation-rescan commands were removed in bug_006 — they required a
@@ -68,10 +68,10 @@ export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggle
 
 /** Opens the Getting Started walkthrough in VS Code's native walkthrough UI. */
 function walkthroughCommand(): vscode.Disposable {
-    return vscode.commands.registerCommand('saropaLogCapture.openWalkthrough', () => {
+    return vscode.commands.registerCommand('saropaCapture.openWalkthrough', () => {
         void vscode.commands.executeCommand(
             'workbench.action.openWalkthrough',
-            'saropa.saropa-log-capture#saropaLogCapture.getStarted',
+            'saropa.saropa-capture#saropaCapture.getStarted',
             false,
         );
     });

@@ -1,6 +1,6 @@
 # Issue Report Guide
 
-How to file, investigate, and close bugs and feature requests in `saropa-log-capture`.
+How to file, investigate, and close bugs and feature requests in `saropa-capture`.
 
 **Feature requests are in scope.** New commands, viewer capabilities, settings, webview features, infrastructure improvements, and tooling enhancements belong here under `bugs/` using the [Feature request](#feature-request) naming pattern and the [feature request template](#feature-request-template).
 
@@ -22,13 +22,13 @@ Use the next available number. Check both `bugs/` (open) and `plans/history/` (c
 
 ## Confirm Attribution Before Filing
 
-**Before filing a bug here, confirm the symptom originates in Saropa Log Capture, not another extension.** The Output panel and webview console can show messages from unrelated extensions. Filing here without proof wastes a round-trip discovering the bug lives elsewhere.
+**Before filing a bug here, confirm the symptom originates in Saropa Capture, not another extension.** The Output panel and webview console can show messages from unrelated extensions. Filing here without proof wastes a round-trip discovering the bug lives elsewhere.
 
 ### Quick check
 
 1. Disable all other extensions (`--disable-extensions` or disable in the Extensions sidebar)
 2. Reproduce the bug — if it disappears, the cause is another extension
-3. Check the Output panel dropdown — is the error in the `Saropa Log Capture` channel or a different one?
+3. Check the Output panel dropdown — is the error in the `Saropa Capture` channel or a different one?
 
 If the bug belongs to another project, write a self-contained report in that project's `bugs/` folder instead.
 
@@ -120,7 +120,7 @@ Copy the block below into a new file. Unlike the bug template above, existing `p
 
 Created: YYYY-MM-DD
 Type: New command / Viewer feature / Setting / Webview UX / Tooling / Infrastructure
-Related: `saropaLogCapture.commandName` (if modifying or extending an existing feature)
+Related: `saropaCapture.commandName` (if modifying or extending an existing feature)
 
 ---
 
@@ -295,10 +295,10 @@ Improvements to the build, test, l10n, or release pipeline.
 
 Use this when diagnosing a new bug.
 
-- [ ] **Attribution** — confirmed the symptom is from Saropa Log Capture, not another extension
+- [ ] **Attribution** — confirmed the symptom is from Saropa Capture, not another extension
 - [ ] **Reproduce it** — can you trigger it reliably?
 - [ ] **Check the webview console** — `Developer: Open Webview Developer Tools`
-- [ ] **Check the output channel** — `Saropa Log Capture` in the Output panel
+- [ ] **Check the output channel** — `Saropa Capture` in the Output panel
 - [ ] **Trace the data flow** — extension → message → webview → render
 - [ ] **Check null/undefined guards** — `typeof x !== 'undefined'` does NOT catch `null`
 - [ ] **Check all line types** — does the code handle regular output, stack frames, logcat, launch boilerplate, and markers?

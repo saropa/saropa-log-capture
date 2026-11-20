@@ -1,6 +1,6 @@
 /**
  * Offer to turn on Explain with AI when the editor exposes at least one LM chat model and the
- * user has never explicitly set saropaLogCapture.ai.enabled (still at default / unset).
+ * user has never explicitly set saropaCapture.ai.enabled (still at default / unset).
  *
  * Bug 019: this used to write `ai.enabled=true` to global settings on every activation with no
  * notification and no opt-in — a silent capability grant the user never asked for. It now shows a
@@ -40,7 +40,7 @@ export function scheduleMaybeAutoEnableAiFromLanguageModels(context: vscode.Exte
             // Never re-show the notice, even to a user who dismissed it without choosing.
             if (context.globalState.get<boolean>(noticeShownKey)) { return; }
 
-            const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
+            const aiCfg = vscode.workspace.getConfiguration('saropaCapture.ai');
             const inspected = aiCfg.inspect<boolean>('enabled');
             if (!isAiEnabledUntouched(inspected)) { return; }
 

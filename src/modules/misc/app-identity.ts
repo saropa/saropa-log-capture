@@ -7,7 +7,7 @@ const cacheTtl = 5 * 60_000;
 
 /** Auto-detect package name from google-services.json, AndroidManifest.xml, or pubspec.yaml. Cached for 5 min. */
 export async function detectPackageName(): Promise<string | undefined> {
-    const manual = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<string>('packageName', '');
+    const manual = vscode.workspace.getConfiguration('saropaCapture.firebase').get<string>('packageName', '');
     if (manual) { return manual; }
     if (cachedPackage && Date.now() < cachedPackage.expires) { return cachedPackage.value; }
     const name = await tryGoogleServices() ?? await tryManifest() ?? await tryPubspec();

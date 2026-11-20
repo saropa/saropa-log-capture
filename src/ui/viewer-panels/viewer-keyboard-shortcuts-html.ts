@@ -155,7 +155,7 @@ function getPowerShortcutsHtml(): string {
 /** One Command-Palette row: command NAME stays English (also the search term), localized description.
  * @l10n-expand viewer.shortcuts.cmd.{1}.desc */
 function commandRow(command: string, descId: string): string {
-    return `<tr data-keybinding-search="Saropa Log Capture: ${command}"><td>${command}</td><td>${t(`viewer.shortcuts.cmd.${descId}.desc`)}</td></tr>`;
+    return `<tr data-keybinding-search="Saropa Capture: ${command}"><td>${command}</td><td>${t(`viewer.shortcuts.cmd.${descId}.desc`)}</td></tr>`;
 }
 
 /** Command Palette shortcuts table. */

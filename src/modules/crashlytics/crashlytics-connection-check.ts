@@ -37,10 +37,10 @@ export interface ConnectionReport {
     readonly checkedAt: number;
 }
 
-const SERVICE_ACCOUNT_SETTING = 'saropaLogCapture.firebase.serviceAccountKeyPath';
+const SERVICE_ACCOUNT_SETTING = 'saropaCapture.firebase.serviceAccountKeyPath';
 
 function serviceAccountConfigured(): boolean {
-    return vscode.workspace.getConfiguration('saropaLogCapture.firebase')
+    return vscode.workspace.getConfiguration('saropaCapture.firebase')
         .get<string>('serviceAccountKeyPath', '').trim().length > 0;
 }
 
@@ -94,7 +94,7 @@ async function checkConfig(): Promise<{ step: ConnectionStep; config?: FirebaseC
         step: {
             id: 'config', label: 'Firebase project', status: 'fail',
             detail: d?.message ?? 'No Firebase project configured.',
-            fix: 'Add google-services.json (e.g. android/app/), or set saropaLogCapture.firebase.projectId and .appId.',
+            fix: 'Add google-services.json (e.g. android/app/), or set saropaCapture.firebase.projectId and .appId.',
         },
     };
 }
@@ -104,7 +104,7 @@ function httpFix(status?: number): string {
     if (status === 403) { return 'Your Google account needs the Firebase Crashlytics Viewer role on this project.'; }
     if (status === 404) { return 'Project or app ID is wrong — verify in Firebase Console → Project Settings → General.'; }
     if (status === 401) { return 'Token is invalid or expired — re-run: gcloud auth application-default login.'; }
-    return 'See the Saropa Log Capture output channel for the full response.';
+    return 'See the Saropa Capture output channel for the full response.';
 }
 
 /** Step 4: a live Crashlytics API call succeeds (distinguishes "no issues" from a real error). */

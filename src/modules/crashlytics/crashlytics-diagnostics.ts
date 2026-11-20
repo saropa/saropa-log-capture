@@ -13,9 +13,9 @@ export interface DiagnosticDetails {
 
 let outputChannel: vscode.OutputChannel | undefined;
 
-/** Lazily create (or reuse) the shared "Saropa Log Capture" output channel. */
+/** Lazily create (or reuse) the shared "Saropa Capture" output channel. */
 export function getOutputChannel(): vscode.OutputChannel {
-    outputChannel ??= vscode.window.createOutputChannel('Saropa Log Capture');
+    outputChannel ??= vscode.window.createOutputChannel('Saropa Capture');
     return outputChannel;
 }
 
@@ -82,7 +82,7 @@ export function classifyTokenError(err: unknown): DiagnosticDetails {
 }
 
 /** Hint shown when Firebase config is missing or API returns 404 (single source of truth for path/settings). */
-export const firebaseConfigSetupHint = 'Add google-services.json (e.g. android/app/) or set saropaLogCapture.firebase.projectId / .appId in settings.';
+export const firebaseConfigSetupHint = 'Add google-services.json (e.g. android/app/) or set saropaCapture.firebase.projectId / .appId in settings.';
 
 /** Re-auth command that grants both cloud-platform and the Play reporting scope (single source of truth). */
 export const playReportingScopeFix = 'gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/playdeveloperreporting';
@@ -107,7 +107,7 @@ export function classifyHttpStatus(status: number, body?: string): string {
             return 'The Play Developer Reporting API is not enabled for this project — run: gcloud services enable playdeveloperreporting.googleapis.com, then retry.';
         }
         if (b.includes('quota project')) {
-            return 'Sign-in has no quota project. Re-run gcloud auth application-default login, or set saropaLogCapture.firebase.projectId.';
+            return 'Sign-in has no quota project. Re-run gcloud auth application-default login, or set saropaCapture.firebase.projectId.';
         }
         return 'Permission denied — your account needs access to this app in the Play Console / Firebase project.';
     }

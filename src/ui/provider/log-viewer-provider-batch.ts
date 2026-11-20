@@ -138,7 +138,7 @@ function buildDropNoticeMarker(dropped: number): PendingLine {
     const noun = dropped === 1 ? 'line' : 'lines';
     // Log-content marker (English, like EarlyOutputBuffer's notice) — a technical
     // artifact in the captured stream, not UI chrome, so it is not localized.
-    const text = `[Saropa Log Capture] ${dropped} live ${noun} dropped `
+    const text = `[Saropa Capture] ${dropped} live ${noun} dropped `
         + `(viewer backlog cap ${MAX_PENDING_LINES} reached; full stream is in the session log file).`;
     return { text: escapeHtml(text), rawText: text, isMarker: true, lineCount: 0, category: 'console', timestamp: 0 };
 }

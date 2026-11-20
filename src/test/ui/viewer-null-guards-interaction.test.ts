@@ -55,7 +55,7 @@ suite('Webview script null guards – interaction', () => {
 
         /* Ctrl+G fix: VS Code's built-in workbench.action.gotoLine has no `when` clause
            so it preempts the webview keydown handler. The fix routes Ctrl+G through a
-           contributes.keybindings entry → saropaLogCapture.gotoLineInViewer command →
+           contributes.keybindings entry → saropaCapture.gotoLineInViewer command →
            triggerGotoLine broadcast → this dispatcher case → openGotoLine(). Pin the
            dispatcher leg so a refactor that drops the case is caught immediately. */
         test('message handler should dispatch triggerGotoLine to openGotoLine', () => {

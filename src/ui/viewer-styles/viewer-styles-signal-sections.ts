@@ -256,7 +256,7 @@ export function getSignalSectionsStyles(): string {
 .signal-trend-row:hover .signal-row-actions,
 .signal-in-log-row:hover .signal-row-actions,
 .signal-row-actions:focus-within { opacity: 1; }
-/* Transient highlight when a deep-link (saropaLogCapture.openSignal) scrolls to a signal,
+/* Transient highlight when a deep-link (saropaCapture.openSignal) scrolls to a signal,
    so the user sees which row the jump landed on. Removed by script after ~2s. */
 .signal-focus-flash {
     background: var(--vscode-list-hoverBackground);

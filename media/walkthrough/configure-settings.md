@@ -6,7 +6,7 @@ Fine-tune the extension to match your workflow.
 
 ### Watch Patterns
 ```json
-"saropaLogCapture.watchPatterns": [
+"saropaCapture.watchPatterns": [
   { "keyword": "error", "alert": "flash" },
   { "keyword": "/api.*failed/i", "alert": "badge" }
 ]
@@ -14,14 +14,14 @@ Fine-tune the extension to match your workflow.
 
 ### Highlight Rules
 ```json
-"saropaLogCapture.highlightRules": [
+"saropaCapture.highlightRules": [
   { "pattern": "/TODO/i", "color": "#ffcc00", "bold": true }
 ]
 ```
 
 ### Exclusions
 ```json
-"saropaLogCapture.exclusions": [
+"saropaCapture.exclusions": [
   "verbose:",
   "/^\\[DEBUG\\]/i"
 ]
@@ -29,7 +29,7 @@ Fine-tune the extension to match your workflow.
 
 ### Auto-Split Rules
 ```json
-"saropaLogCapture.splitRules": {
+"saropaCapture.splitRules": {
   "maxLines": 50000,
   "maxSizeKB": 5000,
   "keywords": ["HOT RESTART"]

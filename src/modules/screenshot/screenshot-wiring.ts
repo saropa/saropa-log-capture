@@ -45,7 +45,7 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     // undiagnosable, and the write no longer happens on a path any caller awaits.
     const store = new ScreenshotStore(deps.log);
     const cfg = (): vscode.WorkspaceConfiguration =>
-        vscode.workspace.getConfiguration('saropaLogCapture');
+        vscode.workspace.getConfiguration('saropaCapture');
     const capturer = new ScreenshotCapturer({
         // Both read through readScreenshotSettings, so the diagnosis command reports the values the
         // capturer is actually using rather than its own second reading of the same keys.
@@ -68,7 +68,7 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     // Build-identity line: the first question in any "no screenshots" report is whether the
     // running extension actually contains this pipeline. Version comes from the manifest —
     // a hardcoded date would silently go stale on the next change to this file.
-    const version = vscode.extensions.getExtension('saropa.saropa-log-capture')?.packageJSON?.version ?? 'unknown';
+    const version = vscode.extensions.getExtension('saropa.saropa-capture')?.packageJSON?.version ?? 'unknown';
     deps.log(`screenshot: capture pipeline armed (v${version} — VM probe + adb screencap fallback)`);
     registerVmServiceUriTracking(deps.context);
     registerSelfTest(deps, cfg);
@@ -101,13 +101,13 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
         capturer.onLine(data);
     });
     deps.context.subscriptions.push(
-        vscode.commands.registerCommand('saropaLogCapture.captureScreenshot', () =>
+        vscode.commands.registerCommand('saropaCapture.captureScreenshot', () =>
             runManualCapture(capturer, deps.sessionManager),
         ),
         // Ask, rather than wait to be told. Every number this reports already existed, but only as a
         // one-time notice at the moment it happened — a reader who arrived afterwards had no way to
         // recover it, which is why those notices kept accumulating.
-        vscode.commands.registerCommand('saropaLogCapture.diagnoseScreenshots', () =>
+        vscode.commands.registerCommand('saropaCapture.diagnoseScreenshots', () =>
             runScreenshotDiagnosis(
                 {
                     capturer, store,

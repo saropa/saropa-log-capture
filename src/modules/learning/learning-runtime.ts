@@ -16,7 +16,7 @@ let workspaceState: vscode.Memento | undefined;
 /** Workspace-local memo of patterns already promoted from HERE, so re-accepting the same
  *  pattern can't inflate the cross-workspace count. Kept in workspace (not global) state so
  *  global storage never holds anything workspace-identifying. */
-const PROMOTED_KEY = "saropaLogCapture.learning.promotedPatterns.v1";
+const PROMOTED_KEY = "saropaCapture.learning.promotedPatterns.v1";
 
 export function initLearningRuntime(
     context: vscode.ExtensionContext,
@@ -29,9 +29,9 @@ export function initLearningRuntime(
         store,
         getSessionId: () => sessionManager.getActiveSession()?.fileUri.toString() ?? "none",
         getMaxLineLength: () =>
-            vscode.workspace.getConfiguration("saropaLogCapture").get<number>("learning.maxStoredLineLength", 2000) ?? 2000,
+            vscode.workspace.getConfiguration("saropaCapture").get<number>("learning.maxStoredLineLength", 2000) ?? 2000,
         isEnabled: () =>
-            vscode.workspace.getConfiguration("saropaLogCapture").get<boolean>("learning.enabled", true) !== false,
+            vscode.workspace.getConfiguration("saropaCapture").get<boolean>("learning.enabled", true) !== false,
     });
 }
 
@@ -46,7 +46,7 @@ export function getGlobalAggregateStore(): GlobalAggregateStore | undefined {
 /** Read the opt-in flag (default OFF, per the privacy posture). */
 export function globalAggregatesOptedIn(): boolean {
     return vscode.workspace
-        .getConfiguration("saropaLogCapture")
+        .getConfiguration("saropaCapture")
         .get<boolean>("learning.globalAggregates", false) === true;
 }
 

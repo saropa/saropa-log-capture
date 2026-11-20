@@ -54,7 +54,7 @@ def print_install_instructions(vsix_path: str) -> None:
   {opt}After installing:{rst}
 
     - Start any debug session ({key}F5{rst}) — capture begins automatically
-    - Open the Saropa Log Capture panel to view live output
+    - Open the Saropa Capture panel to view live output
     - Press {key}Ctrl+Shift+P{rst} and type {key}"Saropa"{rst} to see all commands
 """)
 

@@ -47,16 +47,16 @@ export async function handleBugReport(
 /** Trigger export via existing commands. */
 export function handleExportAction(format: string): void {
     const commandMap: Record<string, string> = {
-        slc: 'saropaLogCapture.exportSlc',
-        json: 'saropaLogCapture.exportJson',
-        csv: 'saropaLogCapture.exportCsv',
+        slc: 'saropaCapture.exportSlc',
+        json: 'saropaCapture.exportJson',
+        csv: 'saropaCapture.exportCsv',
     };
     const cmd = commandMap[format];
     if (cmd) { vscode.commands.executeCommand(cmd).then(undefined, () => {}); }
 }
 
 // handleAiExplain() removed (bug_005): it called executeCommand on
-// 'saropaLogCapture.explainError', a command that was never registered with
+// 'saropaCapture.explainError', a command that was never registered with
 // vscode.commands.registerCommand anywhere in the extension, so every call
 // failed silently and the UI always reported "AI unavailable". The caller
 // (the "Explain with AI" button in analysis-error-render.ts) was removed at

@@ -20,8 +20,8 @@ appears, a panel that shows zero findings), not a crash. So you are hunting for 
 1. A Flutter app that depends on `drift` (or `sqflite`) and has at least one query that can run slow
    or N+1, plus a place you can force a `StateError` / `RangeError`.
 2. All three extensions enabled (the **Saropa Suite** pack installs them in one click): Saropa Drift
-   Advisor (`saropa.drift-viewer`), Saropa Lints (`saropa.saropa-lints`), Saropa Log Capture
-   (`saropa.saropa-log-capture`).
+   Advisor (`saropa.drift-viewer`), Saropa Lints (`saropa.saropa-lints`), Saropa Capture
+   (`saropa.saropa-capture`).
 3. The app's `pubspec.yaml` dev-depends on `saropa_lints` and depends on `saropa_drift_advisor` (so the
    Drift debug server runs and the analyzer plugin is active).
 4. The workspace is a Git checkout (the `commitSha` seam needs a real `.git/HEAD`).
@@ -55,7 +55,7 @@ stop the Log Capture session (log-capture), all without an intervening `git comm
    `location.file` that is **workspace-relative** (e.g. `lib/db/app_database.dart`) — **not** an
    absolute `C:\Users\…` path. → **PASS** on all four; absolute path is a Log Capture FAIL.
 4. Open Drift Advisor's Drift Health panel (**Saropa Drift Advisor: Open Drift Health (Suite)**).
-   Confirm it shows rows from **Saropa Lints** and **Saropa Log Capture**, not only Advisor's own. →
+   Confirm it shows rows from **Saropa Lints** and **Saropa Capture**, not only Advisor's own. →
    **PASS** if sibling rows appear. Zero sibling rows while the files exist = a parse/field mismatch;
    owner is whoever **produced** the file Advisor couldn't read.
 5. Open Lints' consolidated dashboard. Confirm a Drift rule row carries an "Advisor confirms at
@@ -77,8 +77,8 @@ stop the Log Capture session (log-capture), all without an intervening `git comm
 3. In a Log Capture **Lints finding** row, confirm **Show rule in Saropa Lints** appears and opens
    Lints' Rule Explain for that rule (`saropaLints.explainRule`). → **PASS** on open.
 4. Reverse direction: from a Drift Advisor or Lints finding, confirm an action targeting
-   `saropaLogCapture.openSqlHistoryForFingerprint` focuses Log Capture's SQL History on that query, and
-   `saropaLogCapture.openSignal` reveals the matching signal. → **PASS** on each landing.
+   `saropaCapture.openSqlHistoryForFingerprint` focuses Log Capture's SQL History on that query, and
+   `saropaCapture.openSignal` reveals the matching signal. → **PASS** on each landing.
 5. Negative control: disable one sibling extension, reload, and confirm its buttons **disappear**
    rather than erroring. → **PASS** if they vanish silently (this is the fail-safe gate working).
 

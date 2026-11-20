@@ -4,7 +4,7 @@
 
 Created: 2026-09-20
 Type: Viewer feature / Tooling
-Related: `src/modules/ai/ai-prompt.ts`, `src/modules/ai/ai-context-builder.ts`, `src/modules/ai/ai-explain-ui.ts`, `saropaLogCapture.ai.contextLines`, PLAN 120, `bug_003` (AI redaction)
+Related: `src/modules/ai/ai-prompt.ts`, `src/modules/ai/ai-context-builder.ts`, `src/modules/ai/ai-explain-ui.ts`, `saropaCapture.ai.contextLines`, PLAN 120, `bug_003` (AI redaction)
 
 ---
 
@@ -20,7 +20,7 @@ to read the surrounding context from disk as needed.
 ## Motivation
 
 Today `buildExplainErrorPrompt()` embeds the error line, stack trace, surrounding lines
-(`saropaLogCapture.ai.contextLines`, 0–50) and integration data verbatim. That is required
+(`saropaCapture.ai.contextLines`, 0–50) and integration data verbatim. That is required
 for the VS Code Language Model API path, which has no file access. For agentic tools it is
 the wrong shape:
 

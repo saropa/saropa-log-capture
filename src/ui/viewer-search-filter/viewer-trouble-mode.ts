@@ -9,7 +9,7 @@
  * lines, unlike the level filter's context window).
  *
  * Toggled by the toolbar button (`#toolbar-trouble-btn`, next to the filter icon)
- * or the `saropaLogCapture.troubleMode.toggle` command (host posts
+ * or the `saropaCapture.troubleMode.toggle` command (host posts
  * `triggerToggleTroubleMode`), and persisted per-webview via `setState` so the
  * mode survives a webview reload. The button's active style + the dimmed level
  * dots (body class `slc-trouble-active`) show the state.

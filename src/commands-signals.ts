@@ -9,7 +9,7 @@ import { ensureWebviewReady, ensureWebviewReadyOrWarn } from './commands-webview
 export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
-            'saropaLogCapture.showSignals',
+            'saropaCapture.showSignals',
             async () => {
                 // The Log Viewer is a webview *view* (sidebar/panel), not an editor tab. It is
                 // normally closed right after a capture finishes — exactly when the recurring-signal
@@ -22,7 +22,7 @@ export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
             },
         ),
         vscode.commands.registerCommand(
-            'saropaLogCapture.openSignalsInTab',
+            'saropaCapture.openSignalsInTab',
             () => {
                 openSignalTab({
                     getCurrentFileUri: () => deps.viewerProvider.getCurrentFileUri(),
@@ -33,7 +33,7 @@ export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
             },
         ),
         vscode.commands.registerCommand(
-            'saropaLogCapture.refreshRecurringSignals',
+            'saropaCapture.refreshRecurringSignals',
             async () => {
                 // Fired 3s after every capture finishes (session-lifecycle-finalize.ts) with
                 // no user action guaranteeing the view is open. Uses the silent

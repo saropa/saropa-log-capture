@@ -1,7 +1,7 @@
 import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
-const EXTENSION_ID = 'saropa.saropa-log-capture';
+const EXTENSION_ID = 'saropa.saropa-capture';
 
 /**
  * Extension-Host smoke test for the screenshot wiring, exercised through the ACTIVATED extension.
@@ -44,8 +44,8 @@ suite('screenshot wiring (Extension Host smoke)', () => {
 
     test('should have registered both screenshot commands at activation', async () => {
         const all = await vscode.commands.getCommands(true);
-        assert.ok(all.includes('saropaLogCapture.captureScreenshot'), 'the manual capture command');
-        assert.ok(all.includes('saropaLogCapture.diagnoseScreenshots'), 'the diagnosis command');
+        assert.ok(all.includes('saropaCapture.captureScreenshot'), 'the manual capture command');
+        assert.ok(all.includes('saropaCapture.diagnoseScreenshots'), 'the diagnosis command');
     });
 
     test('should run the diagnosis command against the live pipeline without throwing', async () => {
@@ -53,7 +53,7 @@ suite('screenshot wiring (Extension Host smoke)', () => {
         // wrapper, the real settings read, the output-channel reveal, and the no-session path (no
         // debug session runs here, which is exactly the state the report has to describe).
         await assert.doesNotReject(
-            () => run('saropaLogCapture.diagnoseScreenshots'),
+            () => run('saropaCapture.diagnoseScreenshots'),
             'the diagnosis must survive being asked when nothing is running',
         );
     });
@@ -61,15 +61,15 @@ suite('screenshot wiring (Extension Host smoke)', () => {
     test('should run the diagnosis twice without the second call failing', async () => {
         // The report reads back from disk and touches the store's pending state; running it twice is
         // the cheapest check that it does not consume or mutate what it reports.
-        await vscode.commands.executeCommand('saropaLogCapture.diagnoseScreenshots');
-        await assert.doesNotReject(() => run('saropaLogCapture.diagnoseScreenshots'));
+        await vscode.commands.executeCommand('saropaCapture.diagnoseScreenshots');
+        await assert.doesNotReject(() => run('saropaCapture.diagnoseScreenshots'));
     });
 
     test('should survive a manual capture invoked from the palette at any time', async () => {
         // Deliberately asserts only that it does not reject. The OUTCOME depends on session state
         // this suite does not own — every test file shares one Extension Host — so asserting a
         // particular refusal would be asserting something this test cannot control.
-        await assert.doesNotReject(() => run('saropaLogCapture.captureScreenshot'));
+        await assert.doesNotReject(() => run('saropaCapture.captureScreenshot'));
     });
 
 });

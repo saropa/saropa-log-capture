@@ -89,7 +89,7 @@ function runSessionAction(msg: Record<string, unknown>, ctx: ViewerMessageContex
 export function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, ctx: ViewerMessageContext): boolean {
   const boolKey = SAROPA_BOOL_SETTING_BY_MSG_TYPE[type];
   if (boolKey) {
-    vscode.workspace.getConfiguration("saropaLogCapture")
+    vscode.workspace.getConfiguration("saropaCapture")
       .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
     return true;
   }
@@ -97,7 +97,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
   // user's cross-project default for newly opened logs (see SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE).
   const globalBoolKey = SAROPA_GLOBAL_BOOL_SETTING_BY_MSG_TYPE[type];
   if (globalBoolKey) {
-    vscode.workspace.getConfiguration("saropaLogCapture")
+    vscode.workspace.getConfiguration("saropaCapture")
       .update(globalBoolKey, Boolean(msg.value), vscode.ConfigurationTarget.Global)
       .then(undefined, () => {});
     return true;
@@ -105,14 +105,14 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
   /* Minimap drag-to-resize: persist custom pixel width to workspace state */
   if (type === "setMinimapCustomPx") {
     const px = typeof msg.value === "number" ? msg.value : 0;
-    ctx.context.workspaceState.update("saropaLogCapture.minimapCustomPx", px > 0 ? px : undefined)
+    ctx.context.workspaceState.update("saropaCapture.minimapCustomPx", px > 0 ? px : undefined)
       .then(undefined, () => {});
     return true;
   }
   /* Trouble Mode rail drag-to-resize: persist custom pixel width to workspace state */
   if (type === "setTroubleRailCustomPx") {
     const px = typeof msg.value === "number" ? msg.value : 0;
-    ctx.context.workspaceState.update("saropaLogCapture.troubleRailCustomPx", px > 0 ? px : undefined)
+    ctx.context.workspaceState.update("saropaCapture.troubleRailCustomPx", px > 0 ? px : undefined)
       .then(undefined, () => {});
     return true;
   }
@@ -144,7 +144,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       const w = msgStr(msg, "value");
       const allowed = new Set(["xsmall", "small", "medium", "large", "xlarge"]);
       if (!allowed.has(w)) { return true; }
-      vscode.workspace.getConfiguration("saropaLogCapture")
+      vscode.workspace.getConfiguration("saropaCapture")
         .update("minimapWidth", w, vscode.ConfigurationTarget.Workspace);
       return true;
     }
@@ -184,7 +184,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
          `requestSessionList` rebuilds the payload with the new cursor; we trigger it here so
          the user sees the banner clear without needing to reopen the panel. The cursor key
          must stay in sync with viewer-handler-wiring.ts (LOGS_PANEL_DISMISSED_AT_KEY). */
-      ctx.context.workspaceState.update("saropaLogCapture.logsPanelDismissedAt", Date.now())
+      ctx.context.workspaceState.update("saropaCapture.logsPanelDismissedAt", Date.now())
         .then(() => { ctx.onSessionListRequest?.(); }, () => {});
       return true;
     }
@@ -195,9 +195,9 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "exportSessionListJson": ctx.onExportSessionListJson?.()?.then(undefined, () => {}); return true;
     // Kebab "Open log file…" delegates to the command so the picker logic lives in one place.
-    case "openLogFile": vscode.commands.executeCommand("saropaLogCapture.openLogFile").then(undefined, () => {}); return true;
+    case "openLogFile": vscode.commands.executeCommand("saropaCapture.openLogFile").then(undefined, () => {}); return true;
     // Kebab "Open log from URL…" delegates to the command (prompts, downloads, renders).
-    case "openLogFromUrl": vscode.commands.executeCommand("saropaLogCapture.openLogFromUrl").then(undefined, () => {}); return true;
+    case "openLogFromUrl": vscode.commands.executeCommand("saropaCapture.openLogFromUrl").then(undefined, () => {}); return true;
     // OS file dropped onto the viewer — load by path, or stage transferred content to a temp file.
     case "openDroppedLog": handleOpenDroppedLog(msg, ctx).then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;

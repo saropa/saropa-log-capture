@@ -1,4 +1,4 @@
-# Contributing to Saropa Log Capture
+# Contributing to Saropa Capture
 
 Thank you for your interest in contributing! This document provides guidelines for contributors.
 
@@ -28,7 +28,7 @@ These principles guide all development decisions:
 
 ## Terminology Standard
 
-Consistent vocabulary for all user-facing text in Saropa Log Capture.
+Consistent vocabulary for all user-facing text in Saropa Capture.
 
 **Scope:** Commands, settings descriptions, status bar, webview UI, notifications, walkthrough, README, CHANGELOG. Internal code (class names, variable names) is not required to change, but new code should prefer these terms.
 
@@ -48,7 +48,7 @@ Consistent vocabulary for all user-facing text in Saropa Log Capture.
 
 ### Command Naming
 
-Commands use the format: `Saropa Log Capture: <Verb> <Object>`
+Commands use the format: `Saropa Capture: <Verb> <Object>`
 
 | Current | Proposed | Rationale |
 |---------|----------|-----------|
@@ -75,7 +75,7 @@ Commands use the format: `Saropa Log Capture: <Verb> <Object>`
 
 ### Settings Naming
 
-Settings use the prefix `saropaLogCapture.` Existing setting keys (`maxLogFiles`, `logDirectory`, `autoOpen`) are already "log"-based and should **not** change (breaking change for users). Only **descriptions** need updating to use consistent terminology. Any setting description that says "session" should say "log" instead.
+Settings use the prefix `saropaCapture.` Existing setting keys (`maxLogFiles`, `logDirectory`, `autoOpen`) are already "log"-based and should **not** change (breaking change for users). Only **descriptions** need updating to use consistent terminology. Any setting description that says "session" should say "log" instead.
 
 ### Webview UI Text
 
@@ -107,7 +107,7 @@ Settings use the prefix `saropaLogCapture.` Existing setting keys (`maxLogFiles`
 
 ### Exceptions
 
-1. **Extension name:** "Saropa Log Capture" — "Capture" is part of the brand, not a term for the recorded unit.
+1. **Extension name:** "Saropa Capture" — "Capture" is part of the brand, not a term for the recorded unit.
 2. **Internal code:** Class names like `LogSession`, `SessionManager` do not need renaming (internal only, would be a large refactor with no user benefit).
 3. **VS Code API terms:** "Debug session" in VS Code API documentation context is fine since it refers to the VS Code concept, not our concept.
 4. **DAP terminology:** "DAP output categories" in technical setting descriptions is acceptable.
@@ -335,7 +335,7 @@ Runs tests with nyc and prints a coverage report. Note: many tests run inside th
 
 ### Warning and error logging
 
-- Use the **extension logger** (`getExtensionLogger()`) so all messages go to the "Saropa Log Capture" output channel. Call `setExtensionLogger(channel)` once from the extension entry point.
+- Use the **extension logger** (`getExtensionLogger()`) so all messages go to the "Saropa Capture" output channel. Call `setExtensionLogger(channel)` once from the extension entry point.
 - **Levels**: Use `logExtensionError` for failures and unexpected conditions; use `logExtensionWarn` for recoverable or degraded behavior; use `logExtensionInfo` sparingly (e.g. session start/stop, retention run).
 - **Content**: Include a short context (e.g. "editLine", "file retention") and the error message or key data. Avoid logging secrets or full paths to user data unless necessary for support.
 
@@ -351,7 +351,7 @@ Runs tests with nyc and prints a coverage report. Note: many tests run inside th
    npm run compile       # Full build
    npm run test          # Run tests
    ```
-5. Test manually: press **F5**. When the Extension Development Host window opens, if you see "All installed extensions are temporarily disabled", click **Reload and Enable Extensions**. Then click the **Saropa Log Capture** icon in the left activity bar to open the viewer. Start a debug session in that window to see capture in action.
+5. Test manually: press **F5**. When the Extension Development Host window opens, if you see "All installed extensions are temporarily disabled", click **Reload and Enable Extensions**. Then click the **Saropa Capture** icon in the left activity bar to open the viewer. Start a debug session in that window to see capture in action.
 6. Commit with descriptive message
 7. Open a Pull Request
 

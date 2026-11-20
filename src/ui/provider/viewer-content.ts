@@ -59,7 +59,7 @@ export interface ViewerHtmlOptions {
   readonly signalSlowOpThresholdMs?: number;
   /** Log viewer divider row text captions (`accessibility.showCollapseDividerLabels`, default true). */
   readonly accessibilityShowCollapseDividerLabels?: boolean;
-  /** Default per-line column visibility (saropaLogCapture.viewerColumn*), baked into the viewer. */
+  /** Default per-line column visibility (saropaCapture.viewerColumn*), baked into the viewer. */
   readonly viewerColumns?: ViewerColumnDefaults;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Extension-wide logging to the "Saropa Log Capture" output channel.
+ * Extension-wide logging to the "Saropa Capture" output channel.
  *
  * Set the channel once from the extension entry point (setExtensionLogger).
  * All log calls then append to that channel so users and support can inspect
@@ -22,7 +22,7 @@ export function setExtensionLogger(outputChannel: vscode.OutputChannel): void {
  */
 export function getExtensionLogger(): vscode.OutputChannel {
     if (channel) { return channel; }
-    channel = vscode.window.createOutputChannel('Saropa Log Capture');
+    channel = vscode.window.createOutputChannel('Saropa Capture');
     return channel;
 }
 

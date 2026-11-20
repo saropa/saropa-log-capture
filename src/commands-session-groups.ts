@@ -101,16 +101,16 @@ export function sessionGroupCommands(
     collectionStore: CollectionStore,
 ): vscode.Disposable[] {
     return [
-        vscode.commands.registerCommand('saropaLogCapture.groupSelectedSessions', (primary?: unknown, selection?: unknown) =>
+        vscode.commands.registerCommand('saropaCapture.groupSelectedSessions', (primary?: unknown, selection?: unknown) =>
             runGroupSelectedSessions(historyProvider, resolveUris(primary, selection)),
         ),
-        vscode.commands.registerCommand('saropaLogCapture.ungroupSession', (primary?: unknown, selection?: unknown) =>
+        vscode.commands.registerCommand('saropaCapture.ungroupSession', (primary?: unknown, selection?: unknown) =>
             runUngroupSession(historyProvider, resolveUris(primary, selection)),
         ),
-        vscode.commands.registerCommand('saropaLogCapture.openSessionGroup', (primary?: unknown, selection?: unknown) =>
+        vscode.commands.registerCommand('saropaCapture.openSessionGroup', (primary?: unknown, selection?: unknown) =>
             runOpenSessionGroup(historyProvider, viewerProvider, resolveUris(primary, selection)),
         ),
-        vscode.commands.registerCommand('saropaLogCapture.addGroupToCollection', (primary?: unknown, selection?: unknown) =>
+        vscode.commands.registerCommand('saropaCapture.addGroupToCollection', (primary?: unknown, selection?: unknown) =>
             runAddGroupToCollection(historyProvider, collectionStore, resolveUris(primary, selection)),
         ),
     ];

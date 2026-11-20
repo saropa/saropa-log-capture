@@ -2,7 +2,7 @@
  * The Saropa Diagnostic Envelope — the shared cross-tool protocol.
  *
  * Three tools (Saropa Lints = static code, Saropa Drift Advisor = live DB,
- * Saropa Log Capture = runtime telemetry) each emit "a problem with a location,
+ * Saropa Capture = runtime telemetry) each emit "a problem with a location,
  * a severity, a source, and maybe a fix." This module is Log Capture's local copy
  * of the one shape they all produce and consume.
  *

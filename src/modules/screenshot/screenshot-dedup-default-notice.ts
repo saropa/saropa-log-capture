@@ -13,7 +13,7 @@ import { t } from '../../l10n';
  * from "the user explicitly chose the value the schema default happens to match".
  */
 
-const SETTING_ID = 'saropaLogCapture.integrations.screenshots.skipNearDuplicates';
+const SETTING_ID = 'saropaCapture.integrations.screenshots.skipNearDuplicates';
 const noticeShownKey = 'slc.skipNearDuplicatesDefaultNoticeShown';
 
 /**

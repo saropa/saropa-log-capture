@@ -188,7 +188,7 @@ async function loadPendingFilterSuggestions(): Promise<RuleSuggestion[]> {
  *  without the now-accepted row. */
 export async function handleAcceptFilterSuggestion(id: string, pattern: string, post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
     if (!id || !pattern) { return; }
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const cur = cfg.get<string[]>('exclusions', []);
     if (!cur.includes(pattern)) {
         try {

@@ -6,7 +6,7 @@ This extension is published **without** `enabledApiProposals` in `package.json` 
 
 `.vscode/launch.json` passes:
 
-`--enable-proposed-api=saropa.saropa-log-capture`
+`--enable-proposed-api=saropa.saropa-capture`
 
 That opt-in applies only when you debug from this workspace. It does **not** ship to end users.
 
@@ -18,7 +18,7 @@ When VS Code changes or tightens proposed APIs:
 
 1. Run the extension under F5 with the launch flag above.
 2. Exercise terminal-related capture toggles.
-3. Watch the **Saropa Log Capture** output channel for errors.
+3. Watch the **Saropa Capture** output channel for errors.
 
 ## Adding a new proposed dependency
 

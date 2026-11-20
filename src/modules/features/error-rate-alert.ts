@@ -117,7 +117,7 @@ export class ErrorRateAlert {
                 t('action.openLog'),
             ).then((selection) => {
                 if (selection === t('action.openLog')) {
-                    vscode.commands.executeCommand('saropaLogCapture.open');
+                    vscode.commands.executeCommand('saropaCapture.open');
                 }
             });
         }

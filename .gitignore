@@ -27,10 +27,10 @@ agent-transcripts/
 *.cursorrules
 .cursorrules
 
-# Saropa Log Capture (index & cache)
+# Saropa Capture (index & cache)
 .saropa/
 .dev/articles/3 x ARTICLE PLAN.md
 
-# Saropa Log Capture
+# Saropa Capture
 reports/
 docs/handover/

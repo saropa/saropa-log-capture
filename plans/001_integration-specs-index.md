@@ -1,6 +1,6 @@
 # Integration adapter specs index
 
-Implementation specs for log-capture integration adapters. Each adapter is opt-in via `saropaLogCapture.integrations.adapters`.
+Implementation specs for log-capture integration adapters. Each adapter is opt-in via `saropaCapture.integrations.adapters`.
 
 Folder navigation:
 

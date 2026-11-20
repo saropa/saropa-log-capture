@@ -144,11 +144,11 @@
     "git add": true,
     "git commit": true
   },
-  "saropaLogCapture.captureAll": false,
-  "saropaLogCapture.exclusions": [
+  "saropaCapture.captureAll": false,
+  "saropaCapture.exclusions": [
     "  [PASS] Dependencies                  1.9s"
   ],
-  "saropaLogCapture.watchPatterns": [
+  "saropaCapture.watchPatterns": [
     {
       "keyword": "error",
       "alert": "flash"
@@ -162,14 +162,14 @@
       "alert": "badge"
     }
   ],
-  "saropaLogCapture.integrations.adapters": [
+  "saropaCapture.integrations.adapters": [
     "browser",
     "environment",
     "git",
     "packages"
   ],
-  "saropaLogCapture.ai.enabled": true,
-  "saropaLogCapture.enabled": false,
-  "saropaLogCapture.integrations.screenshots.onWarning": true,
-  "saropaLogCapture.integrations.screenshots.onNavigation": true
+  "saropaCapture.ai.enabled": true,
+  "saropaCapture.enabled": false,
+  "saropaCapture.integrations.screenshots.onWarning": true,
+  "saropaCapture.integrations.screenshots.onNavigation": true
 }

@@ -94,7 +94,7 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
 
 function wireExclusionHandlers(target: HandlerTarget, broadcaster: ViewerBroadcaster): void {
   target.setExclusionAddedHandler(async (pattern) => {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const cur = cfg.get<string[]>('exclusions', []);
     if (!cur.includes(pattern)) {
       await cfg.update('exclusions', [...cur, pattern], vscode.ConfigurationTarget.Workspace);
@@ -103,7 +103,7 @@ function wireExclusionHandlers(target: HandlerTarget, broadcaster: ViewerBroadca
     }
   });
   target.setExclusionRemovedHandler(async (pattern) => {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const cur = cfg.get<string[]>('exclusions', []);
     const updated = cur.filter(p => p !== pattern);
     if (updated.length !== cur.length) {
@@ -148,7 +148,7 @@ function wireContentHandlers(
   });
   target.setAnalyzeLineHandler(async (text, idx, uri) => { await showAnalysis(text, idx, uri); });
   target.setAddToWatchHandler(async (text) => {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const cur = cfg.get<{ pattern: string; alertType?: string }[]>('watchPatterns', []);
     if (cur.some(p => p.pattern === text)) {
       vscode.window.showInformationMessage(t('msg.alreadyInWatchList', text));

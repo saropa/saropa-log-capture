@@ -3,7 +3,7 @@
 ## Still empty or "1 line"? Do this first
 
 - **Switch between logs** in the viewer (use the log selector in the toolbar). The extension often creates two log files (e.g. Dart/Flutter parent and child); output is routed to the **most recent** one. The file you have open may be the older, empty one — switch to the other log.
-- **Turn on diagnostics:** Settings → `saropaLogCapture.diagnosticCapture` = `true`, run again, then **Output → Saropa Log Capture**. If you see "routing output to most recent session" or "new log session created" twice, use Prev/Next to open the log that received the output.
+- **Turn on diagnostics:** Settings → `saropaCapture.diagnosticCapture` = `true`, run again, then **Output → Saropa Capture**. If you see "routing output to most recent session" or "new log session created" twice, use Prev/Next to open the log that received the output.
 
 ---
 
@@ -41,7 +41,7 @@ So the regression is probably **timing + session id mismatch**: the 3.1.3 refact
 
 4. **Multi-session fallback:** When output arrives for an unknown session id and we have 2+ log sessions (e.g. two files were created), we route that output to the **most recently created** session so it isn't dropped. At least one file gets the output.
 
-5. **Buffer timeout warning:** If output is buffered for a session id for over 30s with no log session ever created, we log a one-time warning to the Saropa Log Capture output channel so you know capture may be misconfigured or the session never started.
+5. **Buffer timeout warning:** If output is buffered for a session id for over 30s with no log session ever created, we log a one-time warning to the Saropa Capture output channel so you know capture may be misconfigured or the session never started.
 
 So: one log file should get all output even when the adapter or host uses different session ids, ordering, or a parent/child race; and you get a warning if output is stuck buffered.
 
@@ -50,7 +50,7 @@ So: one log file should get all output even when the adapter or host uses differ
 Debug Console has output but the open log shows only a header or one line: often a **second log file** was created and output was routed to the other one. Do this first:
 
 1. **Use Prev/Next in the viewer** — Click **Next** (or **Prev**) in the log viewer bar. The extension routes unknown session-id output to the **most recently created** log, so the other file often has the content. Try both if you have several logs from the same run.
-2. **Enable capture diagnostics** — In Settings set `saropaLogCapture.diagnosticCapture` to `true`, run the same debug scenario again, then open **Output → Saropa Log Capture**. Look for:
+2. **Enable capture diagnostics** — In Settings set `saropaCapture.diagnosticCapture` to `true`, run the same debug scenario again, then open **Output → Saropa Capture**. Look for:
    - **"new log session created"** twice → two files were created (e.g. parent/child race); the second one gets routed output.
    - **"routing output to most recent session"** → output was sent to the newest log; use Prev/Next to open that file.
 
@@ -59,10 +59,10 @@ The race guard (5s) and multi-session fallback reduce duplicate files and route 
 ## If you still get missing or empty logs
 
 1. **Confirm capture is on**  
-   Settings: `saropaLogCapture.enabled` is `true`. No point debugging if it’s off.
+   Settings: `saropaCapture.enabled` is `true`. No point debugging if it’s off.
 
 2. **See what the pipeline is doing**  
-   Set `saropaLogCapture.diagnosticCapture` to `true`, run a debug session, then open **Output → Saropa Log Capture**:
+   Set `saropaCapture.diagnosticCapture` to `true`, run a debug session, then open **Output → Saropa Capture**:
    - **"replaying N early event(s) from sessionId=X into log"** — early output was buffered under another id and is now being replayed into the log.
    - **"routing output to single active session"** — output was for an unknown id and was routed to the single open session.
    - **"routing output to most recent session"** — output was for an unknown id and was routed to the newest of two or more log sessions (multi-session fallback).

@@ -14,12 +14,12 @@ export class StatusBar implements vscode.Disposable {
 
     constructor() {
         this.item = vscode.window.createStatusBarItem(
-            'saropaLogCapture.status',
+            'saropaCapture.status',
             vscode.StatusBarAlignment.Right,
             50,
         );
-        this.item.name = 'Saropa Log Capture';
-        this.item.command = 'saropaLogCapture.open';
+        this.item.name = 'Saropa Capture';
+        this.item.command = 'saropaCapture.open';
         this.hide();
     }
 

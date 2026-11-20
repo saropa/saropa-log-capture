@@ -1,5 +1,5 @@
 
-![Saropa Log Capture banner](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/banner.png)
+![Saropa Capture banner](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/banner.png)
 
 ```text
       F5 debug  ──►  output  ──►  saved to  reports/*.log
@@ -15,7 +15,7 @@
                     └─────────────────────────────────────────┘
 ```
 
-VS Code deletes your Debug Console the moment you stop debugging — every `print`, stack trace, and clue gone. Saropa Log Capture fixes that: install it, hit F5, and every debug session is saved, searchable, and browsable with no configuration. Works with any debug adapter — Dart, Flutter, Node, Python, C++, Go, Java, and more.
+VS Code deletes your Debug Console the moment you stop debugging — every `print`, stack trace, and clue gone. Saropa Capture fixes that: install it, hit F5, and every debug session is saved, searchable, and browsable with no configuration. Works with any debug adapter — Dart, Flutter, Node, Python, C++, Go, Java, and more.
 
 <!-- GitHub Activity -->
 [![GitHub stars](https://img.shields.io/github/stars/saropa/saropa-log-capture?style=social)](https://github.com/saropa/saropa-log-capture)
@@ -35,7 +35,7 @@ VS Code deletes your Debug Console the moment you stop debugging — every `prin
 1. Install from the VS Code Marketplace
 2. Start a debug session (F5)
 3. Output is automatically captured to `reports/`
-4. Click the **Saropa Log Capture** icon in the bottom panel to view output in real time
+4. Click the **Saropa Capture** icon in the bottom panel to view output in real time
 
 > **Testing the extension (F5):** Use **VS Code** (not a downstream fork) for the Extension Development Host — **File → Open Folder** → this repo → **F5**. Some forks won't load the extension as the F5 host.
 
@@ -78,7 +78,7 @@ VS Code deletes your Debug Console the moment you stop debugging — every `prin
 
 ## Flow Map — turn a log into a screen-journey report
 
-**New in v8.** Run **Export Session Flow Map** on any log and Saropa Log Capture reconstructs the user's path through your app as a readable report — a diagram on the left, detail columns on the right, divider draggable to trade width between them.
+**New in v8.** Run **Export Session Flow Map** on any log and Saropa Capture reconstructs the user's path through your app as a readable report — a diagram on the left, detail columns on the right, divider draggable to trade width between them.
 
 ```text
    Export Session Flow Map
@@ -114,9 +114,9 @@ Collapse any column's sections to shrink that column aside and give the open sid
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log starts with session metadata.
-- **Integration adapters:** Opt-in adapters add header lines per session (packages, build/CI, Git, env, test results, coverage, crash dumps, Docker, performance, terminal output, Drift Advisor, and more). Configure via `saropaLogCapture.integrations.adapters`. When your `pubspec.yaml` or `package.json` declares a package an adapter can enrich, Saropa Log Capture offers once to turn the matching adapter on — never enabling anything without your tap.
+- **Integration adapters:** Opt-in adapters add header lines per session (packages, build/CI, Git, env, test results, coverage, crash dumps, Docker, performance, terminal output, Drift Advisor, and more). Configure via `saropaCapture.integrations.adapters`. When your `pubspec.yaml` or `package.json` declares a package an adapter can enrich, Saropa Capture offers once to turn the matching adapter on — never enabling anything without your tap.
 - **Full Debug Console capture:** Toggle "App Only" or set `captureAll` to include system/framework logs.
-- **AI Activity (opt-in):** Stream AI coding-assistant activity into the log viewer, with colored borders and category filters. Settings under `saropaLogCapture.aiActivity.*`.
+- **AI Activity (opt-in):** Stream AI coding-assistant activity into the log viewer, with colored borders and category filters. Settings under `saropaCapture.aiActivity.*`.
 
 ### Viewer
 - **Live sidebar viewer:** Real-time output with virtual scrolling, auto-scroll, and theme support.
@@ -146,7 +146,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
    └─ saropa.com   ⊕ 2 older    ◄ "Latest only": expand folded runs
 ```
 
-- **Controller-rooted tree:** Each project's runs nest under its own session (the Controller); peripheral logs (Lint Report, Arb Translate, L10n Failures, Drift Advisor) group beneath the nearest earlier Controller of that day. Right-click **Set as Controller** / **Mark as Peripheral**, or set `saropaLogCapture.controllerNames`.
+- **Controller-rooted tree:** Each project's runs nest under its own session (the Controller); peripheral logs (Lint Report, Arb Translate, L10n Failures, Drift Advisor) group beneath the nearest earlier Controller of that day. Right-click **Set as Controller** / **Mark as Peripheral**, or set `saropaCapture.controllerNames`.
 - **Latest only (opt-in):** Off by default — every run shows. When on, the newest log of each name carries a clickable **+N older** badge that expands the rest in place; Controllers are never folded.
 - **Active-filter chips:** Date, size, and name filters appear as removable chips under the header, with a dot on the options (⋮) button while any filter is active.
 - **Size filter:** Filter the list by file size ("Filter by size"), alongside date and name filters.
@@ -171,7 +171,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 ### Error Intelligence
 - **Smart classification:** Errors auto-classified as CRITICAL, TRANSIENT, or BUG with inline badges. Configurable detection mode (strict/loose). User-editable severity keywords.
 - **Alerts:** Flash border, sound, counter badge, optional modal popup on errors.
-- **Error notifications (opt-in):** Turn on `saropaLogCapture.showErrorSnackbars` and each newly detected error during capture pops a notification with **Open Log** (jump to the error line) and **Error Report** (open the bug-report webview) buttons. Coalesced by error signature with a cooldown so bursts don't flood the corner. Off by default.
+- **Error notifications (opt-in):** Turn on `saropaCapture.showErrorSnackbars` and each newly detected error during capture pops a notification with **Open Log** (jump to the error line) and **Error Report** (open the bug-report webview) buttons. Coalesced by error signature with a cooldown so bursts don't flood the corner. Off by default.
 - **Multi-level classification:** Eight severity levels (Error, Warning, Info, Performance, TODO, Debug/Trace, Notice, Database) with dedicated colors and filters.
 
 ### Signals
@@ -241,7 +241,7 @@ Fully supports Remote SSH, WSL, and Dev Containers. Use a relative `logDirectory
 
 ## Configuration
 
-All settings are prefixed with `saropaLogCapture.` — see [plans/guides/configuration.md](plans/guides/configuration.md) for the full settings reference.
+All settings are prefixed with `saropaCapture.` — see [plans/guides/configuration.md](plans/guides/configuration.md) for the full settings reference.
 
 **Key settings:**
 
@@ -307,13 +307,13 @@ See [plans/guides/source-logger-best-practices.md](plans/guides/source-logger-be
 
 ## Extension API
 
-Other VS Code extensions can consume a typed API from Saropa Log Capture:
+Other VS Code extensions can consume a typed API from Saropa Capture:
 
 ```typescript
 import * as vscode from 'vscode';
 
 // In your extension's activate():
-const ext = vscode.extensions.getExtension('saropa.saropa-log-capture');
+const ext = vscode.extensions.getExtension('saropa.saropa-capture');
 if (!ext) { return; }
 const api = ext.isActive ? ext.exports : await ext.activate();
 
@@ -379,15 +379,15 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 
 | Command | Description |
 | --- | --- |
-| `Saropa Log Capture: Start Capture` | Start capturing to a new log file |
-| `Saropa Log Capture: Stop Capture` | Stop capturing and finalize the file |
-| `Saropa Log Capture: Pause/Resume Capture` | Toggle capture on/off |
-| `Saropa Log Capture: Insert Marker` | Insert a visual separator into the log |
-| `Saropa Log Capture: Search Log Files` | Search across all log files |
-| `Saropa Log Capture: Compare Logs` | Side-by-side diff of two log sessions |
-| `Saropa Log Capture: Export Session Flow Map` | Build a screen-journey Flow Map report from a log |
-| `Saropa Log Capture: Import .slc Bundle` | Import a shared `.slc` session bundle |
-| `Saropa Log Capture: Getting Started` | Open the Getting Started walkthrough |
+| `Saropa Capture: Start Capture` | Start capturing to a new log file |
+| `Saropa Capture: Stop Capture` | Stop capturing and finalize the file |
+| `Saropa Capture: Pause/Resume Capture` | Toggle capture on/off |
+| `Saropa Capture: Insert Marker` | Insert a visual separator into the log |
+| `Saropa Capture: Search Log Files` | Search across all log files |
+| `Saropa Capture: Compare Logs` | Side-by-side diff of two log sessions |
+| `Saropa Capture: Export Session Flow Map` | Build a screen-journey Flow Map report from a log |
+| `Saropa Capture: Import .slc Bundle` | Import a shared `.slc` session bundle |
+| `Saropa Capture: Getting Started` | Open the Getting Started walkthrough |
 
 Full command list available via Command Palette (Ctrl+Shift+P → "Saropa").
 
@@ -403,7 +403,7 @@ Press **F1** inside the viewer for the full interactive reference with descripti
 | **Ctrl+F** | Open search overlay |
 | **F5** | Start debugging (VS Code built-in) |
 
-See [media/walkthrough/keyboard-shortcuts.md](media/walkthrough/keyboard-shortcuts.md) for the complete list, or open **Options → Keyboard shortcuts...** in the viewer. All 51 power shortcuts are rebindable via `saropaLogCapture.viewerKeybindings`.
+See [media/walkthrough/keyboard-shortcuts.md](media/walkthrough/keyboard-shortcuts.md) for the complete list, or open **Options → Keyboard shortcuts...** in the viewer. All 51 power shortcuts are rebindable via `saropaCapture.viewerKeybindings`.
 
 ---
 
@@ -412,7 +412,7 @@ See [media/walkthrough/keyboard-shortcuts.md](media/walkthrough/keyboard-shortcu
 - **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header, use **Prev/Next** in the viewer and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](plans/010_runbook-missing-or-empty-logs.md).
 - **Viewer line cap:** The viewer shows the first N lines (`viewerMaxLines`, default 50,000). The full file is kept on disk up to `maxLines` (default 100,000). Toolbar shows "Showing first X of Y lines" when truncated.
 - **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). Enable the `terminal` integration adapter to also capture Integrated Terminal output.
-- **Some Debug Console lines are not capturable:** A few lines are rendered into the Debug Console by VS Code itself (e.g. adapter-internal logging or process stdout shown directly), not delivered to extensions as DAP `output` events. The Debug Adapter Protocol is the only channel this extension receives, so those lines cannot be captured. Separately, when `captureAll` is off, lines whose DAP category is not in `saropaLogCapture.categories` are filtered out — the first time each such category is dropped, the **Saropa Log Capture** output channel logs the category name and how to capture it. Enable `captureAll` (the default) to capture every category. With `captureAll` on, the only in-extension reason a line is hidden is a matching `saropaLogCapture.exclusions` pattern; the first time each pattern hides a line, the output channel names that pattern too.
+- **Some Debug Console lines are not capturable:** A few lines are rendered into the Debug Console by VS Code itself (e.g. adapter-internal logging or process stdout shown directly), not delivered to extensions as DAP `output` events. The Debug Adapter Protocol is the only channel this extension receives, so those lines cannot be captured. Separately, when `captureAll` is off, lines whose DAP category is not in `saropaCapture.categories` are filtered out — the first time each such category is dropped, the **Saropa Capture** output channel logs the category name and how to capture it. Enable `captureAll` (the default) to capture every category. With `captureAll` on, the only in-extension reason a line is hidden is a matching `saropaCapture.exclusions` pattern; the first time each pattern hides a line, the output channel names that pattern too.
 
 ### Accessibility
 

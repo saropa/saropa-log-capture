@@ -10,7 +10,7 @@ import { flushLearningBuffer, getGlobalAggregateStore, getLearningStore } from "
 import { SuggestionEngine } from "./suggestion-engine";
 
 export async function maybeShowLearningSuggestionPrompt(broadcaster: ViewerBroadcaster): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+    const cfg = vscode.workspace.getConfiguration("saropaCapture");
     if (cfg.get<boolean>("learning.enabled", true) === false) {
         return;
     }

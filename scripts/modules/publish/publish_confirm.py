@@ -20,7 +20,7 @@ def confirm_publish(version: str) -> bool:
     print(f"\n  {C.BOLD}{C.YELLOW}Publish Summary{C.RESET}")
     print(f"  {'-' * 40}")
     print(f"  Version:     {C.WHITE}v{version}{C.RESET}")
-    print(f"  Marketplace: {C.WHITE}saropa.saropa-log-capture{C.RESET}")
+    print(f"  Marketplace: {C.WHITE}saropa.saropa-capture{C.RESET}")
     print(f"  Repository:  {C.WHITE}{REPO_URL}{C.RESET}")
     print(f"\n  {C.YELLOW}This will:{C.RESET}")
     print(f"    1. Commit and push to origin")

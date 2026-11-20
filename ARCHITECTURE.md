@@ -1,4 +1,4 @@
-# Saropa Log Capture — System Overview
+# Saropa Capture — System Overview
 
 This document describes how the extension is wired: entry point, activation, capture pipeline, and where config, integrations, and the UI fit in.
 

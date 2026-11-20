@@ -7,7 +7,7 @@ import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "../../ui/provider/viewer-worksp
  * boolean settings do not duplicate `getConfiguration().update` blocks.
  */
 suite("viewer-message-handler workspace bool messages", () => {
-    test("maps each webview message type to the saropaLogCapture config key", () => {
+    test("maps each webview message type to the saropaCapture config key", () => {
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setLogViewerVisualSpacing, "logViewerVisualSpacing");
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapSqlDensity, "minimapShowSqlDensity");
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapProportionalLines, "minimapProportionalLines");

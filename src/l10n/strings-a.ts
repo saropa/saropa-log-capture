@@ -3,15 +3,15 @@
  * Merged in ../l10n.ts.
  */
 export const stringsA: Record<string, string> = {
-    'statusBar.recordingTooltip': 'Saropa Log Capture: Recording. Click to open log file.',
-    'statusBar.pausedTooltip': 'Saropa Log Capture: Paused. Click to open log file.',
+    'statusBar.recordingTooltip': 'Saropa Capture: Recording. Click to open log file.',
+    'statusBar.pausedTooltip': 'Saropa Capture: Paused. Click to open log file.',
     'statusBar.lines': '{0} lines',
     'statusBar.pausedLines': 'Paused ({0} lines)',
     'statusBar.tailingLogs': 'Tailing {0} logs',
-    'statusBar.tailingLogsTooltip': 'Saropa Log Capture is tailing external log files for this session.',
+    'statusBar.tailingLogsTooltip': 'Saropa Capture is tailing external log files for this session.',
 
-    'captureToggle.enabledTooltip': 'Saropa Log Capture: Capture is on. Click to disable.',
-    'captureToggle.disabledTooltip': 'Saropa Log Capture: Capture is off. Click to enable.',
+    'captureToggle.enabledTooltip': 'Saropa Capture: Capture is on. Click to disable.',
+    'captureToggle.disabledTooltip': 'Saropa Capture: Capture is off. Click to enable.',
     'captureToggle.enabled': 'Log capture enabled.',
     'captureToggle.disabled': 'Log capture disabled.',
     // Shown when disabling capture also stopped live sessions. {0} is the count that was stopped
@@ -58,7 +58,7 @@ export const stringsA: Record<string, string> = {
     'msg.foundCorrelationTags.one': 'Found {0} correlation tag.',
     'msg.foundCorrelationTags.many': 'Found {0} correlation tags.',
     'msg.suiteDeepLinkFailed': 'Could not open {0}. The Saropa sibling extension may be out of date or disabled.',
-    'msg.adapterRecommend.prompt': '{0} detected in your project. Saropa Log Capture can capture {1}. Turn on?',
+    'msg.adapterRecommend.prompt': '{0} detected in your project. Saropa Capture can capture {1}. Turn on?',
     'msg.adapterRecommend.enable': 'Turn On',
     'msg.adapterRecommend.choose': 'Choose…',
     'msg.adapterRecommend.enabled': 'Enabled {0}.',
@@ -76,11 +76,11 @@ export const stringsA: Record<string, string> = {
     'msg.inlineDecorationsEnabled': 'Inline log decorations enabled',
     'msg.inlineDecorationsDisabled': 'Inline log decorations disabled',
     'msg.templateApplied': 'Template "{0}" applied.',
-    'msg.resetSettingsConfirm': 'Reset all Saropa Log Capture settings to defaults?',
+    'msg.resetSettingsConfirm': 'Reset all Saropa Capture settings to defaults?',
     'msg.settingsReset': 'Reset {0} settings to defaults.',
     // bug_017: shown instead of msg.settingsReset when one or more of the individual
     // configuration updates rejected, so the user knows the reset was only partial.
-    'msg.settingsResetPartial': '{0} of {1} settings reset to defaults; {2} failed. See the Saropa Log Capture output channel for details.',
+    'msg.settingsResetPartial': '{0} of {1} settings reset to defaults; {2} failed. See the Saropa Capture output channel for details.',
     'msg.markerPrompt': 'Marker text (leave empty for timestamp only)',
     'msg.markerPlaceholder': 'e.g. before refactor, test attempt 2',
 
@@ -116,11 +116,13 @@ export const stringsA: Record<string, string> = {
     'msg.logChangedOnDisk': 'Log "{0}" was changed on disk. Reload to see the current content?',
     'msg.logDeletedOnDisk': 'Log "{0}" was deleted on disk. Showing the last loaded snapshot.',
 
-    'msg.gitignoreLogPrompt': "Saropa Log Capture saves logs to '{0}/'. Add it to .gitignore to prevent accidental commits?",
-    'msg.gitignoreSaropaPrompt': "Saropa Log Capture stores indexes and caches in '.saropa/'. Add it to .gitignore?",
+    'msg.gitignoreLogPrompt': "Saropa Capture saves logs to '{0}/'. Add it to .gitignore to prevent accidental commits?",
+    'msg.gitignoreSaropaPrompt': "Saropa Capture stores indexes and caches in '.saropa/'. Add it to .gitignore?",
     'msg.failedUpdateGitignore': 'Failed to update .gitignore: {0}',
 
     'msg.invalidDeepLink': 'Invalid deep link format',
+    'msg.legacyExtensionInstalled': 'The previous "Saropa Log Capture" extension is still installed. Uninstall it: Saropa Capture replaces it and running both causes conflicts.',
+    'msg.legacySettingsMigrated': 'Saropa Capture copied {0} setting(s) from the old saropaLogCapture.* prefix to saropaCapture.*. Old entries were left in place.',
     'msg.noWorkspaceOpen': 'No workspace open. Please open a workspace first.',
     'msg.logFileNotFound': 'Log file not found: {0}',
     'msg.deepLinkCopied': 'Deep link copied{0}',
@@ -147,7 +149,7 @@ export const stringsA: Record<string, string> = {
     'msg.deepLinksCopied': '{0} deep links copied to clipboard',
     'msg.filePathsCopied': '{0} file paths copied to clipboard',
 
-    'msg.aiExplainDisabled': 'Turn on Explain with AI: Options → Integrations in the log viewer, or enable "Saropa Log Capture › AI: Enabled" in Settings.',
+    'msg.aiExplainDisabled': 'Turn on Explain with AI: Options → Integrations in the log viewer, or enable "Saropa Capture › AI: Enabled" in Settings.',
     // bug_003 consent gate: shown once per "Explain with AI" invocation, before any log/stack
     // content is sent to a language model — the redaction pass runs first, but the user must
     // still confirm data leaves the machine at all.
@@ -203,7 +205,7 @@ export const stringsA: Record<string, string> = {
     // Shown once per display language when the editor runs in a locale whose manifest
     // (command titles, settings, menus) is largely untranslated. {0} = language name,
     // {1} = coverage percent. The log viewer itself is fully localized; only the chrome lags.
-    'msg.nlsPartialCoverage': "Saropa Log Capture's menus are about {1}% translated into {0}; some commands and settings appear in English. The log viewer itself is fully localized.",
+    'msg.nlsPartialCoverage': "Saropa Capture's menus are about {1}% translated into {0}; some commands and settings appear in English. The log viewer itself is fully localized.",
     'action.enable': 'Enable',
     'action.copyAiPrompt': 'Copy prompt for external chat',
     'action.openAiSettings': 'Open AI settings',
@@ -225,7 +227,7 @@ export const stringsA: Record<string, string> = {
 
     'msg.cannotRenameExists': 'Cannot rename: "{0}" already exists.',
     'msg.failedRenameLogFile': 'Failed to rename log file: {0}',
-    'msg.fileRetentionMoved': 'Saropa Log Capture: Moved {0} old file(s) to trash (maxLogFiles: {1}).',
+    'msg.fileRetentionMoved': 'Saropa Capture: Moved {0} old file(s) to trash (maxLogFiles: {1}).',
     'msg.sourceFileNotFound': 'Source file "{0}" not found in workspace.',
 
     'msg.noFilterPresets': 'No Quick Filters configured.',
@@ -251,22 +253,22 @@ export const stringsA: Record<string, string> = {
     'msg.screenshotNoVmService': 'No Flutter debug session with a VM Service is running.',
     'msg.screenshotCapFull': 'Screenshot limit for this log reached — older captures are kept.',
     'msg.screenshotBusy': 'A screenshot capture is already in progress.',
-    'msg.screenshotFailed': 'Screenshot capture failed — see the Saropa Log Capture output channel.',
-    'screenshot.diagnosed': 'Screenshot diagnosis written to the Saropa Log Capture output channel.',
+    'msg.screenshotFailed': 'Screenshot capture failed — see the Saropa Capture output channel.',
+    'screenshot.diagnosed': 'Screenshot diagnosis written to the Saropa Capture output channel.',
     // Shown once, ever, and only to someone who never set this setting explicitly (see
     // screenshot-dedup-default-notice.ts). Skipping a picture the user would otherwise have kept is
     // exactly the kind of silent default change a bare CHANGELOG line does not reach.
-    'screenshot.dedupDefaultNotice': 'Saropa Log Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.',
+    'screenshot.dedupDefaultNotice': 'Saropa Capture now skips near-duplicate screenshots by default. Error, warning and manually-requested captures are never skipped.',
     // Shown once, ever, and only when a chat-capable language model is detected and the user has
     // never explicitly set ai.enabled (see ai-auto-enable.ts). Bug 019: this used to be a silent
     // settings write with no opt-in — the notice replaces that with an explicit choice.
-    'ai.autoEnableNotice': 'AI features are available in Saropa Log Capture. Enable them?',
+    'ai.autoEnableNotice': 'AI features are available in Saropa Capture. Enable them?',
     'msg.screenshotNoLog': 'No active capture log to attach the screenshot to.',
 
     'msg.noSessionFiles': 'No log files found.',
     'msg.deletedSessionFiles': 'Deleted {0} log file(s).',
     'prompt.selectSessionsToDelete': 'Select log file(s) to delete',
-    'msg.noTailedFiles': 'No files match tail patterns. Check saropaLogCapture.tailPatterns.',
+    'msg.noTailedFiles': 'No files match tail patterns. Check saropaCapture.tailPatterns.',
     'msg.openWorkspaceFirst': 'Open a workspace folder first.',
     'msg.selectTailedFile': 'Select a file to open and tail',
 

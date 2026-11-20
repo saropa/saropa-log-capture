@@ -1,5 +1,5 @@
 /**
- * Where to persist saropaLogCapture.ai.enabled for one-click enablement from the UI.
+ * Where to persist saropaCapture.ai.enabled for one-click enablement from the UI.
  * Prefer workspace when a folder is open so Integrations and Settings stay aligned per project.
  */
 

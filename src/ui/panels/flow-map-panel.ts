@@ -282,12 +282,12 @@ function ruleTarget(): vscode.ConfigurationTarget {
 }
 
 /**
- * Append one `{ pattern, kind: 'nav', label }` rule to `saropaLogCapture.flowMap.customBreadcrumbs`
+ * Append one `{ pattern, kind: 'nav', label }` rule to `saropaCapture.flowMap.customBreadcrumbs`
  * (the empty-state suggestion button's target) and refresh the report so it applies immediately.
  * Non-fatal on a config-write failure — the report itself is not at stake, just the shortcut.
  */
 async function addCustomBreadcrumbRule(p: FlowMapPanelParams, pattern: string, label: string): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture');
     const existing = cfg.get('flowMap.customBreadcrumbs');
     const entries = Array.isArray(existing) ? existing : [];
     if (hasPattern(entries, pattern)) {

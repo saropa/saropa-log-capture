@@ -1,6 +1,6 @@
 /**
  * Durable history of files opened via the "Open Log File" picker
- * (`saropaLogCapture.openLogFile`).
+ * (`saropaCapture.openLogFile`).
  *
  * Those loads reach files OUTSIDE the configured reports directory, which the
  * directory-scan session list (`fetchItemsCore`) never sees — so without this

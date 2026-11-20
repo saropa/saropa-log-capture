@@ -1,7 +1,7 @@
 /**
- * Saropa Log Capture configuration — single source of truth for all extension settings.
+ * Saropa Capture configuration — single source of truth for all extension settings.
  *
- * Reads from VS Code workspace/global config (section "saropaLogCapture"), applies
+ * Reads from VS Code workspace/global config (section "saropaCapture"), applies
  * defaults, and exposes a typed SaropaLogCaptureConfig. Call getConfig() when you need
  * current values; config is not cached across settings changes.
  */
@@ -70,7 +70,7 @@ export type {
   ProjectIndexConfig,
 } from "./config-types";
 
-const SECTION = "saropaLogCapture";
+const SECTION = "saropaCapture";
 
 export function getConfig(): SaropaLogCaptureConfig {
   const cfg = vscode.workspace.getConfiguration(SECTION);

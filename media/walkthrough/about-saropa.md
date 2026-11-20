@@ -14,7 +14,7 @@ Established in 2010, **Saropa Pty Limited** is a technology firm rooted in finan
 
 ### VS Code Extensions
 
-- **[Saropa Log Capture](https://marketplace.visualstudio.com/items?itemName=Saropa.saropa-log-capture)** — Auto-saves Debug Console output to persistent log files.
+- **[Saropa Capture](https://marketplace.visualstudio.com/items?itemName=Saropa.saropa-capture)** — Auto-saves Debug Console output to persistent log files.
 - **[Saropa Drift Viewer](https://marketplace.visualstudio.com/items?itemName=Saropa.drift-viewer)** — Inspect Drift/SQLite tables, run SQL, export data.
 
 ### Consumer Apps

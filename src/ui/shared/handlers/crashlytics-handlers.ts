@@ -180,7 +180,7 @@ export function handleOpenGcloudInstall(): void {
     vscode.env.openExternal(vscode.Uri.parse(gcloudInstallUrl)).then(undefined, () => {});
 }
 
-/** Show the Saropa Log Capture output channel (where Crashlytics logs and errors are written). */
+/** Show the Saropa Capture output channel (where Crashlytics logs and errors are written). */
 export function handleCrashlyticsShowOutput(): void {
     getOutputChannel().show();
 }
@@ -189,7 +189,7 @@ export function handleCrashlyticsShowOutput(): void {
 export function startCrashlyticsAutoRefresh(post: PostFn): void {
     stopCrashlyticsAutoRefresh();
     const interval = vscode.workspace
-        .getConfiguration('saropaLogCapture.firebase')
+        .getConfiguration('saropaCapture.firebase')
         .get<number>('refreshInterval', 300);
     if (interval > 0) {
         refreshTimer = setInterval(() => { handleCrashlyticsRequest(post); }, interval * 1000);

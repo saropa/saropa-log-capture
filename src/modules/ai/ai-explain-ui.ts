@@ -52,7 +52,7 @@ export async function showAiExplainRunFailure(context: AIContext, err: unknown):
             await vscode.env.clipboard.writeText(buildExplainErrorPrompt(context));
             void vscode.window.showInformationMessage(t('msg.aiExplainPromptCopied'));
         } else if (choice === open) {
-            void vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.ai');
+            void vscode.commands.executeCommand('workbench.action.openSettings', 'saropaCapture.ai');
         }
         return;
     }

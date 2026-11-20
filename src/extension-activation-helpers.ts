@@ -106,7 +106,7 @@ function runSmartBookmarkAction(
 function openWalkthrough(): void {
     void vscode.commands.executeCommand(
         'workbench.action.openWalkthrough',
-        'saropa.saropa-log-capture#saropaLogCapture.getStarted',
+        'saropa.saropa-capture#saropaCapture.getStarted',
         false,
     );
 }

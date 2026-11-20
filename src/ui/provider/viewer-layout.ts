@@ -32,7 +32,7 @@ var logFontSize = 13;
 /**
  * Reset target for the font size — what Ctrl+0 / fontSizeReset returns to.
  * Updated by the setLogFontSize host message so reset follows the user's configured setting,
- * not the hard-coded fallback. Keep in sync with package.json "saropaLogCapture.logFontSize" default.
+ * not the hard-coded fallback. Keep in sync with package.json "saropaCapture.logFontSize" default.
  */
 var logFontSizeDefault = 13;
 

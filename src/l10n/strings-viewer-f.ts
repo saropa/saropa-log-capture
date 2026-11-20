@@ -13,7 +13,7 @@ export const stringsViewerF: Record<string, string> = {
     'viewer.shortcuts.region': 'Keyboard shortcuts',
     'viewer.shortcuts.back': 'Back to Options',
     'viewer.shortcuts.intro': 'Quick reference for the log viewer panel. Double-click a power shortcut row to rebind it.',
-    'viewer.shortcuts.commandNote': 'All commands are under <strong>Saropa Log Capture:</strong> in the Command Palette (Ctrl+Shift+P). See README for the full list.',
+    'viewer.shortcuts.commandNote': 'All commands are under <strong>Saropa Capture:</strong> in the Command Palette (Ctrl+Shift+P). See README for the full list.',
     'viewer.shortcuts.col.key': 'Key',
     'viewer.shortcuts.col.action': 'Action',
     'viewer.shortcuts.col.description': 'Description',

@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 import type { InteractionBatch } from "./interaction-types";
 import type { ExtractedPattern } from "./pattern-extractor";
 
-const STORAGE_KEY = "saropaLogCapture.learning.v1";
+const STORAGE_KEY = "saropaCapture.learning.v1";
 
 export type SuggestionStatus = "pending" | "accepted" | "rejected";
 

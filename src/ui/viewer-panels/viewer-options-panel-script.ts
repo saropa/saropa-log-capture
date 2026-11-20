@@ -7,7 +7,7 @@ export function getOptionsPanelScript(): string {
     return /* javascript */ `
 var optionsPanelOpen = false;
 var minimapShowSqlDensity = true;
-// Keeps Options › Layout scroll map width in sync with workspace saropaLogCapture.minimapWidth.
+// Keeps Options › Layout scroll map width in sync with workspace saropaCapture.minimapWidth.
 var minimapWidthSetting = 'medium';
 
 /** Test if a row (and its indent sibling) matches the filter; toggle visibility. */

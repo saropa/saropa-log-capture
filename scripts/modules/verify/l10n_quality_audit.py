@@ -32,7 +32,7 @@ def _reverse_prompt(translated: str, locale: str) -> str:
     info = _LOCALE_INFO.get(locale)
     lang_label = info[0] if info else locale
     return (
-        "Context: A VS Code extension called Saropa Log Capture for viewing "
+        "Context: A VS Code extension called Saropa Capture for viewing "
         "debug console logs from Flutter and mobile app development.\n\n"
         f"Task: Translate the following {lang_label} text back into English. "
         "Return ONLY the translated string — no explanations, no quotes.\n\n"

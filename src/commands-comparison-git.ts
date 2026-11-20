@@ -56,11 +56,11 @@ async function compareToRef(ref: string, deps: ComparisonGitDeps): Promise<void>
 export function comparisonGitCommands(deps: ComparisonGitDeps): vscode.Disposable[] {
   return [
     vscode.commands.registerCommand(
-      'saropaLogCapture.compareLogToPreviousCommit',
+      'saropaCapture.compareLogToPreviousCommit',
       () => compareToRef('HEAD~1', deps),
     ),
     vscode.commands.registerCommand(
-      'saropaLogCapture.compareLogToCommit',
+      'saropaCapture.compareLogToCommit',
       async () => {
         const ref = await vscode.window.showInputBox({
           title: t('title.compareToCommit'),

@@ -65,7 +65,7 @@ export async function exportSessionListToJson(deps: ExportSessionListDeps): Prom
        dashboards) without a translation step. Schema is versioned so future
        additions don't silently break consumers. */
     const payload = {
-        schema: "saropa-log-capture.session-list/1",
+        schema: "saropa-capture.session-list/1",
         generatedAt: now.toISOString(),
         project: projectName,
         totalSessions: records.length,

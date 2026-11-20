@@ -7,7 +7,7 @@ const cacheTtl = 5 * 60_000;
 
 /** Auto-detect app version from pubspec.yaml, build.gradle, or package.json. Cached for 5 min. */
 export async function detectAppVersion(): Promise<string | undefined> {
-    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    const cfg = vscode.workspace.getConfiguration('saropaCapture.firebase');
     const manual = cfg.get<string>('versionFilter', '');
     if (manual) { return manual; }
     if (cachedVersion && Date.now() < cachedVersion.expires) { return cachedVersion.value; }

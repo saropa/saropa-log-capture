@@ -61,7 +61,7 @@ export async function runOpenInvestigation(
     });
     if (!pick) { return; }
     if (pick.meta) {
-        await vscode.commands.executeCommand('saropaLogCapture.openSession', pick.meta);
+        await vscode.commands.executeCommand('saropaCapture.openSession', pick.meta);
     } else {
         await openOverview(inv, members);
     }

@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { getConfig } from '../config/config';
 import { EXPLAIN_WITH_AI_ADAPTER_ID } from './integration-adapter-constants';
 
-const SECTION = 'saropaLogCapture';
+const SECTION = 'saropaCapture';
 const ADAPTERS_KEY = 'integrations.adapters';
 
 /** Extended adapter metadata for the Integrations screen (long description, performance, when to disable). */
