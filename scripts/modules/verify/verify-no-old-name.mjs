@@ -53,6 +53,7 @@ const ALLOWED = [
 	"package.nls.ru.json",
 	"package.nls.zh-cn.json",
 	"package.nls.zh-tw.json",
+	"bugs/",
 ];
 
 /**
