@@ -40,6 +40,7 @@ Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings
 - Settings migration: on first activation, any explicitly set `saropaLogCapture.*` value (user, workspace, and workspace-folder scope) is copied to the matching `saropaCapture.*` key unless that key is already set. Old entries are left in place; a one-time notice reports how many were copied
 - Old command IDs (`saropaLogCapture.*`) stay registered as aliases of the new commands, so existing keybindings, tasks, and other extensions that call them keep working
 - Warning when the previous "Saropa Log Capture" extension is still installed alongside this one
+- Build-time guard (`verify:no-old-name`) that fails on any leftover old-name string outside an allowlist of historical and migration files
 
 ### Notes
 
