@@ -25,6 +25,17 @@ cspell:disable
 
 ---
 
+## [9.8.2]
+
+More accurate translations of technical terms like "signal", "marker", and "capture" in non-English languages. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.2/CHANGELOG.md)
+
+### Fixed
+
+- Removed "Saropa Lints" from brand shielding — wrong product name left over from the pipeline port
+- Added domain term glossary to Qwen translation prompts so words like "signal", "marker", "capture", and "collection" translate with the correct software sense instead of their everyday meaning
+
+---
+
 ## [9.8.1]
 
 Packaging fix for the Saropa Capture rename. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.1/CHANGELOG.md)

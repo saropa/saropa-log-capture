@@ -236,6 +236,66 @@ def _ensure_ready() -> tuple[bool, str]:
 
 
 # ---------------------------------------------------------------------------
+# Domain term glossary — disambiguates words whose everyday sense differs from
+# the software-specific meaning in this extension.  Qwen mistranslates these
+# without disambiguation (e.g. "signal" → radio signal, "capture" → military
+# capture, "marker" → pen marker).  Keys are lowercase stems matched at word
+# boundaries; the matching glossary entries are injected into the prompt only
+# when the source string contains the term.
+# ---------------------------------------------------------------------------
+
+_TERM_GLOSSARY: dict[str, str] = {
+    "capture": "recording debug console output to a log file (not screen capture, not military capture)",
+    "signal": "an automatically detected pattern in log output — an error, warning, or anomaly (not a radio/electrical signal)",
+    "marker": "a user-inserted visual separator line in a log (not a pen, not a map marker)",
+    "collection": "a named group of related logs for investigating a bug or incident (not a data structure, not a gallery)",
+    "bundle": "a .slc ZIP file containing logs and metadata for sharing (not a software bundle or package)",
+    "tag": "a label applied to a log line or log file (not an HTML tag, not a price tag)",
+    "decoration": "a visual enhancement on a log line such as a severity dot, timestamp, or line number (not room decor)",
+    "exclusion": "a string or regex pattern that hides matching log lines from view (not social exclusion)",
+    "pin": "a log line hoisted above the scrollable area for continuous visibility (not a physical pin)",
+    "retention": "how many log files to keep on disk before old ones are deleted (not user/data retention)",
+    "session": "a single debug run captured to a log file (not a user session, not an HTTP session)",
+    "severity": "log level — error, warning, info, debug, verbose (not medical or security severity)",
+    "framework": "mobile platform internals like Flutter engine or Android system code (not a software framework in general)",
+    "trace": "a stack trace — consecutive function-call frames in an error (not network tracing)",
+    "sidecar": "an auxiliary file alongside the main log — metadata, terminal output, logcat (not a motorcycle sidecar)",
+    "adapter": "an opt-in module that captures supplementary context during a debug session (not a physical adapter)",
+    "replay": "playing back a saved log with original timing to simulate live capture (not video replay)",
+    "bookmark": "a saved reference to a specific line in a log (not a browser bookmark)",
+    "gist": "a GitHub Gist for sharing log data via URL (not the gist/essence of something)",
+}
+
+# Precompiled once: the prompt is built per string, so pre-matching avoids
+# recompiling the same patterns thousands of times in a full run.
+_TERM_PATTERNS: dict[str, re.Pattern[str]] = {
+    term: re.compile(r"\b" + re.escape(term), re.IGNORECASE)
+    for term in _TERM_GLOSSARY
+}
+
+
+def _glossary_block(text: str) -> str:
+    """Build the prompt section glossing only domain terms present in *text*.
+
+    Returns an empty string when no term matches, so short unrelated labels
+    keep the minimal prompt — an irrelevant glossary invites the model to
+    translate terms that are not actually there.
+    """
+    hits = [
+        f"- {term}: {gloss}"
+        for term, gloss in _TERM_GLOSSARY.items()
+        if _TERM_PATTERNS[term].search(text)
+    ]
+    if not hits:
+        return ""
+    return (
+        "Terminology (English meaning in this software context — translate "
+        "with the matching technical sense in the target language):\n"
+        + "\n".join(hits) + "\n\n"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Prompt construction
 # ---------------------------------------------------------------------------
 
@@ -264,10 +324,14 @@ def _build_prompt(
         "language; do not switch to another language mid-sentence.\n"
     )
 
+    # Glossary disambiguates domain terms only when present in the source.
+    glossary = _glossary_block(text)
+
     parts = [
         "Context: A VS Code extension called Saropa Capture for viewing "
         "debug console logs from Flutter and mobile app development. "
         "Tone should be clear and concise, matching typical IDE UI text.\n\n",
+        glossary,
         f"Task: Translate the following English text into {lang_label}.\n\n",
         "Strict Rules:\n",
         "1. Return ONLY the translated string output.\n",

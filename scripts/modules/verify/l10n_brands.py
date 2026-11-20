@@ -3,8 +3,8 @@
 
 Brand names must never be translated, transliterated, or phonetically
 adapted. They appear verbatim in every locale. MT engines routinely
-mangle them (e.g. "Saropa Lints" → "Saropa-Fusseln" in German,
-"サロパリント" in Japanese, "Pelusas Saropa" in Spanish).
+mangle them (e.g. "Saropa Capture" → "Saropa-Erfassung" in German,
+"サロパキャプチャ" in Japanese, "Captura Saropa" in Spanish).
 
 Two categories:
   - BRAND_ONLY: the entire English string IS brand name(s); the translation
@@ -21,11 +21,10 @@ import re
 
 # Explicit full strings that are brand-only but are NOT composed purely of
 # BRAND_TOKENS, so is_brand_only()'s token derivation can't catch them on its
-# own. "Saropa Lints" is the case in point: "Saropa" is a token but "Lints" is
-# not, so without this set it would look half-translatable. Pure-token strings
-# ("Crashlytics", "Docker", "Saropa Capture") do NOT need listing here.
+# own. Pure-token strings ("Crashlytics", "Docker", "Saropa Capture") do NOT
+# need listing here — is_brand_only() derives them from BRAND_TOKENS.
 BRAND_ONLY_STRINGS: frozenset[str] = frozenset({
-    "Saropa Lints",
+    # Add multi-word brand combos where not all words are BRAND_TOKENS.
 })
 
 # Standalone technical acronyms/initialisms that are English in every locale.
@@ -98,7 +97,6 @@ VERIFIED_IDENTICAL: dict[str, frozenset[str]] = {
 # substitution.
 BRAND_TOKENS: tuple[str, ...] = (
     "Saropa Capture",
-    "Saropa Lints",
     "saropaCapture",
     "Saropa",
     "GitHub Copilot Chat",
