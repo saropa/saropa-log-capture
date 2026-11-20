@@ -28,7 +28,8 @@ suite('FlowMap panel scripts — generated JS actually parses', () => {
         // "[\s\S]*" would, given more than one <script> block, swallow everything from the
         // FIRST opening tag to the LAST closing tag instead of stopping at the first block's
         // own close.
-        const m = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/i.exec(html);
+        // [^>]* instead of \s* so malformed close tags (e.g. </script \n attr>) are still matched
+        const m = /<script\b[^>]*>([\s\S]*?)<\/script[^>]*>/i.exec(html);
         assert.ok(m, 'the generator emitted a <script> tag');
         return m![1];
     }

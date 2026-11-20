@@ -128,7 +128,8 @@ suite('Viewer HTML', () => {
             // Case-insensitive + word-boundary + tolerant closing-tag whitespace so the
             // extraction can't be bypassed by an uppercase/mixed-case <SCRIPT> tag or a
             // closing tag with interior whitespace ("</script >").
-            const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi;
+            // [^>]* instead of \s* so malformed close tags (e.g. </script \n attr>) are still matched
+            const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script[^>]*>/gi;
             let match: RegExpExecArray | null;
             let blockIndex = 0;
 

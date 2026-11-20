@@ -11,7 +11,8 @@ function scriptBody(html: string): string | undefined {
     // "[\s\S]*" would, given more than one <script> block, swallow everything from the
     // FIRST opening tag to the LAST closing tag instead of stopping at the first block's
     // own close — silently merging/mis-slicing the generators' output.
-    const m = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/i.exec(html);
+    // [^>]* instead of \s* so malformed close tags (e.g. </script \n attr>) are still matched
+    const m = /<script\b[^>]*>([\s\S]*?)<\/script[^>]*>/i.exec(html);
     return m?.[1];
 }
 
