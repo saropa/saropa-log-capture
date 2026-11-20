@@ -1,8 +1,8 @@
 /**
- * Produce Log Capture's offline diagnostic mirror (R1). On session end (and on demand)
+ * Produce Saropa Capture's offline diagnostic mirror (R1). On session end (and on demand)
  * this serializes the current signals into the Saropa Diagnostic Envelope and writes
  * `<workspace>/.saropa/diagnostics/log-capture.json` — the file the sibling tools (Drift
- * Advisor, Saropa Lints) read to correlate without Log Capture's webview being open.
+ * Advisor, Saropa Lints) read to correlate without Saropa Capture's webview being open.
  *
  * Best-effort: a failure here must never disrupt session finalization, so the caller
  * runs this fire-and-forget with its own `.catch` to the output channel.
@@ -42,7 +42,7 @@ export interface ProduceOptions {
  */
 export async function writeLogCaptureDiagnostics(opts: ProduceOptions): Promise<boolean> {
   // `aggregateSignals('all')` is the same source the recurring-signals notification and the
-  // Signal panel use — the mirror reflects exactly what Log Capture would show the user.
+  // Signal panel use — the mirror reflects exactly what Saropa Capture would show the user.
   const aggregated = await aggregateSignals('all').catch(() => undefined);
   const signals = aggregated?.allSignals ?? [];
   const diagnostics = signalsToDiagnostics(signals, { commitSha: opts.commitSha });

@@ -3,7 +3,7 @@
  *
  * Three tools (Saropa Lints = static code, Saropa Drift Advisor = live DB,
  * Saropa Capture = runtime telemetry) each emit "a problem with a location,
- * a severity, a source, and maybe a fix." This module is Log Capture's local copy
+ * a severity, a source, and maybe a fix." This module is Saropa Capture's local copy
  * of the one shape they all produce and consume.
  *
  * Canonical definition lives in Drift Advisor's plan (67-saropa-suite-integration.md,
@@ -22,7 +22,7 @@ export type DiagnosticSource = 'lints' | 'advisor' | 'log-capture';
 
 /**
  * Severity triple shared suite-wide (the set Saropa Lints standardized on).
- * Deliberately NOT Log Capture's internal `critical | high | medium | low` —
+ * Deliberately NOT Saropa Capture's internal `critical | high | medium | low` —
  * the boundary speaks the common three; the serializer maps to it.
  */
 export type DiagnosticSeverity = 'error' | 'warning' | 'info';
@@ -80,7 +80,7 @@ export interface Diagnostic {
   readonly title: string;
   /** Optional longer body. */
   readonly detail?: string;
-  /** Lints rule id, Advisor check id, or Log Capture signal/detector id. */
+  /** Lints rule id, Advisor check id, or Saropa Capture signal/detector id. */
   readonly ruleId?: string;
   readonly location?: DiagnosticLocation;
   /** Normalized query text, when SQL-related. */
@@ -117,13 +117,13 @@ export interface DiagnosticEnvelope {
  */
 export const DIAGNOSTIC_SCHEMA_VERSION = 1;
 
-/** This tool's producer tag — the value Log Capture stamps on every diagnostic it emits. */
+/** This tool's producer tag — the value Saropa Capture stamps on every diagnostic it emits. */
 export const LOG_CAPTURE_SOURCE: DiagnosticSource = 'log-capture';
 
 /**
  * Shared workspace folder for offline mirrors. All three tools read/write here so they
  * can correlate without a running server (Advisor's API is debug-only, Lints is
- * compile-time, Log Capture runs whenever the editor is open — rarely all live at once).
+ * compile-time, Saropa Capture runs whenever the editor is open — rarely all live at once).
  */
 export const DIAGNOSTICS_DIR_SEGMENTS = ['.saropa', 'diagnostics'] as const;
 

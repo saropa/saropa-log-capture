@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "Configura pattern di monitoraggio, regole di evidenziazione, esclusioni e regole di divisione in **Impostazioni**.\n\n[Apri impostazioni](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "Personalizza configurazione",
   "walkthrough.getStarted.description": "Scopri come catturare e analizzare l'output di debug con Saropa Capture.",
-  "walkthrough.getStarted.title": "Inizia con la cattura log",
+  "walkthrough.getStarted.title": "Inizia con Saropa Capture",
   "walkthrough.openViewer.description": "Clicca l'icona **Saropa Capture** nella barra attività per vedere l'output in tempo reale con colori, stack comprimibili e ricerca.\n\n[Apri visualizzatore log](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "Apri visualizzatore log",
   "walkthrough.startDebugging.description": "La cattura parte automaticamente quando esegui il debug. Premi **F5** o usa il pannello **Esegui e debug**.\n\n[Avvia debug](command:workbench.action.debug.start)",

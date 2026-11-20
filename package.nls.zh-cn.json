@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "在**设置**中配置监视模式、高亮规则、排除项和拆分规则。\n\n[打开设置](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "自定义设置",
   "walkthrough.getStarted.description": "了解如何使用 Saropa Capture 捕获和分析调试输出。",
-  "walkthrough.getStarted.title": "开始使用日志捕获",
+  "walkthrough.getStarted.title": "开始使用 Saropa Capture",
   "walkthrough.openViewer.description": "单击活动栏中的 **Saropa Capture** 图标，查看带有颜色、可折叠堆栈和搜索功能的实时日志输出。\n\n[打开日志查看器](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "打开日志查看器",
   "walkthrough.startDebugging.description": "调试时日志捕获自动开始。按 **F5** 或使用**运行和调试**面板开始。\n\n[开始调试](command:workbench.action.debug.start)",

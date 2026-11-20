@@ -1,7 +1,7 @@
 /**
  * File I/O for the offline diagnostic mirrors under `<workspace>/.saropa/diagnostics/`.
  * The shared contract that lets the three suite tools correlate without a running server
- * (Advisor's API is debug-only, Lints is compile-time, Log Capture runs whenever the
+ * (Advisor's API is debug-only, Lints is compile-time, Saropa Capture runs whenever the
  * editor is open — rarely all live at once). See the envelope module for the schema.
  *
  * All reads are failure-tolerant: an absent or malformed sibling file yields `undefined`,
@@ -55,7 +55,7 @@ export async function readSiblingEnvelope(source: DiagnosticSource): Promise<Dia
 }
 
 /**
- * Write Log Capture's envelope to `.saropa/diagnostics/log-capture.json`, creating the
+ * Write Saropa Capture's envelope to `.saropa/diagnostics/log-capture.json`, creating the
  * directory if needed. Pretty-printed (2-space) so the file is human-diffable in review.
  * Returns false when there is no workspace folder to write into.
  */

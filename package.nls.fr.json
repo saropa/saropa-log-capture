@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "Configurez les motifs de surveillance, les règles de surlignage, les exclusions et les règles de division dans **Paramètres**.\n\n[Ouvrir les paramètres](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "Personnaliser la configuration",
   "walkthrough.getStarted.description": "Apprenez à capturer et analyser la sortie de débogage avec Saropa Capture.",
-  "walkthrough.getStarted.title": "Démarrer avec la capture de journaux",
+  "walkthrough.getStarted.title": "Démarrer avec Saropa Capture",
   "walkthrough.openViewer.description": "Cliquez sur l’icône **Saropa Capture** dans la barre d’activité pour voir la sortie en direct avec couleurs, piles repliables et recherche.\n\n[Ouvrir la vue des journaux](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "Ouvrir la vue des journaux",
   "walkthrough.startDebugging.description": "La capture démarre automatiquement lors du débogage. Appuyez sur **F5** ou utilisez le panneau **Exécuter et déboguer**.\n\n[Démarrer le débogage](command:workbench.action.debug.start)",

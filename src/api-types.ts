@@ -94,7 +94,7 @@ export interface SaropaDailyTroubleItem {
     readonly label: string;
     /** Optional supporting detail (excerpt, count, category). */
     readonly detail?: string;
-    /** Deep-link command id to jump into Log Capture, e.g. 'saropaCapture.openSignal'. */
+    /** Deep-link command id to jump into Saropa Capture, e.g. 'saropaCapture.openSignal'. */
     readonly command?: string;
     /** Argument object passed to {@link command} (shape is command-specific). */
     readonly args?: unknown;
@@ -109,7 +109,7 @@ export interface SaropaDailyTroubleItem {
  * SQL/network/memory/ANR-risk/Drift-Advisor signals are computed once at session finalization
  * and have no live equivalent to re-run mid-session, so they never appear here.
  *
- * `command`/`args` on each item deep-link into Log Capture's Signal panel on the same
+ * `command`/`args` on each item deep-link into Saropa Capture's Signal panel on the same
  * `openSignal` contract {@link SaropaDailySummary} uses. Note that the panel's rows are built
  * from finalized session metadata, so a signal first seen inside a still-running session may not
  * have a row to land on until that session ends.
@@ -151,7 +151,7 @@ export interface SaropaDailySummary {
     readonly counts: Record<string, number>;
     /** Failure-only items for the caller's Trouble section. */
     readonly trouble: readonly SaropaDailyTroubleItem[];
-    /** No-arg command id that opens Log Capture ("Open in Log Capture"). */
+    /** No-arg command id that opens Saropa Capture ("Open in Saropa Capture"). */
     readonly openCommand?: string;
 }
 

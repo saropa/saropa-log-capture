@@ -221,7 +221,7 @@ Collapse any column's sections to shrink that column aside and give the open sid
 
 Works standalone, but unlocks richer diagnostics paired with these companion extensions:
 
-| Extension | What it adds to Log Capture |
+| Extension | What it adds to Saropa Capture |
 |---|---|
 | **[Saropa Lints](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-lints)** | Bug reports include lint violations filtered by impact, OWASP summaries, health scores, and "Explain rule" links. |
 | **[Saropa Drift Advisor](https://marketplace.visualstudio.com/items?itemName=saropa.drift-viewer)** | Session metadata carries query performance stats, schema summaries, anomaly counts, and index suggestions. Right-click SQL lines for "Open in Drift Advisor". |

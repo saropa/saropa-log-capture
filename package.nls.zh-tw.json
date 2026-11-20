@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "在 **設定** 中設定監看模式、醒目提示規則、排除項目與分割規則。\n\n[開啟設定](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "自訂設定",
   "walkthrough.getStarted.description": "了解如何使用 Saropa Capture 擷取與分析偵錯輸出。",
-  "walkthrough.getStarted.title": "開始使用記錄擷取",
+  "walkthrough.getStarted.title": "開始使用 Saropa Capture",
   "walkthrough.openViewer.description": "按一下活動列中的 **Saropa Capture** 圖示，即可檢視即時記錄輸出（含色彩、可摺疊堆疊與搜尋）。\n\n[開啟記錄檢視器](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "開啟記錄檢視器",
   "walkthrough.startDebugging.description": "開始偵錯時會自動開始擷取。按 **F5** 或使用 **執行與偵錯** 面板。\n\n[開始偵錯](command:workbench.action.debug.start)",

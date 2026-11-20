@@ -1,7 +1,7 @@
 /**
  * Types for the optional Saropa Lints extension API.
  *
- * When the Saropa Lints extension is installed and exposes this API, Log Capture
+ * When the Saropa Lints extension is installed and exposes this API, Saropa Capture
  * uses it to read violations and health score params without re-reading the file.
  * Fallback: read reports/.saropa_lints/violations.json from disk and use built-in constants.
  *
@@ -61,7 +61,7 @@ export interface SaropaLintsApi {
 
     /**
      * Run analysis scoped to the given workspace-relative file paths (e.g. stack-trace files).
-     * Optional: when absent, Log Capture falls back to runAnalysis({ files }).
+     * Optional: when absent, Saropa Capture falls back to runAnalysis({ files }).
      */
     runAnalysisForFiles?(files: string[]): Promise<boolean>;
 

@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "Configure padrões de vigilância, regras de destaque, exclusões e regras de divisão em **Configurações**.\n\n[Abrir configurações](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "Personalizar configuração",
   "walkthrough.getStarted.description": "Aprenda a capturar e analisar a saída de depuração com Saropa Capture.",
-  "walkthrough.getStarted.title": "Começar com a captura de log",
+  "walkthrough.getStarted.title": "Introdução ao Saropa Capture",
   "walkthrough.openViewer.description": "Clique no ícone **Saropa Capture** na barra de atividades para ver a saída em tempo real com cores, pilhas recolhíveis e pesquisa.\n\n[Abrir visualizador de log](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "Abrir visualizador de log",
   "walkthrough.startDebugging.description": "A captura inicia automaticamente ao depurar. Pressione **F5** ou use o painel **Executar e depurar**.\n\n[Iniciar depuração](command:workbench.action.debug.start)",

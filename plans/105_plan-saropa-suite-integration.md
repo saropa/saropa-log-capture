@@ -1,4 +1,4 @@
-# 105 Saropa Suite Integration — Log Capture side
+# 105 Saropa Suite Integration — Saropa Capture side
 
 > **Status: Shipped — reference guide, not an active plan (2026-06-14).** The Log-Capture side of the
 > suite (R1–R5) shipped in Saropa Capture and is per-repo unit-tested; the extension is published.
@@ -12,7 +12,7 @@
 - **Shipped (today, ad-hoc):** SQL Query History shows live **Drift Advisor** database issues and
   runs **Saropa Lints** static-code checks; the Signal panel has a "Drift Advisor" action and a
   "Drift Advisor issues" summary signal; the Drift debug-server ASCII box is recognized; Logs panel
-  folds lint reports / audits into Reports rows. The Drift Advisor → Log Capture **bridge** (session
+  folds lint reports / audits into Reports rows. The Drift Advisor → Saropa Capture **bridge** (session
   metadata + JSON sidecar) is consumed.
 - **Shipped (suite protocol groundwork):** the typed **Saropa Diagnostic Envelope**
   (`src/modules/diagnostics/`) — produce side writes `.saropa/diagnostics/log-capture.json` on
@@ -36,12 +36,12 @@
 
 ## Goal
 
-Make Log Capture a first-class **producer and consumer** of the Saropa Diagnostic Envelope so a slow
+Make Saropa Capture a first-class **producer and consumer** of the Saropa Diagnostic Envelope so a slow
 query or crash it observes at runtime links directly to the live database state (Drift Advisor) and
 to the static rule that governs it (Saropa Lints) — and vice versa. One correlated picture across
 static code, live data, and runtime behavior, with no product subsuming another.
 
-This is the **Log Capture** half of a three-repo plan. The sibling docs:
+This is the **Saropa Capture** half of a three-repo plan. The sibling docs:
 
 - **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md`
   (repo `saropa/saropa_drift_advisor`). **Owns the canonical shared protocol** (Section 2 there);
@@ -60,24 +60,24 @@ This is the **Log Capture** half of a three-repo plan. The sibling docs:
 | `saropa_drift_advisor` | Live **DB data + schema** | Debug runtime | issues |
 | `saropa-capture` (this) | **Behavior / telemetry** (logs, crashes) | Debug + production | signals |
 
-Log Capture is the only one that sees production reality — crashes, real SQL timings, the order
+Saropa Capture is the only one that sees production reality — crashes, real SQL timings, the order
 events actually fired. That makes it the source of the "did it actually happen?" leg that the other
 two can only predict.
 
 ## Shared protocol (canonical: Drift Advisor doc, Section 2)
 
-Log Capture conforms to the **Saropa Diagnostic Envelope** — it does not redefine it. Fields Log
+Saropa Capture conforms to the **Saropa Diagnostic Envelope** — it does not redefine it. Fields Log
 Capture is responsible for:
 
 - `source: "log-capture"`, `severity: "error" | "warning" | "info"` (the Lints triple, suite-wide).
 - `ruleId` — the signal / detector id.
 - `category` — `crash`, `performance`, `drift`, `security`, …
-- `sql` — the normalized query text for DB signals (Log Capture already fingerprints SQL in
+- `sql` — the normalized query text for DB signals (Saropa Capture already fingerprints SQL in
   `DB_12` / `DB_15` / `DB_17`).
-- `location.file` — workspace-relative. **Already a known trap:** Log Capture previously leaked
+- `location.file` — workspace-relative. **Already a known trap:** Saropa Capture previously leaked
   `C:\Users\<name>\…` into bug reports; the envelope forbids absolute home paths, so reuse the
   repository-relative path logic already added for that fix.
-- `commitSha` — Log Capture already reads per-session metadata SHAs and diffs against a Git commit
+- `commitSha` — Saropa Capture already reads per-session metadata SHAs and diffs against a Git commit
   baseline; populate it.
 
 ## Scope
@@ -85,8 +85,8 @@ Capture is responsible for:
 - **In scope (v1):** Drift / SQL signals and crash signals — the categories where the other two tools
   have a counterpart. Produce + consume the envelope; wire deep-links; feed crash signatures to Lints.
 - **Later:** non-Drift performance signals, broader signal categories, the cross-commit timeline UI.
-- **Out of scope:** Log Capture reading source AST (that is Lints' boundary) or inspecting a live DB
-  directly (that is Advisor's) — Log Capture only ever sees logs/telemetry and links *out* to those
+- **Out of scope:** Saropa Capture reading source AST (that is Lints' boundary) or inspecting a live DB
+  directly (that is Advisor's) — Saropa Capture only ever sees logs/telemetry and links *out* to those
   tools.
 
 ## Implementation Plan
@@ -103,17 +103,17 @@ Capture is responsible for:
 3. **Deep-link command ids — public API (R4).** Contribute and never rename:
    `saropaCapture.openSignal { id }`,
    `saropaCapture.openSqlHistoryForFingerprint { sql | fingerprint }`. A sibling envelope's
-   `fix.command` targeting Log Capture uses one of these.
+   `fix.command` targeting Saropa Capture uses one of these.
 4. **Deep-link out (R5).** A slow-query or DB signal offers, as inline actions when those extensions
    are present: `driftViewer.openExplainForSql { sql, table }` (Advisor) and
    `saropaLints.explainRule { ruleId }` / `saropaLints.enableRule` (Lints). This extends `DB_12`'s
    "Find in codebase" with two runtime-confirmation targets.
-5. **Crash-to-rule feed (R3, Lints consumes).** For each crash family Log Capture already parses
+5. **Crash-to-rule feed (R3, Lints consumes).** For each crash family Saropa Capture already parses
    (StateError `.first`, RangeError `[index]`, the Crashlytics issue families, Flutter exception
    blocks), emit a stable `crash` signature in the signal's `ruleId`/`detail` so Lints can map it to
-   the preventing rule and prompt "enable rule X." Log Capture owns the *signature*; Lints owns the
+   the preventing rule and prompt "enable rule X." Saropa Capture owns the *signature*; Lints owns the
    *mapping*.
-6. **Drift Health loop (Advisor doc, Section 5).** Log Capture is leg 1: detect the N+1 / slow query
+6. **Drift Health loop (Advisor doc, Section 5).** Saropa Capture is leg 1: detect the N+1 / slow query
    in SQL Query History and emit the signal that seeds the joined panel Advisor hosts.
 
 ## UX Rules
@@ -122,7 +122,7 @@ Capture is responsible for:
   not "clean").
 - Cross-tool actions appear only when the target extension is installed and the diagnostic carries the
   needed fields (`sql` for EXPLAIN, `ruleId` for rule explain); never show a dead action.
-- Attribution is always visible: a row from Advisor/Lints reads as theirs, not as a Log Capture
+- Attribution is always visible: a row from Advisor/Lints reads as theirs, not as a Saropa Capture
   finding.
 
 ## Test Plan
@@ -163,13 +163,13 @@ Duplicated across the three TypeScript extensions; extract to internal shared pa
 deps, not a monorepo merge):
 
 - **`saropa-vscode-i18n`** — NLLB-then-Google fallback, real-coverage audits, day-bucketed report
-  paths, untranslated-locale notices (Log Capture's `058_plan-expand-translation-locales.md` and the
+  paths, untranslated-locale notices (Saropa Capture's `058_plan-expand-translation-locales.md` and the
   one-time coverage notice are direct inputs). Sharing tooling only; running a translation job stays
   separately authorized.
 - **`saropa-vscode-ui`** — theme tokens + dashboard kit (KPI cards, sortable tables, sparklines,
   axe-checked light/dark/high-contrast). All three shipped the same "fixed color washes out" bug
   class.
-- **`saropa-release-tools`** (Python) — `publish.py` orchestrator (Log Capture already has the
+- **`saropa-release-tools`** (Python) — `publish.py` orchestrator (Saropa Capture already has the
   never-run-NLLB publish guard in `checks_build.py`), dependency-import gate, American-English gate,
   changelog conventions. All three already converged.
 
@@ -189,7 +189,7 @@ deps, not a monorepo merge):
 
 ### What shipped
 
-The Log-Capture side of the three-tool Saropa suite integration is implemented. Log Capture is now
+The Log-Capture side of the three-tool Saropa suite integration is implemented. Saropa Capture is now
 both a producer and consumer of the **Saropa Diagnostic Envelope** — the typed, versioned shape
 (`source`, `severity`, `category`, `ruleId`, `sql`, `table`, `fix`, `commitSha`) that the three tools
 exchange so a runtime signal can correlate with the live database state (Drift Advisor) and the static
@@ -199,7 +199,7 @@ A new module group under `src/modules/diagnostics/` carries the protocol:
 
 - `saropa-diagnostic-envelope.ts` — the canonical `Diagnostic`/`DiagnosticEnvelope` types, the
   `schemaVersion` gate (`isReadableSchema`), and the `.saropa/diagnostics/<source>.json` path contract.
-- `signal-to-diagnostic.ts` — pure serialization from Log Capture's internal `RecurringSignalEntry`
+- `signal-to-diagnostic.ts` — pure serialization from Saropa Capture's internal `RecurringSignalEntry`
   to the shared shape: four-level internal severity collapses to the suite triple, signal kinds map to
   shared categories, SQL fingerprints yield `sql`+`table`, and a v1 category filter keeps the mirror to
   drift/crash/performance.

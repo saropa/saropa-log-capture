@@ -36,7 +36,7 @@ function splitPerformanceWarning(performanceNote?: string): { warningEmoji: stri
     return { warningEmoji: PERFORMANCE_WARNING_EMOJI, text };
 }
 
-/** Companion extensions that enhance Log Capture when installed. */
+/** Companion extensions that enhance Saropa Capture when installed. */
 interface CompanionExtension {
     readonly extensionId: string;
     /** Brand/product name — stays English. */
@@ -45,7 +45,7 @@ interface CompanionExtension {
     readonly benefitKey: string;
 }
 
-/** Extensions that unlock deeper integration features in Log Capture. */
+/** Extensions that unlock deeper integration features in Saropa Capture. */
 const COMPANION_EXTENSIONS: readonly CompanionExtension[] = [
     {
         extensionId: SAROPA_LINTS_EXTENSION_ID,

@@ -32,6 +32,7 @@ Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings
 ### Changed
 
 - Renamed the product from "Saropa Log Capture" to "Saropa Capture" across the manifest, command titles, viewer screens and tabs, output channel, exports, walkthrough, localization files, scripts, and docs
+- Short-form "Log Capture" is now "Saropa Capture" everywhere (walkthrough title, API docs, panel text); the product name is a no-translate brand token in every locale, and the walkthrough title in all 10 locales was corrected to keep it verbatim
 - Extension ID is now `saropa.saropa-capture`; settings and command IDs now use the `saropaCapture.` prefix. Prior releases remain listed as "Saropa Log Capture" in the changelog history
 
 ### Added

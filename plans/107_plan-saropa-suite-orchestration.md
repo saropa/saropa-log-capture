@@ -18,7 +18,7 @@ it sits over:
 - **Drift Advisor** — `D:\src\saropa_drift_advisor\plans\history\2026.07\2026.07.16\67-saropa-suite-integration.md`
   (owns the canonical envelope schema — Section 2 there).
 - **Saropa Lints** — `D:\src\saropa_lints\plans\SAROPA_SUITE_INTEGRATION.md`.
-- **Log Capture** (this repo) — `D:\src\saropa-log-capture\plans\105_plan-saropa-suite-integration.md`.
+- **Saropa Capture** (this repo) — `D:\src\saropa-log-capture\plans\105_plan-saropa-suite-integration.md`.
 - **Saropa Dart Utils** — `D:\src\saropa_dart_utils\plans\SAROPA_SUITE_INTEGRATION.md`
   (remediation layer, not a fourth lens).
 
@@ -38,7 +38,7 @@ extensions that each implement a shared protocol and have **never shaken hands**
 features — is the remaining work.
 
 **All four extensions were published to the marketplace before that verification ran** (Drift Advisor
-4.0.1, Saropa Lints 14.0.0, Log Capture 9.0.1, the Saropa Suite pack 1.0.7), so the handshake is now a
+4.0.1, Saropa Lints 14.0.0, Saropa Capture 9.0.1, the Saropa Suite pack 1.0.7), so the handshake is now a
 *production* check, not a pre-ship gate. The bound on the risk is the fail-safe design: a deep-link
 renders only when the sibling command is registered (a `getCommands` probe — no dead buttons), envelope
 parsing returns `undefined` on a schema/field mismatch rather than throwing, and mirror reads are
@@ -50,12 +50,12 @@ a point release in the owning repo rather than a rollback.
 
 | Repo | Requirements shipped | Test state | Honest gap |
 |------|----------------------|-----------|------------|
-| **Log Capture** | R1 produce, R2 read+render, R3 crash signatures, R4 deep-link in, R5 deep-link out | 30 unit tests; traced to `src/` | No end-to-end run against a live sibling |
+| **Saropa Capture** | R1 produce, R2 read+render, R3 crash signatures, R4 deep-link in, R5 deep-link out | 30 unit tests; traced to `src/` | No end-to-end run against a live sibling |
 | **Drift Advisor** | R1 envelope on `/api/issues`, R2 mirror, R3 consume, R4 Drift Health panel, R5 five deep-link ids, R6 commit correlation + timeline + sidecar | 2845 tests | Visual/a11y audit of three panels unverified on a rendered window |
 | **Saropa Lints** | R1 export, R2 consume+badge, R3 crash-to-rule, R4 deep-link ids, R5 deep-link out, R6 commit stamp, R7 pairing nudge | ~50 suite tests | Translated locale catalogs stale for `suite.*` keys; device verification pending |
 | **Dart Utils** | R1 rule→remediation map, R3 crash-coverage audit (zero gaps), R5 CLI scanner | Pinning tests | R5 in-editor rule-pack port not built (CLI only) |
 
-The **Saropa Suite** Extension Pack (Drift Advisor + Lints + Log Capture) is already published, so the
+The **Saropa Suite** Extension Pack (Drift Advisor + Lints + Saropa Capture) is already published, so the
 three-tool install is a single click — which makes Phase 1 below practical to set up.
 
 ---
@@ -107,14 +107,14 @@ sibling defect is a bug report written into that repo, not an edit).
 
 The seams to exercise:
 
-1. **Envelope on disk agrees byte-for-byte.** Trigger a slow query in the app → confirm Log Capture
+1. **Envelope on disk agrees byte-for-byte.** Trigger a slow query in the app → confirm Saropa Capture
    writes `.saropa/diagnostics/log-capture.json` → confirm Drift Advisor and Lints both parse it
    without dropping diagnostics (schema major, field names, workspace-relative paths all matching the
    canonical Section 2 shape).
 2. **Deep-links resolve and land.** Confirm the gated "Explain this query in Drift Advisor" / "Show
    rule in Saropa Lints" buttons actually appear (the `getCommands` probe sees the sibling), and that
    clicking one lands on the right surface — not a dead command, not the wrong table.
-3. **Crash → rule loop fires.** Trigger a parsed crash family → confirm Log Capture stamps the
+3. **Crash → rule loop fires.** Trigger a parsed crash family → confirm Saropa Capture stamps the
    `crash:<id>` signature → confirm Lints' "enable rule X" nudge fires for the mapped rule → confirm
    Dart Utils' remediation map names the safe primitive.
 4. **Commit correlation dims correctly.** Confirm a mirror captured at a different `commitSha` renders
@@ -159,7 +159,7 @@ flow-analysis-safe target. Independent of Phases 1–3; pursue only after the ha
 
 ## Ownership and the cross-project rule
 
-This plan coordinates four repos but **edits only Log Capture**. Work that lands in a sibling repo is
+This plan coordinates four repos but **edits only Saropa Capture**. Work that lands in a sibling repo is
 either done by the user or filed as a self-contained bug report into that repo's `bugs/` folder — never
 a direct cross-project edit. The per-repo plans remain the source of truth for each half's internal
 detail; this document only sequences the joint work and records the suite-wide decisions (the

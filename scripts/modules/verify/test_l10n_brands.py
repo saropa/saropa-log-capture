@@ -17,8 +17,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from modules.verify.l10n_brands import (  # noqa: E402
     _SENT_CAPACITY,
     _sentinel,
+    is_brand_only,
     shield_brands,
     unshield_brands,
+    validate_brands,
 )
 
 
@@ -68,6 +70,24 @@ class ShieldUnshieldRoundTripTests(unittest.TestCase):
         self.assertEqual(len(replacements), 2)
         restored = unshield_brands(shielded, replacements)
         self.assertEqual(restored, text)
+
+
+class ProductNameBrandTests(unittest.TestCase):
+    """The product name must never reach the translator or be altered by it."""
+
+    def test_saropa_capture_is_brand_only(self) -> None:
+        # A string that is only the product name is forced to English in every locale.
+        self.assertTrue(is_brand_only("Saropa Capture"))
+
+    def test_saropa_capture_missing_from_translation_is_reported(self) -> None:
+        # Guards against a translation that rewrites the name (e.g. "Saropa-Erfassung").
+        missing = validate_brands("Open Saropa Capture", "Saropa-Erfassung oeffnen")
+        self.assertIn("Saropa Capture", missing)
+
+    def test_saropa_capture_survives_shield_in_sentence(self) -> None:
+        shielded, replacements = shield_brands("Get Started with Saropa Capture")
+        self.assertNotIn("Saropa Capture", shielded)
+        self.assertEqual(replacements[0][1], "Saropa Capture")
 
 
 class UnshieldToleranceTests(unittest.TestCase):

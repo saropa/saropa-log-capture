@@ -1,5 +1,5 @@
 /**
- * Best-effort GET /api/health against the Drift debug server (Log Capture extension host).
+ * Best-effort GET /api/health against the Drift debug server (Saropa Capture extension host).
  * Used to show "reachable" next to a URL discovered from log lines.
  */
 

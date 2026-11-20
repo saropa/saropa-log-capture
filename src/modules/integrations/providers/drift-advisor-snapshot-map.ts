@@ -1,6 +1,6 @@
 /**
  * Maps Drift Advisor snapshot JSON (extension API or `.saropa/drift-advisor-session.json`)
- * to Log Capture meta payload and sidecar JSON. Shape is best-effort against the
+ * to Saropa Capture meta payload and sidecar JSON. Shape is best-effort against the
  * contract in plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md §4.3–4.5.
  */
 
@@ -8,7 +8,7 @@ import { DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION } from '../drift-advisor-constant
 
 /** Loose snapshot shape from Drift Advisor `getSessionSnapshot()` or session file. */
 export interface DriftAdvisorSnapshotLike {
-    /** When set, copied through to meta/sidecar; otherwise Log Capture fills `DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`. */
+    /** When set, copied through to meta/sidecar; otherwise Saropa Capture fills `DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`. */
     readonly schemaVersion?: number;
     readonly baseUrl?: string;
     readonly performance?: Record<string, unknown> | null;

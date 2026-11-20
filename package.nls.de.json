@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "Konfigurieren Sie Überwachungsmuster, Hervorhebungsregeln, Ausschlüsse und Aufteilungsregeln in den **Einstellungen**.\n\n[Einstellungen öffnen](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "Einrichtung anpassen",
   "walkthrough.getStarted.description": "Erfahren Sie, wie Sie Debug-Ausgaben mit Saropa Capture erfassen und analysieren.",
-  "walkthrough.getStarted.title": "Erste Schritte mit der Protokollerfassung",
+  "walkthrough.getStarted.title": "Erste Schritte mit Saropa Capture",
   "walkthrough.openViewer.description": "Klicken Sie auf das **Saropa Capture**-Symbol in der Aktivitätsleiste, um Live-Protokollausgabe mit Farben, reduzierbaren Stacks und Suche anzuzeigen.\n\n[Protokoll-Viewer öffnen](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "Protokoll-Viewer öffnen",
   "walkthrough.startDebugging.description": "Die Protokollerfassung startet beim Debuggen automatisch. Drücken Sie **F5** oder nutzen Sie das **Ausführen und Debuggen**-Panel zum Starten.\n\n[Debuggen starten](command:workbench.action.debug.start)",

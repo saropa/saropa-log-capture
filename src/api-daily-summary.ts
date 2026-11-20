@@ -92,7 +92,7 @@ export async function getDailySummary(date: string): Promise<SaropaDailySummary 
         headline: buildHeadline(sessions, totals, signals[0]),
         counts: { sessions, errors: totals.errors, warnings: totals.warnings, signals: signals.length },
         trouble: buildTrouble(signals),
-        // No-arg focus command — the honest "Open in Log Capture" entry point.
+        // No-arg focus command — the honest "Open in Saropa Capture" entry point.
         openCommand: 'saropaCapture.logViewer.focus',
     };
 }

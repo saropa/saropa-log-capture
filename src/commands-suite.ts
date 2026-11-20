@@ -2,7 +2,7 @@
  * Public deep-link command surface for the Saropa suite integration (R4).
  *
  * These two command ids are the documented, never-renamed entry points a sibling
- * extension's envelope `fix.command` targets to jump INTO Log Capture (the reciprocal
+ * extension's envelope `fix.command` targets to jump INTO Saropa Capture (the reciprocal
  * of Drift Advisor's `driftViewer.*` and Saropa Lints' `saropaLints.*` ids). Treat any
  * rename or arg-shape change as a breaking change to the cross-tool protocol.
  *
@@ -38,7 +38,7 @@ interface OpenSqlHistoryArg {
 }
 
 /**
- * Strip the `kind:` namespace a Log Capture diagnostic id carries (e.g. `sql:SELECT …`
+ * Strip the `kind:` namespace a Saropa Capture diagnostic id carries (e.g. `sql:SELECT …`
  * or `error:ab12cd`) back to the raw fingerprint the webview rows are keyed on. Ids
  * without a recognizable prefix are returned unchanged so an already-raw value still works.
  */

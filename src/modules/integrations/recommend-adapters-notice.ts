@@ -1,6 +1,6 @@
 /**
  * Activation-time, opt-in nudge: when a workspace's pubspec.yaml declares a
- * package a Log Capture adapter can enrich, offer to turn that adapter on
+ * package a Saropa Capture adapter can enrich, offer to turn that adapter on
  * (plan 106). Discovery only — never flips a setting without an explicit tap.
  *
  * Gated per workspace per suggestion set (R5): dismissing the same set never

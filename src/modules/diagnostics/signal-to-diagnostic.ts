@@ -1,5 +1,5 @@
 /**
- * Serialize Log Capture's internal recurring signals into Saropa Diagnostic Envelope
+ * Serialize Saropa Capture's internal recurring signals into Saropa Diagnostic Envelope
  * diagnostics (R1, produce side). Pure — no VS Code, no clock, no fs — so the mapping
  * (severity, category, crash signature, SQL/table extraction) is unit-testable in
  * isolation. The writer module supplies the clock, producer version, and file I/O.
@@ -27,10 +27,10 @@ export interface SerializeContext {
 const CRASH_CATEGORIES: ReadonlySet<string> = new Set(['fatal', 'anr', 'oom', 'native']);
 
 /**
- * Map Log Capture's four-level internal severity onto the suite's three-level triple.
+ * Map Saropa Capture's four-level internal severity onto the suite's three-level triple.
  * `critical`/`high` are both "this broke something" → `error`; `medium` → `warning`;
  * `low` → `info`. Collapsing two levels into `error` is deliberate: the boundary speaks
- * the common three, and the original four-level value stays inside Log Capture.
+ * the common three, and the original four-level value stays inside Saropa Capture.
  */
 export function mapSeverity(severity: SignalSeverity): DiagnosticSeverity {
   if (severity === 'critical' || severity === 'high') {
@@ -102,7 +102,7 @@ export function signalToDiagnostic(entry: RecurringSignalEntry, ctx: SerializeCo
     title: entry.label,
     detail: entry.detail,
     // Only crash diagnostics get a ruleId here — it is the cross-tool contract Lints
-    // consumes. Log Capture never fabricates a Lints/Advisor rule id for other kinds.
+    // consumes. Saropa Capture never fabricates a Lints/Advisor rule id for other kinds.
     ruleId: crashSig ? crashSignatureRuleId(crashSig) : undefined,
     sql,
     table: extractTable(sql),
@@ -111,7 +111,7 @@ export function signalToDiagnostic(entry: RecurringSignalEntry, ctx: SerializeCo
 }
 
 /**
- * Categories Log Capture produces in v1 — the ones where a sibling tool has a
+ * Categories Saropa Capture produces in v1 — the ones where a sibling tool has a
  * counterpart (Drift/SQL ↔ Advisor + Lints; crash ↔ Lints; slow query ↔ the Drift
  * Health loop). Broader categories are deferred (see plan Scope). Filtering here keeps
  * the offline mirror small and on-contract rather than dumping every internal signal.

@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "**設定** で監視パターン、ハイライトルール、除外、分割ルールを設定します。\n\n[設定を開く](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "セットアップをカスタマイズ",
   "walkthrough.getStarted.description": "Saropa Capture を使用してデバッグ出力をキャプチャおよび分析する方法を学びます。",
-  "walkthrough.getStarted.title": "ログキャプチャを始める",
+  "walkthrough.getStarted.title": "Saropa Capture を始める",
   "walkthrough.openViewer.description": "アクティビティバーの **Saropa Capture** アイコンをクリックして、カラー、折りたたみ可能なスタック、検索機能付きのライブログ出力を表示します。\n\n[ログビューアーを開く](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "ログビューアーを開く",
   "walkthrough.startDebugging.description": "デバッグを開始すると、ログのキャプチャが自動的に始まります。**F5** を押すか、**実行とデバッグ** パネルを使用して開始してください。\n\n[デバッグを開始](command:workbench.action.debug.start)",

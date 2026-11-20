@@ -1,4 +1,4 @@
-feat(integrations): Drift Advisor integration (Log Capture side)
+feat(integrations): Drift Advisor integration (Saropa Capture side)
 
 - Add driftAdvisor to INTEGRATION_ADAPTERS (label, description, performanceNote, whenToDisable)
 - Notify webview when Drift Advisor extension is present (setDriftAdvisorAvailable)

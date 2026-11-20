@@ -43,7 +43,7 @@ export function getSqlQueryHistoryDashboardScript(): string {
             if (e.data && e.data.type === 'suiteDeepLinkAvailability') window.applySuiteDeepLinkAvailability(e.data);
         });
     }
-    /* Source attribution chip so a row reads as the sibling tool's finding, not a Log Capture one. */
+    /* Source attribution chip so a row reads as the sibling tool's finding, not a Saropa Capture one. */
     function sqlHistorySourceBadge(labelKey) {
         return '<span class="sql-qh-src-badge">' + escapeHtml(vt(labelKey)) + '</span>';
     }

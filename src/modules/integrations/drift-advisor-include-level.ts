@@ -1,9 +1,9 @@
 /**
- * Drift Advisor "how much goes into Log Capture session" — pure helpers (no vscode import)
+ * Drift Advisor "how much goes into Saropa Capture session" — pure helpers (no vscode import)
  * so Node/Mocha tests can run without the VS Code test host.
  */
 
-/** Drift Advisor setting: depth of Log Capture integration (bridge + built-in align on this key). */
+/** Drift Advisor setting: depth of Saropa Capture integration (bridge + built-in align on this key). */
 export const DRIFT_ADVISOR_CONFIG_SECTION = 'driftViewer';
 
 /** Scoped to workspace folder so multi-root picks the session’s folder. */

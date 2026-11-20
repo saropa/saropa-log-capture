@@ -35,10 +35,10 @@ same commit takes deliberate sequencing:
   the time the app stops, so capture it *during* the session, or run
   **Saropa Drift Advisor: Write Diagnostics Mirror (Suite)** on demand.
 - `lints.json` is written on **analysis settle** (the debounced tick after the analyzer finishes).
-- `log-capture.json` is written on **Log Capture session end**.
+- `log-capture.json` is written on **Saropa Capture session end**.
 
 To have all three present and current: run the app in debug (advisor) → let analysis settle (lints) →
-stop the Log Capture session (log-capture), all without an intervening `git commit`.
+stop the Saropa Capture session (log-capture), all without an intervening `git commit`.
 
 ---
 
@@ -46,20 +46,20 @@ stop the Log Capture session (log-capture), all without an intervening `git comm
 
 **Goal:** all three tools read each other's `.saropa/diagnostics/*.json` without dropping everything.
 
-1. Run the app in debug, exercise a query, then stop the Log Capture session.
+1. Run the app in debug, exercise a query, then stop the Saropa Capture session.
 2. Confirm all three files exist in `<workspace>/.saropa/diagnostics/`: `log-capture.json`,
    `advisor.json`, `lints.json`. → **PASS** if all three present. A missing file means that producer
    never fired (lifecycle gotcha above) — re-sequence before reading further.
 3. Open `log-capture.json`. Confirm: top-level `schemaVersion`, `producer`, `generatedAt`,
    `diagnostics[]`; each diagnostic has `source: "log-capture"`, a `commitSha`, and a
    `location.file` that is **workspace-relative** (e.g. `lib/db/app_database.dart`) — **not** an
-   absolute `C:\Users\…` path. → **PASS** on all four; absolute path is a Log Capture FAIL.
+   absolute `C:\Users\…` path. → **PASS** on all four; absolute path is a Saropa Capture FAIL.
 4. Open Drift Advisor's Drift Health panel (**Saropa Drift Advisor: Open Drift Health (Suite)**).
    Confirm it shows rows from **Saropa Lints** and **Saropa Capture**, not only Advisor's own. →
    **PASS** if sibling rows appear. Zero sibling rows while the files exist = a parse/field mismatch;
    owner is whoever **produced** the file Advisor couldn't read.
 5. Open Lints' consolidated dashboard. Confirm a Drift rule row carries an "Advisor confirms at
-   runtime" or "Log Capture saw N" badge. → **PASS** if a badge appears from real sibling evidence.
+   runtime" or "Saropa Capture saw N" badge. → **PASS** if a badge appears from real sibling evidence.
 
 ---
 
@@ -67,17 +67,17 @@ stop the Log Capture session (log-capture), all without an intervening `git comm
 
 **Goal:** the gated cross-tool buttons appear only when valid, and actually open the right surface.
 
-1. In Log Capture's **SQL Query History**, find a query row. Confirm an **Explain this query in Drift
+1. In Saropa Capture's **SQL Query History**, find a query row. Confirm an **Explain this query in Drift
    Advisor** action is present. → **PASS** if present (the `getCommands` probe found
    `driftViewer.openExplainForSql`). Absent button = Drift Advisor isn't registering that id; owner is
    Drift Advisor.
 2. Click it. → **PASS** if Drift Advisor's EXPLAIN panel opens **on that query**. Opens on the wrong
    query / no-ops = FAIL (source repo if the args are malformed, target repo if the command mishandles
    them).
-3. In a Log Capture **Lints finding** row, confirm **Show rule in Saropa Lints** appears and opens
+3. In a Saropa Capture **Lints finding** row, confirm **Show rule in Saropa Lints** appears and opens
    Lints' Rule Explain for that rule (`saropaLints.explainRule`). → **PASS** on open.
 4. Reverse direction: from a Drift Advisor or Lints finding, confirm an action targeting
-   `saropaCapture.openSqlHistoryForFingerprint` focuses Log Capture's SQL History on that query, and
+   `saropaCapture.openSqlHistoryForFingerprint` focuses Saropa Capture's SQL History on that query, and
    `saropaCapture.openSignal` reveals the matching signal. → **PASS** on each landing.
 5. Negative control: disable one sibling extension, reload, and confirm its buttons **disappear**
    rather than erroring. → **PASS** if they vanish silently (this is the fail-safe gate working).
@@ -86,17 +86,17 @@ stop the Log Capture session (log-capture), all without an intervening `git comm
 
 ## Seam 3 — crash → rule → remediation
 
-**Goal:** a parsed crash family flows from a Log Capture signature to a Lints "enable rule" nudge.
+**Goal:** a parsed crash family flows from a Saropa Capture signature to a Lints "enable rule" nudge.
 
 1. Force a parsed crash family in the app — `.first` on an empty list (`StateError`) or `[i]` out of
-   range (`RangeError`) — and capture it in a Log Capture session.
+   range (`RangeError`) — and capture it in a Saropa Capture session.
 2. In `log-capture.json`, confirm the crash diagnostic carries `category: "crash"` and a `ruleId` of
    the form `crash:<id>` (e.g. `crash:state-error-no-element`, `crash:range-error-index`). → **PASS**
-   if the signature is stamped; absent = Log Capture FAIL.
+   if the signature is stamped; absent = Saropa Capture FAIL.
 3. Confirm Saropa Lints raises its once-per-rule **"This crash class is covered by rule `X`, currently
    disabled — enable it"** nudge for the mapped rule (it fires on activation and when the crash mirror
    changes; it is gated, so it shows once). → **PASS** on the nudge; never fires = a mismatch between
-   Log Capture's `CRASH_SIGNATURE_IDS` and Lints' crash-to-rule map; owner is Lints.
+   Saropa Capture's `CRASH_SIGNATURE_IDS` and Lints' crash-to-rule map; owner is Lints.
 4. Cross-check (data, not runtime): the rule the nudge names should appear in Dart Utils'
    `kRuleRemediations`, pointing at the safe primitive (e.g. `firstWhereOrElse`, `singleOrNull`). →
    **PASS** if the mapping row exists.
@@ -131,7 +131,7 @@ you saw). For every FAIL:
 ## What passing unlocks
 
 When all four seams pass on a live run, the verifiable plans can close:
-[105_plan-saropa-suite-integration.md](../105_plan-saropa-suite-integration.md) (Log Capture) and the
+[105_plan-saropa-suite-integration.md](../105_plan-saropa-suite-integration.md) (Saropa Capture) and the
 Saropa Lints plan archive with a finish report; the orchestration tracker
 [107](../107_plan-saropa-suite-orchestration.md) advances to Phase 2 (the a11y/visual audits). Drift
 Advisor's plan 67 and the Dart Utils plan stay open by their own design (canonical protocol owner;

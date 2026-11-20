@@ -102,7 +102,7 @@ const maxTroubleItems = 10;
 
 /**
  * Failure-only items for the caller's Trouble section: the day's critical/high signals,
- * each carrying a deep-link into Log Capture's Signal panel. `openSignal` expects the
+ * each carrying a deep-link into Saropa Capture's Signal panel. `openSignal` expects the
  * `${kind}:${fingerprint}` id documented in commands-suite.ts.
  */
 export function buildTrouble(signals: readonly RecurringSignalEntry[]): SaropaDailyTroubleItem[] {

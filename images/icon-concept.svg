@@ -7,7 +7,7 @@
       <stop offset="45%" stop-color="#a855c8"/>
       <stop offset="100%" stop-color="#5a8de6"/>
     </linearGradient>
-    <!-- Dark purple outline: matches existing Log Capture icon strokes -->
+    <!-- Dark purple outline: matches existing Saropa Capture icon strokes -->
     <linearGradient id="outlineGrad" x1="0.5" y1="0" x2="0.5" y2="1">
       <stop offset="0%" stop-color="#3d1952"/>
       <stop offset="100%" stop-color="#3d1952"/>

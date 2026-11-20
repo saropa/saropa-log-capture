@@ -3,14 +3,14 @@
  * unit-tested directly under `node --test`. The impure reader (installation + mirror) lives in
  * `suite-connection-status.ts` and feeds this.
  *
- * The four states answer "is this sibling tool actually sharing data with Log Capture?":
+ * The four states answer "is this sibling tool actually sharing data with Saropa Capture?":
  * `notInstalled` (absent), `notApplicable` (installed, but this workspace could never produce its
  * data — e.g. Drift Advisor in a workspace with no `drift` dependency), `silent` (installed and
  * applicable, but its `.saropa/diagnostics` mirror is missing or stale — the case that makes the
  * integration invisible), and `connected` (sharing fresh data).
  */
 
-/** The two diagnostic-producing siblings Log Capture consumes (its own emission is separate). */
+/** The two diagnostic-producing siblings Saropa Capture consumes (its own emission is separate). */
 export type SiblingTool = 'advisor' | 'lints';
 
 /**

@@ -29,7 +29,7 @@ const TOOL_LABEL: Readonly<Record<SiblingTool, string>> = {
 };
 
 /**
- * Refresh commands Log Capture may invoke to make a silent tool emit on demand (self-wiring).
+ * Refresh commands Saropa Capture may invoke to make a silent tool emit on demand (self-wiring).
  * Only listed where the sibling actually contributes one — Drift Advisor ships
  * `driftViewer.writeDiagnosticsMirror`; Saropa Lints has no manual mirror command yet, so it is
  * absent here and the user is guided instead (tracked as a cross-repo ask in plan 108).

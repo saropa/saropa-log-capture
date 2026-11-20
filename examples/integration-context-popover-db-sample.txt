@@ -1,6 +1,6 @@
 # QA samples — Integration context popover → Database insight
 #
-# Open a log containing lines like these in the Log Capture viewer, right-click a line,
+# Open a log containing lines like these in the Saropa Capture viewer, right-click a line,
 # choose "Show integration context". Expect a "Database insight" block (fingerprint,
 # seen count, SQL snippet) when the line is tagged database (Drift Sent SQL).
 #

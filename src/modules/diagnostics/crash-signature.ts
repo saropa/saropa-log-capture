@@ -1,20 +1,20 @@
 /**
- * Stable crash-family signatures — Log Capture's half of the crash-to-rule feed (R3).
+ * Stable crash-family signatures — Saropa Capture's half of the crash-to-rule feed (R3).
  *
- * The suite split: Log Capture owns the *signature* (a stable id naming the crash
+ * The suite split: Saropa Capture owns the *signature* (a stable id naming the crash
  * family it observed at runtime); Saropa Lints owns the *mapping* (signature → the
  * static rule that would have prevented it, plus the "enable rule X" prompt). This
  * file is therefore a published contract — a signature id, once emitted, must never be
  * renamed, or Lints' mapping silently breaks. Add new ids; do not repurpose old ones.
  *
  * Signatures are matched from the human-readable crash text the signal already carries
- * (label + detail), not from the source AST — Log Capture never reads code (that is
+ * (label + detail), not from the source AST — Saropa Capture never reads code (that is
  * Lints' boundary). Each id targets a Dart/Flutter crash family with a known
  * preventing rule on the Lints side.
  */
 
 /**
- * The crash families Log Capture can recognize from runtime text. Stable ids — the
+ * The crash families Saropa Capture can recognize from runtime text. Stable ids — the
  * cross-tool contract. Kept as a const tuple so the union type below stays in sync.
  */
 export const CRASH_SIGNATURE_IDS = [

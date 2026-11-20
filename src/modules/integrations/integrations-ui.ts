@@ -210,7 +210,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
         label: 'Drift Advisor',
         description: 'Drift query stats, schema, and health in session metadata and sidecar',
         descriptionLong:
-            'Adds Saropa Drift Advisor data to the capture when its extension is installed: session metadata (`saropa-drift-advisor`) and `{logBase}.drift-advisor.json` beside the log. Log Capture’s built-in path calls Drift’s `getSessionSnapshot()` or reads `.saropa/drift-advisor-session.json` only when `driftViewer.integrations.includeInLogCaptureSession` is full (default if unset); none or header skips that path. Drift’s own bridge usually runs afterward and may overwrite the same meta key. Right-click drift-perf / drift-query lines for Open in Drift Advisor.',
+            'Adds Saropa Drift Advisor data to the capture when its extension is installed: session metadata (`saropa-drift-advisor`) and `{logBase}.drift-advisor.json` beside the log. Saropa Capture’s built-in path calls Drift’s `getSessionSnapshot()` or reads `.saropa/drift-advisor-session.json` only when `driftViewer.integrations.includeInLogCaptureSession` is full (default if unset); none or header skips that path. Drift’s own bridge usually runs afterward and may overwrite the same meta key. Right-click drift-perf / drift-query lines for Open in Drift Advisor.',
         performanceNote: 'Low when full — built-in uses API/file with timeout; Drift bridge uses parallel requests with timeout.',
         whenToDisable: 'Drift Advisor extension not installed (and no session file), you don\'t use Drift/SQLite, or you set includeInLogCaptureSession to none/header in Drift.',
     },

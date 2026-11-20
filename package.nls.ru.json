@@ -538,7 +538,7 @@
   "walkthrough.configureSettings.description": "Настройте шаблоны наблюдения, правила подсветки, исключения и правила разделения в **Настройках**.\n\n[Открыть настройки](command:workbench.action.openSettings?%22saropaCapture%22)",
   "walkthrough.configureSettings.title": "Настройка",
   "walkthrough.getStarted.description": "Узнайте, как записывать и анализировать вывод отладки с Saropa Capture.",
-  "walkthrough.getStarted.title": "Начало работы с записью журналов",
+  "walkthrough.getStarted.title": "Начало работы с Saropa Capture",
   "walkthrough.openViewer.description": "Нажмите на значок **Saropa Capture** на панели активности, чтобы видеть вывод в реальном времени с цветами, сворачиваемыми стеками и поиском.\n\n[Открыть просмотр журнала](command:saropaCapture.logViewer.focus)",
   "walkthrough.openViewer.title": "Открыть просмотр журнала",
   "walkthrough.startDebugging.description": "Запись начинается автоматически при отладке. Нажмите **F5** или используйте панель **Запуск и отладка**.\n\n[Начать отладку](command:workbench.action.debug.start)",
