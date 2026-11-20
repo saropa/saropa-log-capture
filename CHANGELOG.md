@@ -25,6 +25,16 @@ cspell:disable
 
 ---
 
+## [9.8.3]
+
+Removed a false "previous extension is still installed" warning that appeared on every startup. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+### Fixed
+
+- The startup warning "The previous "Saropa Log Capture" extension is still installed. Uninstall it" no longer appears. The extension ID did not change in the rename, so the check found the running extension itself and warned every user about a conflict that did not exist
+
+---
+
 ## [9.8.2]
 
 More accurate translations of technical terms like "signal", "marker", and "capture" in non-English languages. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.2/CHANGELOG.md)
@@ -65,7 +75,6 @@ Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings
 
 - Settings migration: on first activation, any explicitly set `saropaLogCapture.*` value (user, workspace, and workspace-folder scope) is copied to the matching `saropaCapture.*` key unless that key is already set. Old entries are left in place; a one-time notice reports how many were copied
 - Old command IDs (`saropaLogCapture.*`) stay registered as aliases of the new commands, so existing keybindings, tasks, and other extensions that call them keep working
-- Warning when the previous "Saropa Log Capture" extension is still installed alongside this one
 
 ### Notes
 

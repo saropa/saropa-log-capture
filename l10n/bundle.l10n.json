@@ -93,7 +93,6 @@
   "Saropa Capture stores indexes and caches in '.saropa/'. Add it to .gitignore?": "Saropa Capture stores indexes and caches in '.saropa/'. Add it to .gitignore?",
   "Failed to update .gitignore: {0}": "Failed to update .gitignore: {0}",
   "Invalid deep link format": "Invalid deep link format",
-  "The previous \"Saropa Log Capture\" extension is still installed. Uninstall it: Saropa Capture replaces it and running both causes conflicts.": "The previous \"Saropa Log Capture\" extension is still installed. Uninstall it: Saropa Capture replaces it and running both causes conflicts.",
   "Saropa Capture copied {0} setting(s) from the old saropaLogCapture.* prefix to saropaCapture.*. Old entries were left in place.": "Saropa Capture copied {0} setting(s) from the old saropaLogCapture.* prefix to saropaCapture.*. Old entries were left in place.",
   "No workspace open. Please open a workspace first.": "No workspace open. Please open a workspace first.",
   "Log file not found: {0}": "Log file not found: {0}",

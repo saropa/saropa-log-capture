@@ -121,7 +121,6 @@ export const stringsA: Record<string, string> = {
     'msg.failedUpdateGitignore': 'Failed to update .gitignore: {0}',
 
     'msg.invalidDeepLink': 'Invalid deep link format',
-    'msg.legacyExtensionInstalled': 'The previous "Saropa Log Capture" extension is still installed. Uninstall it: Saropa Capture replaces it and running both causes conflicts.',
     'msg.legacySettingsMigrated': 'Saropa Capture copied {0} setting(s) from the old saropaLogCapture.* prefix to saropaCapture.*. Old entries were left in place.',
     'msg.noWorkspaceOpen': 'No workspace open. Please open a workspace first.',
     'msg.logFileNotFound': 'Log file not found: {0}',

@@ -5,9 +5,7 @@
  * (`saropaLogCapture.*` -> `saropaCapture.*`), the command IDs (same prefix change), and the
  * marketplace extension ID. This module keeps the first two working for existing users:
  *  - copies explicitly-set old settings to the new keys (never overwrites a new value),
- *  - registers the old command IDs as aliases so keybindings/tasks keep working,
- *  - warns when the old extension is still installed (two copies would fight over the
- *    same output channel, status bar item, and log files).
+ *  - registers the old command IDs as aliases so keybindings/tasks keep working.
  */
 import * as vscode from 'vscode';
 import { t } from './l10n';
@@ -15,7 +13,6 @@ import { logExtensionError, logExtensionWarn } from './modules/misc/extension-lo
 
 const oldPrefix = 'saropaLogCapture';
 const newPrefix = 'saropaCapture';
-const oldExtensionId = 'saropa.saropa-log-capture';
 const userScopeFlag = `${newPrefix}.legacySettingsMigratedUser`;
 const workspaceScopeFlag = `${newPrefix}.legacySettingsMigratedWorkspace`;
 
@@ -111,16 +108,15 @@ export function registerLegacyCommandAliases(context: vscode.ExtensionContext): 
     }
 }
 
-/** One-time-per-activation warning when the pre-rename extension is still installed beside this one. */
-function warnIfOldExtensionInstalled(): void {
-    if (!vscode.extensions.getExtension(oldExtensionId)) { return; }
-    void vscode.window.showWarningMessage(t('msg.legacyExtensionInstalled'));
-}
-
-/** Entry point called from activation. Never throws: compatibility must not block startup. */
+/**
+ * Entry point called from activation. Never throws: compatibility must not block startup.
+ * Bug fix: a "previous extension still installed" warning used to run here. The extension ID
+ * (saropa.saropa-log-capture) did not change in the rename, so the lookup found this very
+ * extension and the warning fired for every user. The warning was removed because no second
+ * extension can exist under an unchanged ID.
+ */
 export function activateLegacyCompat(context: vscode.ExtensionContext): void {
     registerLegacyCommandAliases(context);
-    warnIfOldExtensionInstalled();
     migrateLegacySettings(context).then((copied) => {
         if (copied > 0) { void vscode.window.showInformationMessage(t('msg.legacySettingsMigrated', copied)); }
     }).catch((err) => logExtensionError('legacyCompat', err instanceof Error ? err : new Error(String(err))));
