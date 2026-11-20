@@ -1,6 +1,8 @@
 # 125 — Rename "Saropa Log Capture" to "Saropa Capture"
 
-Status: Proposed. Not started. Requires owner sign-off on the breaking-change decisions in section 2 before any edit.
+Status: Implemented in 9.8.0 (commit "rename Saropa Log Capture to Saropa Capture"): full rename with settings migration, command aliases, old-extension warning. Online work (GitHub repo rename, marketplace/Open VSX publish and old-listing deprecation, local folder rename, repo-URL replacement) is DEFERRED to [deferred/126_plan-saropa-capture-online-rename.md](deferred/126_plan-saropa-capture-online-rename.md).
+
+Open here: F5 verification of section 3.6 surfaces and the migration; leftover-string guard test (3.8); screenshots with the old name baked in (3.5); bug reports in sibling projects (3.7). Archive to `plans/history/` when these close.
 
 ## 1. Scope (measured)
 
