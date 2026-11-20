@@ -14,6 +14,7 @@ import { saveToSharedFolder } from './modules/share/shared-folder';
 import { showCollectionPanel } from './ui/collection/collection-panel';
 import { isSplitGroup, type SessionMetadata, type TreeItem } from './ui/session/session-history-grouping';
 import type { CollectionStore } from './modules/collection/collection-store';
+import { extensionId } from './extension-id';
 
 export interface ShareCommandsDeps {
     readonly context: vscode.ExtensionContext;
@@ -101,7 +102,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
                         () => exportCollectionToSlc(collection, folder.uri),
                     );
                     if (outUri) {
-                        const deepLink = `vscode://saropa.saropa-capture/import?url=${encodeURIComponent(outUri.toString())}`;
+                        const deepLink = `vscode://${extensionId}/import?url=${encodeURIComponent(outUri.toString())}`;
                         await vscode.env.clipboard.writeText(deepLink);
                         vscode.window.showInformationMessage(t('msg.deepLinkLocalCopied'));
                     }

@@ -5,7 +5,7 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 
-const EXTENSION_ID = "saropa.saropa-capture";
+const EXTENSION_ID = "saropa.saropa-log-capture";
 
 suite("Extension smoke (activation)", () => {
     test(`${EXTENSION_ID} resolves and activates`, async () => {

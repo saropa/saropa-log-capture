@@ -13,9 +13,9 @@ import { aggregateSignals } from '../misc/cross-session-aggregator';
 import { buildEnvelope, signalsToDiagnostics } from './signal-to-diagnostic';
 import { writeEnvelope } from './envelope-io';
 import { LOG_CAPTURE_SOURCE } from './saropa-diagnostic-envelope';
+import { extensionId as EXTENSION_ID } from '../../extension-id';
 
 /** Full extension id (`publisher.name`) used to read our own version at runtime. */
-const EXTENSION_ID = 'saropa.saropa-capture';
 
 /** Producer `name` field — matches the package name the siblings expect. */
 const PRODUCER_NAME = 'saropa-capture';

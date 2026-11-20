@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Guard: no leftover "Saropa Log Capture" / "saropaLogCapture" / "saropa.saropa-log-capture"
+ * Guard: no leftover "Saropa Log Capture" / "saropaLogCapture"
  * outside an explicit allowlist. Catches accidental regressions after the v9.8.0 rename.
  *
  * Exit 0 = clean, exit 1 = violations found.
@@ -16,7 +16,8 @@ const root = path.resolve(__dirname, "..", "..", "..");
 const OLD_PATTERNS = [
 	"Saropa Log Capture",
 	"saropaLogCapture",
-	"saropa\\.saropa-log-capture",
+	// The extension ID saropa.saropa-log-capture is intentionally NOT guarded: it is the live
+	// marketplace ID (see src/extension-id.ts), not a leftover of the rename.
 ];
 
 /**

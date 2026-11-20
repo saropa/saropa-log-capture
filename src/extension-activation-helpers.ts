@@ -8,6 +8,7 @@ import type { FirstErrorResult } from './modules/bookmarks/first-error';
 import { isSplitGroup, getTreeItemUri, type TreeItem } from './ui/session/session-history-grouping';
 import { LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 import { flattenLeafSessions } from './ui/provider/viewer-log-context';
+import { extensionId } from './extension-id';
 
 const walkthroughShownKey = 'slc.walkthroughShown';
 
@@ -106,7 +107,7 @@ function runSmartBookmarkAction(
 function openWalkthrough(): void {
     void vscode.commands.executeCommand(
         'workbench.action.openWalkthrough',
-        'saropa.saropa-capture#saropaCapture.getStarted',
+        `${extensionId}#saropaCapture.getStarted`,
         false,
     );
 }

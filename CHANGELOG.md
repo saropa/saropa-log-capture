@@ -31,7 +31,7 @@ Packaging fix for the Saropa Capture rename. [log](https://github.com/saropa/sar
 
 ### Fixed
 
-- Package `name` field updated to `saropa-capture` so the VS Code extension ID (`saropa.saropa-capture`) matches all runtime lookups, deep links, and test assertions
+- Extension ID stays `saropa.saropa-log-capture` so updates reach existing installs; the 9.8.0 note that the ID changed to `saropa.saropa-capture` no longer applies. Deep links, the walkthrough, diagnostics, and gist footers now use the real ID from one shared constant. Display name and UI strings remain "Saropa Capture"
 
 ### Added
 

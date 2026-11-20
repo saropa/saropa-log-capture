@@ -14,7 +14,7 @@
  * `activate()` exports `getDailySummary(date)` on the public API (see
  * `api.ts` / `api-daily-summary.ts`, shape `SaropaDailySummary` in `api-types.ts`).
  * A sibling calls
- * `vscode.extensions.getExtension('saropa.saropa-capture')?.exports.getDailySummary('YYYY-MM-DD')`
+ * `vscode.extensions.getExtension('saropa.saropa-log-capture')?.exports.getDailySummary('YYYY-MM-DD')`
  * to fold one day's sessions / errors / signals into a consolidated Suite report. The
  * `SaropaDailySummary.trouble[].command` deep-links back through `openSignal` above, so
  * the two halves share one protocol — treat the exported shape (and `apiVersion`) with

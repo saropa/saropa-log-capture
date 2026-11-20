@@ -22,6 +22,7 @@ import { runScreenshotSelfTest, formatSelfTest } from './screenshot-self-test';
 import { runScreenshotDiagnosis } from './screenshot-diagnose';
 import { readScreenshotEnabled, readScreenshotSettings } from './screenshot-settings';
 import type { SessionManagerImpl } from '../session/session-manager';
+import { extensionId } from '../../extension-id';
 
 /** What the rest of the extension needs back from the wiring. */
 export interface ScreenshotRuntime {
@@ -68,7 +69,7 @@ export function registerScreenshotCapture(deps: ScreenshotWiringDeps): Screensho
     // Build-identity line: the first question in any "no screenshots" report is whether the
     // running extension actually contains this pipeline. Version comes from the manifest —
     // a hardcoded date would silently go stale on the next change to this file.
-    const version = vscode.extensions.getExtension('saropa.saropa-capture')?.packageJSON?.version ?? 'unknown';
+    const version = vscode.extensions.getExtension(extensionId)?.packageJSON?.version ?? 'unknown';
     deps.log(`screenshot: capture pipeline armed (v${version} — VM probe + adb screencap fallback)`);
     registerVmServiceUriTracking(deps.context);
     registerSelfTest(deps, cfg);

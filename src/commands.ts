@@ -26,6 +26,7 @@ import { investigationCommands } from './commands-investigations';
 import { InvestigationStore } from './modules/session/investigation-store';
 import { suiteIntegrationCommands } from './commands-suite';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
+import { extensionId } from './extension-id';
 
 export type { CommandDeps } from './commands-deps';
 
@@ -71,7 +72,7 @@ function walkthroughCommand(): vscode.Disposable {
     return vscode.commands.registerCommand('saropaCapture.openWalkthrough', () => {
         void vscode.commands.executeCommand(
             'workbench.action.openWalkthrough',
-            'saropa.saropa-capture#saropaCapture.getStarted',
+            `${extensionId}#saropaCapture.getStarted`,
             false,
         );
     });

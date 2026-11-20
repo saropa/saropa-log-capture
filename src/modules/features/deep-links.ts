@@ -5,10 +5,10 @@
  * Use case: paste a link in Slack/email, teammate clicks it, VS Code opens
  * and navigates directly to that log entry.
  *
- * URI Format: vscode://saropa.saropa-capture/open?session=<filename>&line=<n>
+ * URI Format: vscode://saropa.saropa-log-capture/open?session=<filename>&line=<n>
  *
- * The extension ID "saropa.saropa-capture" is derived from publisher.name
- * in package.json. VS Code routes all vscode://saropa.saropa-capture/* URIs
+ * The extension ID "saropa.saropa-log-capture" is derived from publisher.name
+ * in package.json. VS Code routes all vscode://saropa.saropa-log-capture/* URIs
  * to our registered UriHandler.
  */
 
@@ -17,6 +17,7 @@ import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
 import { logExtensionWarn } from '../misc/extension-logger';
 import { MAX_SAFE_LINE, MAX_SESSION_FILENAME_LENGTH } from '../config/config-validation';
+import { extensionId } from '../../extension-id';
 
 /**
  * Parameters extracted from a deep link URI.
@@ -41,12 +42,12 @@ export interface DeepLinkParams {
  *
  * @example
  * // Valid URI
- * parseDeepLinkUri(Uri.parse('vscode://saropa.saropa-capture/open?session=app.log&line=42'))
+ * parseDeepLinkUri(Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=42'))
  * // Returns: { session: 'app.log', line: 42 }
  *
  * @example
  * // Missing session parameter
- * parseDeepLinkUri(Uri.parse('vscode://saropa.saropa-capture/open?line=42'))
+ * parseDeepLinkUri(Uri.parse('vscode://saropa.saropa-log-capture/open?line=42'))
  * // Returns: undefined
  */
 
@@ -100,10 +101,10 @@ export function parseDeepLinkUri(uri: vscode.Uri): DeepLinkParams | undefined {
  *
  * @example
  * generateDeepLink('myapp.log', 42)
- * // Returns: "vscode://saropa.saropa-capture/open?session=myapp.log&line=42"
+ * // Returns: "vscode://saropa.saropa-log-capture/open?session=myapp.log&line=42"
  */
 export function generateDeepLink(sessionFilename: string, line?: number): string {
-    const baseUri = 'vscode://saropa.saropa-capture/open';
+    const baseUri = `vscode://${extensionId}/open`;
     const params = new URLSearchParams();
 
     const safeName = typeof sessionFilename === 'string' && sessionFilename.trim().length > 0
@@ -122,7 +123,7 @@ export function generateDeepLink(sessionFilename: string, line?: number): string
 /**
  * Handle an incoming deep link by opening the referenced log file.
  *
- * This is called by VS Code when a vscode://saropa.saropa-capture/* URI
+ * This is called by VS Code when a vscode://saropa.saropa-log-capture/* URI
  * is opened (from browser, terminal, another app, etc.).
  *
  * @param uri - The deep link URI to handle

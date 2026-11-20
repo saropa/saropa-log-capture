@@ -6,7 +6,7 @@ This extension is published **without** `enabledApiProposals` in `package.json` 
 
 `.vscode/launch.json` passes:
 
-`--enable-proposed-api=saropa.saropa-capture`
+`--enable-proposed-api=saropa.saropa-log-capture`
 
 That opt-in applies only when you debug from this workspace. It does **not** ship to end users.
 

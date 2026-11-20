@@ -313,7 +313,7 @@ Other VS Code extensions can consume a typed API from Saropa Capture:
 import * as vscode from 'vscode';
 
 // In your extension's activate():
-const ext = vscode.extensions.getExtension('saropa.saropa-capture');
+const ext = vscode.extensions.getExtension('saropa.saropa-log-capture');
 if (!ext) { return; }
 const api = ext.isActive ? ext.exports : await ext.activate();
 

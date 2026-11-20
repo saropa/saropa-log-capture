@@ -7,6 +7,7 @@
 
 import { buildItemUrl } from "../../modules/marketplace-url";
 import { t } from "../../l10n";
+import { extensionId } from '../../extension-id';
 
 /** Generate the about panel HTML with static content.
  *  Chrome and marketing prose (tagline, blurb, link descriptions) are localized
@@ -269,7 +270,7 @@ function getProjectLinksHtml(): string {
             icon: '\u{1F4CB}', title: 'Saropa Capture',
             badge: 'VS Code Marketplace',
             desc: t('viewer.about.project.logCapture.desc'),
-            url: buildItemUrl('saropa.saropa-capture')
+            url: buildItemUrl(extensionId)
         }),
         linkHtml({
             icon: '\u{1F50D}', title: 'saropa_lints', badge: 'pub.dev \u00b7 Dart & Flutter',

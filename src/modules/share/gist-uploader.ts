@@ -9,19 +9,20 @@ import { getGitHubToken, handleGitHubApiUnauthorized } from './github-auth';
 import { logExtensionError } from '../misc/extension-logger';
 import type { GistShareResult } from './share-types';
 import { buildItemUrl } from '../marketplace-url';
+import { extensionId } from '../../extension-id';
 
 const GIST_API = 'https://api.github.com/gists';
 
 function generateReadme(gistId: string, collection: Collection): string {
     return `# ${collection.name}
 
-Shared via [Saropa Capture](${buildItemUrl('saropa.saropa-capture')})
+Shared via [Saropa Capture](${buildItemUrl(extensionId)})
 
 ## Open in VS Code
 
 Click this link to open in VS Code:
 \`\`\`
-vscode://saropa.saropa-capture/import?gist=${gistId}
+vscode://${extensionId}/import?gist=${gistId}
 \`\`\`
 
 ## Contents
@@ -106,7 +107,7 @@ export async function shareViaGist(
     }
 
     const rawUrl = gist.files['collection.slc.b64']?.raw_url ?? '';
-    const deepLinkUrl = `vscode://saropa.saropa-capture/import?gist=${gist.id}`;
+    const deepLinkUrl = `vscode://${extensionId}/import?gist=${gist.id}`;
 
     return {
         gistId: gist.id,

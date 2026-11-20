@@ -3,7 +3,7 @@
  *
  * Consuming extensions access the API via:
  * ```typescript
- * const ext = vscode.extensions.getExtension<SaropaLogCaptureApi>('saropa.saropa-capture');
+ * const ext = vscode.extensions.getExtension<SaropaLogCaptureApi>('saropa.saropa-log-capture');
  * const api = ext?.isActive ? ext.exports : await ext?.activate();
  * ```
  */

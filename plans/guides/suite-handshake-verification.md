@@ -21,7 +21,7 @@ appears, a panel that shows zero findings), not a crash. So you are hunting for 
    or N+1, plus a place you can force a `StateError` / `RangeError`.
 2. All three extensions enabled (the **Saropa Suite** pack installs them in one click): Saropa Drift
    Advisor (`saropa.drift-viewer`), Saropa Lints (`saropa.saropa-lints`), Saropa Capture
-   (`saropa.saropa-capture`).
+   (`saropa.saropa-log-capture`).
 3. The app's `pubspec.yaml` dev-depends on `saropa_lints` and depends on `saropa_drift_advisor` (so the
    Drift debug server runs and the analyzer plugin is active).
 4. The workspace is a Git checkout (the `commitSha` seam needs a real `.git/HEAD`).

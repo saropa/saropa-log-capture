@@ -14,8 +14,8 @@ import { getGlobalProjectIndexer } from './modules/project-indexer/project-index
 import { getGlobalSearchIndex } from './modules/search/search-index-global';
 import { logExtensionWarn } from './modules/misc/extension-logger';
 import { ensureWebviewReadyOrWarn } from './commands-webview-ready';
+import { extensionId } from './extension-id';
 
-const extensionId = 'saropa.saropa-capture';
 const settingsSection = 'saropaCapture';
 
 export function toolCommands(deps: CommandDeps): vscode.Disposable[] {

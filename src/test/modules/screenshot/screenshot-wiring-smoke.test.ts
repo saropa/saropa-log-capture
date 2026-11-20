@@ -1,7 +1,7 @@
 import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
-const EXTENSION_ID = 'saropa.saropa-capture';
+const EXTENSION_ID = 'saropa.saropa-log-capture';
 
 /**
  * Extension-Host smoke test for the screenshot wiring, exercised through the ACTIVATED extension.
