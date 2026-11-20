@@ -41,6 +41,7 @@ Saropa Log Capture is now Saropa Capture. Your existing settings and keybindings
 - Old command IDs (`saropaLogCapture.*`) stay registered as aliases of the new commands, so existing keybindings, tasks, and other extensions that call them keep working
 - Warning when the previous "Saropa Log Capture" extension is still installed alongside this one
 - Build-time guard (`verify:no-old-name`) that fails on any leftover old-name string outside an allowlist of historical and migration files
+- Reverted package `name` field to `saropa-log-capture` so VSIX packaging works while the repo folder keeps the old name (full rename deferred to plan 126)
 
 ### Notes
 

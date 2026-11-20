@@ -3392,7 +3392,7 @@
   "license": "MIT",
   "main": "./dist/extension.js",
   "l10n": "./l10n",
-  "name": "saropa-capture",
+  "name": "saropa-log-capture",
   "publisher": "saropa",
   "repository": {
     "type": "git",
