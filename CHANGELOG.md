@@ -27,17 +27,12 @@ cspell:disable
 
 ## [9.7.0]
 
+Closed four security scanner findings — two dependency vulnerabilities and two defensive regex fixes. No user-facing behavior change. [log](https://github.com/saropa/saropa-log-capture/blob/v9.7.0/CHANGELOG.md)
+
 ### Security
 
 - Override `minimatch` (≥7.0.0) to ≥11.0.1 — fixes CVE-2026-118764 (DoS via globparts amplification, medium severity). Only affects dev tooling; npm-run-all's 3.x stays untouched
 - Override `serialize-javascript` to ≥7.1.3 — fixes CVE-2026-115897 (XSS via unescaped `</script` in serialized function body, low severity). Transitive via mocha
-
----
-
-## [9.6.1]
-
-### Security
-
 - Fixed HTML script-tag regex to match malformed closing tags (CodeQL `js/bad-tag-filter`). The `</script\s*>` pattern could miss variants like `</script \n attr>` — replaced with `</script[^>]*>` in script extraction across the flow-map self-check and test harnesses.
 
 ---
