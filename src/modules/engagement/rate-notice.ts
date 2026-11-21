@@ -24,7 +24,7 @@ const ACTIVATION_COUNT_KEY = 'slc.rateActivationCount';
 /** Permanent outcome once the user rates or permanently dismisses. */
 const RATE_OUTCOME_KEY = 'slc.rateOutcome';
 
-/** Full VS Code Marketplace review URL for Saropa Log Capture. */
+/** Full VS Code Marketplace review URL for Saropa Capture. */
 const MARKETPLACE_REVIEW_URL =
     'https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture&ssr=false#review-details';
 
