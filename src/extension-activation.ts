@@ -54,6 +54,7 @@ import { maybeRecommendAdapters } from './modules/integrations/recommend-adapter
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
+import { maybePromptForRating } from './modules/engagement/rate-notice';
 import { startFlutterCrashWatcher } from './modules/integrations/flutter-crash-watcher';
 import { registerScreenshotCapture } from './modules/screenshot/screenshot-wiring';
 
@@ -406,6 +407,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     // Bug 019: needs `context` to persist the one-time opt-in notice (no longer a silent settings write).
     scheduleMaybeAutoEnableAiFromLanguageModels(context);
+
+    // Deferred so it doesn't stack with the other activation-time toasts; the counter
+    // increments immediately but the prompt waits for the initial flurry to settle.
+    setTimeout(() => maybePromptForRating(context), 15_000);
 
     outputChannel.appendLine('Saropa Capture activated.');
     return {

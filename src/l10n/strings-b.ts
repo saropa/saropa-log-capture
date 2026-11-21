@@ -280,4 +280,9 @@ export const stringsB: Record<string, string> = {
     'msg.resultsTruncated': 'Results truncated.',
     'msg.noSearchHistory': 'No search history yet.',
     'msg.sourceFileMissing': 'Source file not found.',
+
+    // Rating prompt — shown once after enough activations (rate-notice.ts). "Saropa Capture"
+    // is the current brand name and stays literal; the MT pipeline shields it.
+    'rate.prompt': 'Enjoying Saropa Capture? A quick rating on the Marketplace helps others find it.',
+    'rate.action.rate': 'Rate',
 };

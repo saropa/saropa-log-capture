@@ -25,9 +25,19 @@ cspell:disable
 
 ---
 
+## [9.9.0]
+
+A friendly one-time nudge to leave a rating on the Marketplace, with options to put it off or never see it again. [log](https://github.com/saropa/saropa-log-capture/blob/v9.9.0/CHANGELOG.md)
+
+### Added
+
+- One-time "please rate" toast after enough activations — links to the VS Code Marketplace review page, with "Not now" (defers) and "Don't Ask Again" options
+
+---
+
 ## [9.8.3]
 
-Removed a false "previous extension is still installed" warning that appeared on every startup. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+Removed a false "previous extension is still installed" warning that appeared on every startup. [log](https://github.com/saropa/saropa-log-capture/blob/v9.8.3/CHANGELOG.md)
 
 ### Fixed
 
